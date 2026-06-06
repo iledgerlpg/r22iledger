@@ -23,7 +23,8 @@ body::before{content:'';position:fixed;inset:0;background:url("data:image/svg+xm
 .card{background:rgba(255,255,255,.97);border-radius:20px;box-shadow:0 20px 60px rgba(13,71,161,.2);overflow:hidden}
 .card-header{background:linear-gradient(135deg,#0D47A1,#1565C0);padding:36px 40px 32px;text-align:center;position:relative;overflow:hidden}
 .card-header::after{content:'';position:absolute;bottom:-30px;left:-10%;width:120%;height:60px;background:rgba(255,255,255,.97);border-radius:50%}
-<link rel="icon" type="image/png" href="iledger.png" />
+.logo-icon{width:58px;height:58px;background:rgba(255,255,255,.15);border-radius:16px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;border:1px solid rgba(255,255,255,.25)}
+.logo-icon svg{width:30px;height:30px;fill:white}
 .card-header h1{color:white;font-size:24px;font-weight:800;letter-spacing:-.5px}
 .card-header p{color:rgba(255,255,255,.7);font-size:13px;margin-top:4px}
 .card-body{padding:34px 38px 38px}
@@ -69,7 +70,7 @@ body::before{content:'';position:fixed;inset:0;background:url("data:image/svg+xm
   <div class="card">
     <div class="card-header">
       <div class="logo-icon">
-        <svg viewBox="0 0 32 32"><path d="M4 4h10v10H4zm14 0h10v10H18zM4 18h10v10H4zm14 0h10v10H18z" opacity=".4"/><path d="M6 6h6v6H6zm14 0h6v6h-6zM6 20h6v6H6zm14 0h6v6h-6z"/></svg>
+       <img src="iledger.png" 
       </div>
       <h1>iLedgerV2</h1>
       <p>Sistem Manajemen Keuangan Enterprise</p>
