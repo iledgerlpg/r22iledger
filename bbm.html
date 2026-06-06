@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="light">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>iLedgerV2 – BBM</title>
+<link rel="stylesheet" href="css/style.css">
+<script src="js/config.js"></script>
+<script src="js/page-template.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script> window.CURRENT_PAGE='bbm';</script>
+<div id="navbarMount"></div>
+<style>
+.toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:20px}
+.toolbar-left{display:flex;align-items:center;gap:10px;flex:1;flex-wrap:wrap}
+.filter-select{padding:9px 14px;border:1.5px solid var(--border-color);border-radius:var(--radius);font-family:var(--font);font-size:13px;color:var(--text-primary);background:var(--bg-card);cursor:pointer;outline:none;min-width:130px}
+.charts-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+.chart-card{background:var(--bg-card);border-radius:var(--radius-lg);border:1px solid var(--border-color);padding:18px}
+.chart-title{font-size:14px;font-weight:700;color:var(--text-primary);margin-bottom:4px}
+.chart-subtitle{font-size:11px;color:var(--text-secondary);margin-bottom:14px}
+.jenis-badge-Solar{background:#fef3c7;color:#92400e}
+.jenis-badge-Pertalite{background:#dcfce7;color:#166534}
+.jenis-badge-Pertamax{background:#dbeafe;color:#1d4ed8}
+.jenis-badge-Dexlite{background:#f3e8ff;color:#7c3aed}
+.jenis-badge-Pertamina.Dex{background:#fee2e2;color:#991b1b}
+@media(max-width:768px){.charts-row{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header class="main-header">
+  <button class="header-toggle" onclick="toggleSidebar()">
+    <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+  </button>
+  <div class="header-breadcrumb">
+    <span>iLedgerV2</span><span class="breadcrumb-sep">/</span>
+    <span class="breadcrumb-current">BBM</span>
+  </div>
+  <div class="header-actions">
+    <button class="header-btn" onclick="toggleTheme()"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/></svg></button>
+  </div>
+</header>
+
+<main class="main-content" id="mainContent">
+  <div class="page-header">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px">
+      <div>
+        <h1 class="page-title">Manajemen BBM</h1>
+        <p class="page-subtitle">Pantau konsumsi dan biaya bahan bakar semua armada</p>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-outline btn-sm" onclick="exportPDF()">
+          <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> PDF
+        </button>
+        <button class="btn btn-primary" onclick="openModal('modalAdd')">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Tambah BBM
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- KPI -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:20px">
+    <div class="kpi-card"><div class="kpi-icon" style="background:#FFF7ED;color:#EA580C"><svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" fill="none" stroke-width="1.8"><path d="M3 22V6a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v16"/><rect x="6" y="9" width="5" height="4"/></svg></div><div><div class="kpi-label">Total Liter Bulan Ini</div><div class="kpi-value sm" id="kpiLiter">-</div></div></div>
+    <div class="kpi-card"><div class="kpi-icon" style="background:#FEE2E2;color:#DC2626"><svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" fill="none" stroke-width="1.8"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div><div><div class="kpi-label">Biaya Bulan Ini</div><div class="kpi-value sm" id="kpiBiaya">-</div></div></div>
+    <div class="kpi-card"><div class="kpi-icon" style="background:#DBEAFE;color:#1D4ED8"><svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" fill="none" stroke-width="1.8"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5"/></svg></div><div><div class="kpi-label">Biaya Bulan Lalu</div><div class="kpi-value sm" id="kpiBiayaLalu">-</div></div></div>
+    <div class="kpi-card"><div class="kpi-icon" style="background:#DCFCE7;color:#16A34A"><svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" fill="none" stroke-width="1.8"><rect x="1" y="3" width="15" height="13" rx="1"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div><div><div class="kpi-label">Armada Terisi</div><div class="kpi-value sm" id="kpiArmada">-</div></div></div>
+  </div>
+
+  <!-- Charts -->
+  <div class="charts-row">
+    <div class="chart-card">
+      <div class="chart-title">Pemakaian BBM Bulanan</div>
+      <div class="chart-subtitle">Liter per bulan (6 bulan terakhir)</div>
+      <div style="height:220px"><canvas id="chartLiter"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Biaya BBM per Jenis</div>
+      <div class="chart-subtitle">Distribusi per jenis BBM</div>
+      <div style="height:220px"><canvas id="chartJenis"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <div class="toolbar-left">
+      <div class="search-bar" style="min-width:220px">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input class="search-input" placeholder="Cari no. polisi, jenis BBM..." id="searchInput" oninput="debounceSearch()">
+      </div>
+      <select class="filter-select" id="filterArmada" onchange="loadData()">
+        <option value="">Semua Armada</option>
+      </select>
+      <input type="month" class="filter-select" id="filterMonth" onchange="loadData()" style="min-width:155px">
+    </div>
+    <span style="font-size:12px;color:var(--text-secondary)" id="resultInfo">-</span>
+  </div>
+
+  <div class="card">
+    <div class="table-wrapper">
+      <table class="data-table">
+        <thead>
+          <tr><th>No</th><th>Tanggal</th><th>No. Polisi</th><th>Jenis BBM</th><th>Liter</th><th>Harga/L</th><th>Total</th><th>Oleh</th><th>Aksi</th></tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+    <div style="padding:12px 16px;border-top:1px solid var(--border-color);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+      <span style="font-size:12px;color:var(--text-secondary)" id="pageInfo">-</span>
+      <div id="paginationContainer" style="display:flex;gap:6px"></div>
+    </div>
+  </div>
+</main>
+
+<!-- MODAL ADD/EDIT BBM -->
+<div class="modal-overlay" id="modalAdd">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-header">
+      <h3 class="modal-title" id="modalTitle">Tambah Data BBM</h3>
+      <button class="modal-close" onclick="closeModal('modalAdd');resetForm()">
+        <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="editId">
+      <div class="form-row-m">
+        <div class="form-group-m">
+          <label class="form-label-m">Tanggal <span style="color:var(--error)">*</span></label>
+          <input type="date" id="fTanggal" class="form-control-m">
+        </div>
+        <div class="form-group-m">
+          <label class="form-label-m">Armada <span style="color:var(--error)">*</span></label>
+          <select id="fArmada" class="form-control-m">
+            <option value="">-- Pilih Armada --</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group-m">
+        <label class="form-label-m">Jenis BBM <span style="color:var(--error)">*</span></label>
+        <select id="fJenisBBM" class="form-control-m">
+          <option value="Solar">Solar</option>
+          <option value="Pertalite">Pertalite</option>
+          <option value="Dexlite">Dexlite</option>
+          <option value="Pertamax">Pertamax</option>
+          <option value="Pertamina Dex">Pertamina Dex</option>
+          <option value="Custom">Custom</option>
+        </select>
+      </div>
+      <div class="form-row-m">
+        <div class="form-group-m">
+          <label class="form-label-m">Jumlah Liter <span style="color:var(--error)">*</span></label>
+          <input type="number" id="fLiter" class="form-control-m" placeholder="0.00" step="0.01" oninput="calcTotal()">
+        </div>
+        <div class="form-group-m">
+          <label class="form-label-m">Harga per Liter <span style="color:var(--error)">*</span></label>
+          <input type="number" id="fHargaLiter" class="form-control-m" placeholder="0" oninput="calcTotal()">
+        </div>
+      </div>
+      <div id="totalPreview" style="display:none;background:var(--gray-50);border-radius:var(--radius);padding:12px;margin-top:4px">
+        <div style="font-size:11px;color:var(--text-secondary);font-weight:600;text-transform:uppercase;letter-spacing:.4px">Total Biaya</div>
+        <div style="font-size:22px;font-weight:800;color:var(--primary);margin-top:2px" id="totalValue">Rp 0</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modalAdd');resetForm()">Batal</button>
+      <button class="btn btn-primary" id="btnSave" onclick="saveData()">
+        <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" fill="none" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+        Simpan
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentPage = 1, totalPages = 1;
+let allArmada = [];
+let litterChart = null, jenisChart = null;
+let searchTimeout = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+  const now = new Date();
+  const pad = n => String(n).padStart(2,'0');
+  document.getElementById('fTanggal').value = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
+  document.getElementById('filterMonth').value = `${now.getFullYear()}-${pad(now.getMonth()+1)}`;
+  loadArmada();
+  loadData();
+  loadStats();
+  loadCharts();
+});
+
+async function loadArmada() {
+  const res = await callAPI('getArmada', { status: 'ACTIVE' });
+  if (!res.success) return;
+  allArmada = res.data;
+  const filterSel = document.getElementById('filterArmada');
+  const modalSel = document.getElementById('fArmada');
+  allArmada.forEach(a => {
+    const opt = `<option value="${a.id}" data-nopol="${a.noPolisi}">${a.noPolisi} – ${a.merk}</option>`;
+    filterSel.innerHTML += opt;
+    modalSel.innerHTML += opt;
+  });
+}
+
+async function loadStats() {
+  const res = await callAPI('getBBMStats', {});
+  if (!res.success) return;
+  const d = res.data;
+  document.getElementById('kpiLiter').textContent = (d.totalLiterBulanIni || 0).toLocaleString('id-ID') + ' L';
+  document.getElementById('kpiBiaya').textContent = formatRupiah(d.totalBiayaBulanIni || 0);
+  document.getElementById('kpiBiayaLalu').textContent = formatRupiah(d.totalBiayaBulanLalu || 0);
+  const uniqueArmada = new Set();
+  allArmada.forEach(a => uniqueArmada.add(a.id));
+  document.getElementById('kpiArmada').textContent = (d.topArmada?.length || 0) + ' unit';
+}
+
+async function loadCharts() {
+  const res = await callAPI('getDashboardCharts', { chartType: 'bbm', period: 'monthly' });
+  if (!res.success) return;
+  const d = res.data;
+
+  const ctx1 = document.getElementById('chartLiter').getContext('2d');
+  if (litterChart) litterChart.destroy();
+  litterChart = new Chart(ctx1, {
+    type: 'bar',
+    data: { labels: d.labels, datasets: [{ label: 'Liter', data: d.liter, backgroundColor: 'rgba(234,88,12,.7)', borderRadius: 5 }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { ticks: { callback: v => v + ' L', font:{size:10} }, grid:{color:'rgba(0,0,0,.04)'} }, x: { ticks:{font:{size:10}}, grid:{display:false} } } }
+  });
+
+  const statsRes = await callAPI('getBBMStats', {});
+  if (statsRes.success && statsRes.data.byJenis) {
+    const byJenis = statsRes.data.byJenis;
+    const ctx2 = document.getElementById('chartJenis').getContext('2d');
+    if (jenisChart) jenisChart.destroy();
+    const palette = ['#f59e0b','#10b981','#3b82f6','#8b5cf6','#ef4444','#6b7280'];
+    jenisChart = new Chart(ctx2, {
+      type: 'doughnut',
+      data: { labels: byJenis.map(j => j.jenis), datasets: [{ data: byJenis.map(j => j.total), backgroundColor: palette.slice(0, byJenis.length), borderWidth: 2, borderColor: '#fff' }] },
+      options: { responsive: true, maintainAspectRatio: false, cutout: '60%', plugins: { legend: { position: 'bottom', labels: { font:{size:10}, usePointStyle: true } }, tooltip: { callbacks: { label: c => ' ' + c.label + ': ' + formatRupiah(c.parsed) } } } }
+    });
+  }
+}
+
+async function loadData() {
+  showSkeleton('tableBody', 5);
+  const res = await callAPI('getBBM', {
+    page: currentPage, limit: 20,
+    search: document.getElementById('searchInput').value,
+    filterArmada: document.getElementById('filterArmada').value,
+    filterMonth: document.getElementById('filterMonth').value
+  });
+  if (!res.success) { showToast('Gagal memuat data.','error'); return; }
+  totalPages = res.totalPages || 1;
+  document.getElementById('resultInfo').textContent = res.total + ' data';
+  document.getElementById('pageInfo').textContent = `Hal ${res.page} dari ${totalPages}`;
+  renderTable(res.data, res.page, 20);
+  renderPagination('paginationContainer', currentPage, totalPages, 'changePage');
+}
+
+function renderTable(data, page, limit) {
+  const tbody = document.getElementById('tableBody');
+  if (!data || !data.length) {
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--text-secondary)">Belum ada data BBM. Klik "Tambah BBM" untuk mencatat.</td></tr>';
+    return;
+  }
+  const jenisColors = { Solar:'#fef3c7', Pertalite:'#dcfce7', Pertamax:'#dbeafe', Dexlite:'#f3e8ff', 'Pertamina Dex':'#fee2e2' };
+  const jenisTxt = { Solar:'#92400e', Pertalite:'#166534', Pertamax:'#1d4ed8', Dexlite:'#7c3aed', 'Pertamina Dex':'#991b1b' };
+  tbody.innerHTML = data.map((r, i) => {
+    const bg = jenisColors[r.jenisBBM] || '#f1f5f9';
+    const tc = jenisTxt[r.jenisBBM] || '#475569';
+    return `<tr>
+      <td style="font-weight:600;color:var(--text-secondary)">${(page-1)*limit+i+1}</td>
+      <td style="white-space:nowrap;font-size:12px">${r.tanggal}</td>
+      <td style="font-weight:700">${r.noPolisi}</td>
+      <td><span style="background:${bg};color:${tc};padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700">${r.jenisBBM}</span></td>
+      <td style="font-weight:600">${Number(r.liter).toLocaleString('id-ID',{minimumFractionDigits:1})} L</td>
+      <td style="font-size:12px">${formatRupiah(r.hargaPerLiter)}</td>
+      <td style="font-weight:800;color:var(--primary)">${formatRupiah(r.total)}</td>
+      <td style="font-size:11px;color:var(--text-secondary)">${(r.createdBy||'').split('@')[0]}</td>
+      <td><div style="display:flex;gap:6px">
+        <button class="btn btn-outline btn-sm btn-icon" onclick='editRow(${JSON.stringify(r).replace(/'/g,"&#39;")})'>
+          <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </button>
+        <button class="btn btn-danger btn-sm btn-icon" onclick="deleteRow('${r.id}','${r.noPolisi}')">
+          <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+        </button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+function changePage(p) { currentPage = p; loadData(); }
+function debounceSearch() { clearTimeout(searchTimeout); searchTimeout = setTimeout(() => { currentPage = 1; loadData(); }, 400); }
+
+function calcTotal() {
+  const liter = parseFloat(document.getElementById('fLiter').value) || 0;
+  const harga = parseFloat(document.getElementById('fHargaLiter').value) || 0;
+  const total = liter * harga;
+  const preview = document.getElementById('totalPreview');
+  if (total > 0) { preview.style.display = 'block'; document.getElementById('totalValue').textContent = formatRupiah(total); }
+  else preview.style.display = 'none';
+}
+
+async function saveData() {
+  const id = document.getElementById('editId').value;
+  const tgl = document.getElementById('fTanggal').value;
+  const armadaSel = document.getElementById('fArmada');
+  const armadaOpt = armadaSel.options[armadaSel.selectedIndex];
+  const idArmada = armadaSel.value;
+  const noPolisi = armadaOpt?.dataset.nopol || '';
+  const jenisBBM = document.getElementById('fJenisBBM').value;
+  const liter = document.getElementById('fLiter').value;
+  const hargaPerLiter = document.getElementById('fHargaLiter').value;
+  if (!tgl || !idArmada || !liter || !hargaPerLiter) { showToast('Semua field wajib diisi.','error'); return; }
+  const btn = document.getElementById('btnSave');
+  btn.disabled = true; btn.textContent = 'Menyimpan...';
+  const res = await callAPI(id ? 'updateBBM' : 'addBBM', { id, tanggal: tgl, idArmada, noPolisi, jenisBBM, liter: parseFloat(liter), hargaPerLiter: parseFloat(hargaPerLiter) });
+  btn.disabled = false;
+  btn.innerHTML = '<svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" fill="none" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Simpan';
+  if (res.success) { showToast(res.message || 'Data BBM disimpan.', 'success'); closeModal('modalAdd'); resetForm(); loadData(); loadStats(); }
+  else showToast(res.error,'error');
+}
+
+function editRow(row) {
+  document.getElementById('editId').value = row.id;
+  document.getElementById('modalTitle').textContent = 'Edit Data BBM';
+  document.getElementById('fTanggal').value = row.tanggal ? row.tanggal.split('/').reverse().join('-') : '';
+  const armadaSel = document.getElementById('fArmada');
+  for (let i = 0; i < armadaSel.options.length; i++) {
+    if (armadaSel.options[i].value === row.idArmada) { armadaSel.selectedIndex = i; break; }
+  }
+  document.getElementById('fJenisBBM').value = row.jenisBBM;
+  document.getElementById('fLiter').value = row.liter;
+  document.getElementById('fHargaLiter').value = row.hargaPerLiter;
+  calcTotal();
+  openModal('modalAdd');
+}
+
+async function deleteRow(id, noPolisi) {
+  confirmAction(`Hapus data BBM untuk "${noPolisi}"?`, async () => {
+    const res = await callAPI('deleteBBM', { id });
+    if (res.success) { showToast('Data BBM dihapus.','success'); loadData(); loadStats(); }
+    else showToast(res.error,'error');
+  });
+}
+
+function resetForm() {
+  document.getElementById('editId').value = '';
+  document.getElementById('modalTitle').textContent = 'Tambah Data BBM';
+  ['fLiter','fHargaLiter'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('fArmada').value = '';
+  document.getElementById('totalPreview').style.display = 'none';
+  const now = new Date();
+  const pad = n => String(n).padStart(2,'0');
+  document.getElementById('fTanggal').value = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
+}
+
+function exportPDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'landscape' });
+  doc.setFont('helvetica','bold'); doc.setFontSize(16);
+  doc.text('Laporan BBM', 14, 18);
+  doc.setFont('helvetica','normal'); doc.setFontSize(10);
+  doc.text('Dicetak: ' + new Date().toLocaleString('id-ID'), 14, 26);
+  const rows = [];
+  document.querySelectorAll('#tableBody tr').forEach(tr => {
+    const tds = tr.querySelectorAll('td');
+    if (tds.length >= 7) rows.push([tds[0].textContent, tds[1].textContent, tds[2].textContent, tds[3].textContent, tds[4].textContent, tds[5].textContent, tds[6].textContent]);
+  });
+  doc.autoTable({ head:[['No','Tanggal','No Polisi','Jenis BBM','Liter','Harga/L','Total']], body:rows, startY:32, styles:{fontSize:9}, headStyles:{fillColor:[13,71,161],textColor:255,fontStyle:'bold'} });
+  doc.save('BBM_' + new Date().toLocaleDateString('id-ID').replace(/\//g,'-') + '.pdf');
+}
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => initPage('bbm'));
+</script>
+</body>
+</html>

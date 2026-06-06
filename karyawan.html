@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="light">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>iLedgerV2 – Kelola Karyawan</title>
+<link rel="stylesheet" href="css/style.css">
+<script src="js/config.js"></script>
+<script src="js/page-template.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script> window.CURRENT_PAGE='karyawan';</script>
+<div id="navbarMount"></div>
+<style>
+.karyawan-card{background:var(--bg-card);border-radius:var(--radius-lg);border:1px solid var(--border-color);overflow:hidden;transition:transform .2s,box-shadow .2s}
+.karyawan-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-md)}
+.karyawan-header-bar{height:4px;background:linear-gradient(90deg,var(--primary),var(--accent))}
+.karyawan-body{padding:18px}
+.karyawan-avatar{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;color:white;margin-bottom:12px;flex-shrink:0}
+.karyawan-name{font-size:15px;font-weight:700;color:var(--text-primary)}
+.karyawan-jabatan{font-size:12px;color:var(--text-secondary);margin-bottom:12px}
+.karyawan-details{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.kd-item .kd-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--text-secondary)}
+.kd-item .kd-value{font-size:12px;font-weight:600;color:var(--text-primary);margin-top:1px}
+.karyawan-footer{padding:12px 18px;border-top:1px solid var(--border-color);display:flex;align-items:center;justify-content:space-between}
+.gaji-display{font-size:13px;font-weight:800;color:var(--success)}
+.search-toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:20px}
+.filter-select{padding:9px 14px;border:1.5px solid var(--border-color);border-radius:var(--radius);font-family:var(--font);font-size:13px;color:var(--text-primary);background:var(--bg-card);cursor:pointer;outline:none}
+.karyawan-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+.avatar-colors{--c1:#0D47A1;--c2:#1565C0;--c3:#0288D1;--c4:#00838F;--c5:#558B2F;--c6:#6A1B9A}
+</style>
+</head>
+<body>
+
+<header class="main-header">
+  <button class="header-toggle" onclick="toggleSidebar()">
+    <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+  </button>
+  <div class="header-breadcrumb">
+    <span>iLedgerV2</span><span class="breadcrumb-sep">/</span>
+    <span class="breadcrumb-current">Kelola Karyawan</span>
+  </div>
+  <div class="header-actions">
+    <button class="header-btn" onclick="toggleTheme()"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/></svg></button>
+  </div>
+</header>
+
+<main class="main-content" id="mainContent">
+  <div class="page-header">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px">
+      <div>
+        <h1 class="page-title">Kelola Karyawan</h1>
+        <p class="page-subtitle">Manajemen data karyawan perusahaan (Akses: HRD)</p>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-outline btn-sm" onclick="exportPDF()">
+          <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> PDF
+        </button>
+        <button class="btn btn-primary" onclick="openModal('modalKaryawan')">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Tambah Karyawan
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:20px">
+    <div class="kpi-card"><div class="kpi-icon" style="background:#DBEAFE;color:#1D4ED8"><svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" fill="none" stroke-width="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div><div><div class="kpi-label">Total Karyawan</div><div class="kpi-value sm" id="statTotal">-</div></div></div>
+    <div class="kpi-card"><div class="kpi-icon" style="background:#DCFCE7;color:#16A34A"><svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" fill="none" stroke-width="1.8"><polyline points="20 6 9 17 4 12"/></svg></div><div><div class="kpi-label">Aktif</div><div class="kpi-value sm" id="statAktif">-</div></div></div>
+    <div class="kpi-card"><div class="kpi-icon" style="background:#FEF3C7;color:#D97706"><svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" fill="none" stroke-width="1.8"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div><div><div class="kpi-label">Total Gaji / Bulan</div><div class="kpi-value sm" id="statGaji">-</div></div></div>
+    <div class="kpi-card"><div class="kpi-icon" style="background:#F5F3FF;color:#7C3AED"><svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" fill="none" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/></svg></div><div><div class="kpi-label">Tidak Aktif</div><div class="kpi-value sm" id="statNonaktif">-</div></div></div>
+  </div>
+
+  <div class="search-toolbar">
+    <div class="search-bar" style="flex:1;min-width:200px">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input class="search-input" id="searchInput" placeholder="Cari nama, NIK, jabatan..." oninput="debounceSearch()">
+    </div>
+    <select class="filter-select" id="filterStatus" onchange="loadData()">
+      <option value="">Semua Status</option>
+      <option value="ACTIVE">Aktif</option>
+      <option value="INACTIVE">Tidak Aktif</option>
+    </select>
+    <span style="font-size:12px;color:var(--text-secondary)" id="resultInfo">-</span>
+  </div>
+
+  <div class="karyawan-grid" id="karyawanGrid"></div>
+</main>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalKaryawan">
+  <div class="modal" style="max-width:700px">
+    <div class="modal-header">
+      <h3 class="modal-title" id="modalTitle">Tambah Karyawan</h3>
+      <button class="modal-close" onclick="closeModal('modalKaryawan');resetForm()">
+        <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body" style="max-height:70vh;overflow-y:auto">
+      <input type="hidden" id="editId">
+
+      <div style="font-size:12px;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Data Pribadi</div>
+      <div class="form-row-m">
+        <div class="form-group-m">
+          <label class="form-label-m">NIK <span style="color:var(--error)">*</span></label>
+          <input type="text" id="fNIK" class="form-control-m" placeholder="3201234567890001">
+        </div>
+        <div class="form-group-m">
+          <label class="form-label-m">Nama Lengkap <span style="color:var(--error)">*</span></label>
+          <input type="text" id="fNama" class="form-control-m" placeholder="Nama lengkap">
+        </div>
+      </div>
+      <div class="form-row-m">
+        <div class="form-group-m">
+          <label class="form-label-m">Jenis Kelamin</label>
+          <select id="fJK" class="form-control-m">
+            <option value="Laki-laki">Laki-laki</option>
+            <option value="Perempuan">Perempuan</option>
+          </select>
+        </div>
+        <div class="form-group-m">
+          <label class="form-label-m">No. Telepon</label>
+          <input type="tel" id="fNoTelp" class="form-control-m" placeholder="08123456789">
+        </div>
+      </div>
+      <div class="form-row-m">
+        <div class="form-group-m">
+          <label class="form-label-m">Tempat Lahir</label>
+          <input type="text" id="fTempatLahir" class="form-control-m" placeholder="Jakarta">
+        </div>
+        <div class="form-group-m">
+          <label class="form-label-m">Tanggal Lahir</label>
+          <input type="date" id="fTglLahir" class="form-control-m">
+        </div>
+      </div>
+      <div class="form-group-m">
+        <label class="form-label-m">Alamat</label>
+        <textarea id="fAlamat" class="form-control-m" rows="2" style="resize:none" placeholder="Alamat lengkap"></textarea>
+      </div>
+
+      <div style="font-size:12px;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:.5px;margin:16px 0 10px">Pekerjaan & Kontrak</div>
+      <div class="form-row-m">
+        <div class="form-group-m">
+          <label class="form-label-m">Jabatan <span style="color:var(--error)">*</span></label>
+          <input type="text" id="fJabatan" class="form-control-m" placeholder="Driver / Admin / Manager">
+        </div>
+        <div class="form-group-m">
+          <label class="form-label-m">Departemen</label>
+          <select id="fDepartemen" class="form-control-m">
+            <option>Operasional</option><option>Administrasi</option>
+            <option>Keuangan</option><option>HRD</option><option>IT</option><option>Lainnya</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row-m">
+        <div class="form-group-m">
+          <label class="form-label-m">Tanggal Masuk</label>
+          <input type="date" id="fTglMasuk" class="form-control-m">
+        </div>
+        <div class="form-group-m">
+          <label class="form-label-m">Gaji Pokok (Rp)</label>
+          <input type="number" id="fGaji" class="form-control-m" placeholder="5000000" min="0">
+        </div>
+      </div>
+
+      <div style="font-size:12px;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:.5px;margin:16px 0 10px">BPJS & Rekening</div>
+      <div class="form-row-m">
+        <div class="form-group-m">
+          <label class="form-label-m">No. BPJS Kesehatan</label>
+          <input type="text" id="fBPJSKES" class="form-control-m" placeholder="0001234567890">
+        </div>
+        <div class="form-group-m">
+          <label class="form-label-m">No. BPJS Ketenagakerjaan</label>
+          <input type="text" id="fBPJSTK" class="form-control-m" placeholder="09987654321">
+        </div>
+      </div>
+      <div class="form-row-m">
+        <div class="form-group-m">
+          <label class="form-label-m">No. Rekening</label>
+          <input type="text" id="fNoRek" class="form-control-m" placeholder="1234567890">
+        </div>
+        <div class="form-group-m">
+          <label class="form-label-m">Nama Bank</label>
+          <select id="fNamaBank" class="form-control-m">
+            <option value="">-- Pilih Bank --</option>
+            <option>BCA</option><option>BRI</option><option>Mandiri</option><option>BNI</option>
+            <option>CIMB Niaga</option><option>Danamon</option><option>BTN</option><option>Lainnya</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="editStatusField" style="display:none">
+        <div style="font-size:12px;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:.5px;margin:16px 0 10px">Status</div>
+        <div class="form-row-m">
+          <div class="form-group-m">
+            <label class="form-label-m">Status Karyawan</label>
+            <select id="fStatus" class="form-control-m">
+              <option value="ACTIVE">Aktif</option>
+              <option value="INACTIVE">Tidak Aktif</option>
+              <option value="RESIGN">Resign</option>
+            </select>
+          </div>
+          <div class="form-group-m">
+            <label class="form-label-m">Tanggal Keluar</label>
+            <input type="date" id="fTglKeluar" class="form-control-m">
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modalKaryawan');resetForm()">Batal</button>
+      <button class="btn btn-primary" id="btnSave" onclick="saveData()">
+        <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" fill="none" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+        Simpan
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+let allData = [];
+let searchTimeout = null;
+const avatarBg = ['#0D47A1','#1565C0','#0288D1','#00838F','#558B2F','#6A1B9A','#D84315','#37474F'];
+
+document.addEventListener('DOMContentLoaded', () => {
+  if (_user.role !== 'HRD') {
+    document.querySelector('.main-content').innerHTML = '<div style="text-align:center;padding:60px;color:var(--text-secondary)"><h2>Akses Ditolak</h2><p>Halaman ini hanya untuk HRD.</p></div>';
+    return;
+  }
+  loadData();
+});
+
+async function loadData() {
+  const res = await callAPI('getKaryawan', {
+    search: document.getElementById('searchInput').value,
+    status: document.getElementById('filterStatus').value
+  });
+  if (!res.success) { showToast('Gagal memuat data.','error'); return; }
+  allData = res.data;
+  document.getElementById('resultInfo').textContent = allData.length + ' karyawan';
+  updateStats(allData);
+  renderGrid(allData);
+}
+
+function updateStats(data) {
+  const aktif = data.filter(d => d.status === 'ACTIVE').length;
+  const nonaktif = data.filter(d => d.status !== 'ACTIVE').length;
+  const totalGaji = data.filter(d => d.status === 'ACTIVE').reduce((s,d) => s + d.gaji, 0);
+  document.getElementById('statTotal').textContent = data.length + ' orang';
+  document.getElementById('statAktif').textContent = aktif + ' orang';
+  document.getElementById('statNonaktif').textContent = nonaktif + ' orang';
+  document.getElementById('statGaji').textContent = formatRupiah(totalGaji);
+}
+
+function renderGrid(data) {
+  const container = document.getElementById('karyawanGrid');
+  if (!data.length) {
+    container.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px;color:var(--text-secondary)"><h3 style="color:var(--text-primary)">Belum ada karyawan</h3><p style="margin-top:6px;font-size:13px">Klik "Tambah Karyawan" untuk mendaftarkan</p></div>';
+    return;
+  }
+  container.innerHTML = data.map((k, i) => {
+    const bg = avatarBg[i % avatarBg.length];
+    const initials = k.nama.split(' ').slice(0,2).map(w => w[0]).join('').toUpperCase();
+    return `
+    <div class="karyawan-card">
+      <div class="karyawan-header-bar"></div>
+      <div class="karyawan-body">
+        <div style="display:flex;align-items:flex-start;gap:12px">
+          <div class="karyawan-avatar" style="background:${bg}">${initials}</div>
+          <div style="flex:1;min-width:0">
+            <div class="karyawan-name">${k.nama}</div>
+            <div class="karyawan-jabatan">${k.jabatan} · ${k.departemen}</div>
+          </div>
+          <span class="badge ${k.status === 'ACTIVE' ? 'badge-success' : 'badge-gray'}" style="flex-shrink:0">${k.status === 'ACTIVE' ? 'Aktif' : 'Nonaktif'}</span>
+        </div>
+        <div class="karyawan-details" style="margin-top:12px">
+          <div class="kd-item"><div class="kd-label">NIK</div><div class="kd-value">${k.nik || '-'}</div></div>
+          <div class="kd-item"><div class="kd-label">Masuk</div><div class="kd-value">${k.tanggalMasuk || '-'}</div></div>
+          <div class="kd-item"><div class="kd-label">BPJS Kes</div><div class="kd-value">${k.noBPJSKES || '-'}</div></div>
+          <div class="kd-item"><div class="kd-label">BPJS TK</div><div class="kd-value">${k.noBPJSTK || '-'}</div></div>
+        </div>
+      </div>
+      <div class="karyawan-footer">
+        <div class="gaji-display">${formatRupiah(k.gaji)}<span style="font-size:10px;font-weight:400;color:var(--text-secondary)">/bln</span></div>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-outline btn-sm btn-icon" onclick='editRow(${JSON.stringify(k).replace(/'/g,"&#39;")})'>
+            <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </button>
+          <button class="btn btn-danger btn-sm btn-icon" onclick="deleteRow('${k.id}','${k.nama}')">
+            <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function saveData() {
+  const id = document.getElementById('editId').value;
+  const nik = document.getElementById('fNIK').value.trim();
+  const nama = document.getElementById('fNama').value.trim();
+  const jabatan = document.getElementById('fJabatan').value.trim();
+
+  if (!nik || !nama || !jabatan) { showToast('NIK, Nama, dan Jabatan wajib diisi.','error'); return; }
+
+  const btn = document.getElementById('btnSave');
+  btn.disabled = true; btn.textContent = 'Menyimpan...';
+
+  const res = await callAPI(id ? 'updateKaryawan' : 'addKaryawan', {
+    id, nik, namaKaryawan: nama,
+    jenisKelamin: document.getElementById('fJK').value,
+    noTelp: document.getElementById('fNoTelp').value,
+    tempatLahir: document.getElementById('fTempatLahir').value,
+    tanggalLahir: document.getElementById('fTglLahir').value,
+    alamat: document.getElementById('fAlamat').value,
+    jabatan, departemen: document.getElementById('fDepartemen').value,
+    tanggalMasuk: document.getElementById('fTglMasuk').value,
+    gaji: document.getElementById('fGaji').value,
+    noBPJSKES: document.getElementById('fBPJSKES').value,
+    noBPJSTK: document.getElementById('fBPJSTK').value,
+    noRekening: document.getElementById('fNoRek').value,
+    namaBank: document.getElementById('fNamaBank').value,
+    status: id ? document.getElementById('fStatus').value : 'ACTIVE',
+    tanggalKeluar: document.getElementById('fTglKeluar').value
+  });
+
+  btn.disabled = false;
+  btn.innerHTML = '<svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" fill="none" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Simpan';
+
+  if (res.success) { showToast(res.message,'success'); closeModal('modalKaryawan'); resetForm(); loadData(); }
+  else showToast(res.error,'error');
+}
+
+function editRow(row) {
+  document.getElementById('editId').value = row.id;
+  document.getElementById('modalTitle').textContent = 'Edit Karyawan';
+  document.getElementById('fNIK').value = row.nik;
+  document.getElementById('fNama').value = row.nama;
+  document.getElementById('fJK').value = row.jenisKelamin;
+  document.getElementById('fNoTelp').value = row.noTelp || '';
+  document.getElementById('fTempatLahir').value = row.tempatLahir || '';
+  document.getElementById('fAlamat').value = row.alamat || '';
+  document.getElementById('fJabatan').value = row.jabatan;
+  document.getElementById('fDepartemen').value = row.departemen;
+  document.getElementById('fGaji').value = row.gaji;
+  document.getElementById('fBPJSKES').value = row.noBPJSKES || '';
+  document.getElementById('fBPJSTK').value = row.noBPJSTK || '';
+  document.getElementById('fNoRek').value = row.noRekening || '';
+  document.getElementById('fNamaBank').value = row.namaBank || '';
+  document.getElementById('fStatus').value = row.status;
+  document.getElementById('editStatusField').style.display = 'block';
+  openModal('modalKaryawan');
+}
+
+async function deleteRow(id, nama) {
+  confirmAction(`Nonaktifkan karyawan "${nama}"?`, async () => {
+    const res = await callAPI('deleteKaryawan', { id });
+    if (res.success) { showToast('Karyawan dinonaktifkan.','success'); loadData(); }
+    else showToast(res.error,'error');
+  });
+}
+
+function resetForm() {
+  document.getElementById('editId').value = '';
+  document.getElementById('modalTitle').textContent = 'Tambah Karyawan';
+  document.getElementById('editStatusField').style.display = 'none';
+  ['fNIK','fNama','fNoTelp','fTempatLahir','fAlamat','fJabatan','fGaji','fBPJSKES','fBPJSTK','fNoRek','fTglLahir','fTglMasuk','fTglKeluar'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('fJK').value = 'Laki-laki';
+  document.getElementById('fDepartemen').value = 'Operasional';
+}
+
+function debounceSearch() { clearTimeout(searchTimeout); searchTimeout = setTimeout(loadData, 400); }
+
+function exportPDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'landscape' });
+  doc.setFont('helvetica','bold'); doc.setFontSize(16);
+  doc.text('Data Karyawan', 14, 18);
+  doc.setFont('helvetica','normal'); doc.setFontSize(10);
+  doc.text('Dicetak: ' + new Date().toLocaleString('id-ID') + ' (RAHASIA)', 14, 26);
+  doc.autoTable({
+    head: [['No','NIK','Nama','Jabatan','Dept','BPJS Kes','BPJS TK','Tgl Masuk','Gaji','Status']],
+    body: allData.map((k,i) => [i+1, k.nik, k.nama, k.jabatan, k.departemen, k.noBPJSKES||'-', k.noBPJSTK||'-', k.tanggalMasuk||'-', formatRupiah(k.gaji), k.status]),
+    startY: 32, styles:{fontSize:8}, headStyles:{fillColor:[13,71,161],textColor:255,fontStyle:'bold'}
+  });
+  doc.save('Karyawan_' + new Date().toLocaleDateString('id-ID').replace(/\//g,'-') + '.pdf');
+}
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => initPage('karyawan'));
+</script>
+</body>
+</html>

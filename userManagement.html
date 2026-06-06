@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="light">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>iLedgerV2 – User Management</title>
+<link rel="stylesheet" href="css/style.css">
+<script src="js/config.js"></script>
+<script src="js/page-template.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script> window.CURRENT_PAGE='user-management';</script>
+<div id="navbarMount"></div>
+<style>
+.user-card{background:var(--bg-card);border-radius:var(--radius-lg);border:1px solid var(--border-color);padding:20px;display:flex;align-items:flex-start;gap:16px;transition:box-shadow .2s}
+.user-card:hover{box-shadow:var(--shadow-md)}
+.user-avatar-lg{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:white;flex-shrink:0}
+.user-info-main{flex:1;min-width:0}
+.user-name-lg{font-size:15px;font-weight:700;color:var(--text-primary)}
+.user-email-lg{font-size:12px;color:var(--text-secondary);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.user-meta{display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap}
+.user-actions{display:flex;flex-direction:column;gap:8px;flex-shrink:0}
+.users-grid{display:flex;flex-direction:column;gap:12px}
+.pending-banner{background:linear-gradient(135deg,#fffbeb,#fef3c7);border:1.5px solid #fde68a;border-radius:var(--radius-lg);padding:16px 20px;margin-bottom:20px;display:flex;align-items:center;gap:12px}
+.pending-banner svg{width:24px;height:24px;stroke:#D97706;fill:none;stroke-width:2;flex-shrink:0}
+.pending-banner .pb-text{font-size:14px;font-weight:600;color:#92400e}
+.pending-banner .pb-count{background:#D97706;color:white;padding:2px 10px;border-radius:10px;font-size:12px;font-weight:700;margin-left:8px}
+</style>
+</head>
+<body>
+
+<header class="main-header">
+  <button class="header-toggle" onclick="toggleSidebar()">
+    <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+  </button>
+  <div class="header-breadcrumb">
+    <span>iLedgerV2</span><span class="breadcrumb-sep">/</span>
+    <span class="breadcrumb-current">User Management</span>
+  </div>
+  <div class="header-actions">
+    <button class="header-btn" onclick="toggleTheme()"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/></svg></button>
+  </div>
+</header>
+
+<main class="main-content" id="mainContent">
+  <div class="page-header">
+    <h1 class="page-title">User Management</h1>
+    <p class="page-subtitle">Kelola pengguna dan approval akun (Akses: HRD)</p>
+  </div>
+
+  <div id="pendingBanner" style="display:none" class="pending-banner">
+    <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+    <span class="pb-text">Ada pengguna menunggu persetujuan <span class="pb-count" id="pendingCount">0</span></span>
+  </div>
+
+  <!-- Filter -->
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;align-items:center">
+    <div class="search-bar" style="flex:1;min-width:200px">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input class="search-input" id="searchInput" placeholder="Cari nama atau email..." oninput="filterUsers()">
+    </div>
+    <select id="filterStatus" style="padding:9px 14px;border:1.5px solid var(--border-color);border-radius:var(--radius);font-family:var(--font);font-size:13px;background:var(--bg-card);color:var(--text-primary);cursor:pointer;outline:none" onchange="filterUsers()">
+      <option value="">Semua Status</option>
+      <option value="PENDING">Menunggu</option>
+      <option value="ACTIVE">Aktif</option>
+      <option value="REJECTED">Ditolak</option>
+      <option value="INACTIVE">Nonaktif</option>
+    </select>
+    <button class="btn btn-outline btn-sm" onclick="loadData()">
+      <svg viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.98"/></svg>
+      Refresh
+    </button>
+  </div>
+
+  <div class="users-grid" id="usersGrid"></div>
+</main>
+
+<!-- Modal Reject -->
+<div class="modal-overlay" id="modalReject">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header">
+      <h3 class="modal-title">Tolak Pengguna</h3>
+      <button class="modal-close" onclick="closeModal('modalReject')">
+        <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="rejectUserId">
+      <div class="form-group-m">
+        <label class="form-label-m">Alasan Penolakan (opsional)</label>
+        <textarea id="rejectReason" class="form-control-m" rows="3" style="resize:none" placeholder="Masukkan alasan penolakan..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modalReject')">Batal</button>
+      <button class="btn btn-danger" onclick="confirmReject()">
+        <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" fill="none" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        Tolak
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+let allUsers = [];
+const avatarBg = ['#0D47A1','#1565C0','#0288D1','#00838F','#6A1B9A','#D84315'];
+
+document.addEventListener('DOMContentLoaded', () => {
+  if (_user.role !== 'HRD') {
+    document.querySelector('.main-content').innerHTML = '<div style="text-align:center;padding:60px;color:var(--text-secondary)"><h2>Akses Ditolak</h2><p>Halaman ini hanya untuk HRD.</p></div>';
+    return;
+  }
+  loadData();
+});
+
+async function loadData() {
+  const res = await callAPI('getUsers', {});
+  if (!res.success) { showToast('Gagal memuat data.','error'); return; }
+  allUsers = res.data;
+  const pending = allUsers.filter(u => u.status === 'PENDING').length;
+  if (pending > 0) {
+    document.getElementById('pendingBanner').style.display = 'flex';
+    document.getElementById('pendingCount').textContent = pending;
+    const badge = document.getElementById('pendingBadge');
+    if (badge) { badge.style.display = 'inline'; badge.textContent = pending; }
+  }
+  filterUsers();
+}
+
+function filterUsers() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  const st = document.getElementById('filterStatus').value;
+  const filtered = allUsers.filter(u => {
+    const matchQ = !q || u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q);
+    const matchS = !st || u.status === st;
+    return matchQ && matchS;
+  });
+  renderUsers(filtered);
+}
+
+function renderUsers(data) {
+  const container = document.getElementById('usersGrid');
+  if (!data.length) {
+    container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-secondary);background:var(--bg-card);border-radius:var(--radius-lg);border:1px solid var(--border-color)">Tidak ada pengguna ditemukan.</div>';
+    return;
+  }
+  container.innerHTML = data.map((u, i) => {
+    const initials = u.name.split(' ').slice(0,2).map(w => w[0]).join('').toUpperCase();
+    const bg = avatarBg[i % avatarBg.length];
+    const statusBadge = {
+      ACTIVE: 'badge-success', PENDING: 'badge-warning',
+      REJECTED: 'badge-error', INACTIVE: 'badge-gray'
+    }[u.status] || 'badge-gray';
+    const statusLabel = { ACTIVE:'Aktif', PENDING:'Menunggu', REJECTED:'Ditolak', INACTIVE:'Nonaktif' }[u.status] || u.status;
+    const roleBadge = u.role === 'HRD' ? 'badge-info' : 'badge-gray';
+
+    const actions = u.status === 'PENDING' ? `
+      <button class="btn btn-success btn-sm" onclick="approveUser('${u.userId}')">
+        <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+        Setujui
+      </button>
+      <button class="btn btn-danger btn-sm" onclick="openRejectModal('${u.userId}')">
+        <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        Tolak
+      </button>` : u.userId !== _user.userId ? `
+      <button class="btn btn-danger btn-sm" onclick="deleteUser('${u.userId}','${u.name}')">
+        <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+        Hapus
+      </button>` : '<span style="font-size:11px;color:var(--text-secondary)">Akun Anda</span>';
+
+    return `
+    <div class="user-card">
+      <div class="user-avatar-lg" style="background:${bg}">${initials}</div>
+      <div class="user-info-main">
+        <div class="user-name-lg">${u.name}</div>
+        <div class="user-email-lg">${u.email}</div>
+        <div class="user-meta">
+          <span class="badge ${statusBadge}">${statusLabel}</span>
+          <span class="badge ${roleBadge}">${u.role}</span>
+          ${u.lastLogin ? `<span style="font-size:11px;color:var(--text-secondary)">Login: ${u.lastLogin.split(' ')[0]}</span>` : ''}
+          ${u.createdAt ? `<span style="font-size:11px;color:var(--text-secondary)">Daftar: ${u.createdAt.split(' ')[0]}</span>` : ''}
+        </div>
+      </div>
+      <div class="user-actions">${actions}</div>
+    </div>`;
+  }).join('');
+}
+
+async function approveUser(userId) {
+  const res = await callAPI('approveUser', { userId });
+  if (res.success) { showToast('Pengguna berhasil disetujui.','success'); loadData(); }
+  else showToast(res.error,'error');
+}
+
+function openRejectModal(userId) {
+  document.getElementById('rejectUserId').value = userId;
+  document.getElementById('rejectReason').value = '';
+  openModal('modalReject');
+}
+
+async function confirmReject() {
+  const userId = document.getElementById('rejectUserId').value;
+  const reason = document.getElementById('rejectReason').value;
+  const res = await callAPI('rejectUser', { userId, reason });
+  if (res.success) { showToast('Pengguna ditolak.','success'); closeModal('modalReject'); loadData(); }
+  else showToast(res.error,'error');
+}
+
+async function deleteUser(userId, nama) {
+  confirmAction(`Hapus pengguna "${nama}"? Tindakan ini tidak dapat dibatalkan.`, async () => {
+    const res = await callAPI('deleteUser', { userId });
+    if (res.success) { showToast('Pengguna dihapus.','success'); loadData(); }
+    else showToast(res.error,'error');
+  });
+}
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => initPage('userManagement'));
+</script>
+</body>
+</html>

@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0D47A1">
+<title>iLedgerV2 – Login</title>
+<link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="js/config.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Plus Jakarta Sans',sans-serif;min-height:100vh;background:linear-gradient(135deg,#0D47A1 0%,#1565C0 40%,#0288D1 100%);display:flex;align-items:center;justify-content:center;padding:20px;overflow:hidden}
+body::before{content:'';position:fixed;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4z'/%3E%3C/g%3E%3C/svg%3E");pointer-events:none}
+.bg-shape{position:fixed;border-radius:50%;pointer-events:none;opacity:.07}
+.bg-shape-1{width:500px;height:500px;background:white;top:-200px;right:-150px;animation:float1 8s ease-in-out infinite}
+.bg-shape-2{width:300px;height:300px;background:white;bottom:-100px;left:-100px;animation:float2 10s ease-in-out infinite}
+@keyframes float1{0%,100%{transform:translateY(0)}50%{transform:translateY(30px)}}
+@keyframes float2{0%,100%{transform:translateY(0)}50%{transform:translateY(-20px)}}
+.login-wrapper{position:relative;z-index:1;width:100%;max-width:440px;animation:slideUp .6s cubic-bezier(0.16,1,0.3,1)}
+@keyframes slideUp{from{opacity:0;transform:translateY(40px)}to{opacity:1;transform:translateY(0)}}
+.card{background:rgba(255,255,255,.97);border-radius:20px;box-shadow:0 20px 60px rgba(13,71,161,.2);overflow:hidden}
+.card-header{background:linear-gradient(135deg,#0D47A1,#1565C0);padding:36px 40px 32px;text-align:center;position:relative;overflow:hidden}
+.card-header::after{content:'';position:absolute;bottom:-30px;left:-10%;width:120%;height:60px;background:rgba(255,255,255,.97);border-radius:50%}
+.logo-icon{width:58px;height:58px;background:rgba(255,255,255,.15);border-radius:16px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;border:1px solid rgba(255,255,255,.25)}
+.logo-icon svg{width:30px;height:30px;fill:white}
+.card-header h1{color:white;font-size:24px;font-weight:800;letter-spacing:-.5px}
+.card-header p{color:rgba(255,255,255,.7);font-size:13px;margin-top:4px}
+.card-body{padding:34px 38px 38px}
+.form-group{margin-bottom:18px}
+.form-label{display:block;font-size:12px;font-weight:700;color:#475569;margin-bottom:7px;text-transform:uppercase;letter-spacing:.4px}
+.input-wrap{position:relative}
+.input-icon{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:#94a3b8;pointer-events:none}
+.input-icon svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2}
+.form-control{width:100%;padding:11px 40px 11px 42px;border:1.5px solid #e2e8f0;border-radius:10px;font-family:inherit;font-size:14px;color:#1e293b;background:#f8fafc;transition:all .2s;outline:none}
+.form-control:focus{border-color:#0D47A1;background:white;box-shadow:0 0 0 3px rgba(13,71,161,.1)}
+.form-control.error{border-color:#ef4444}
+.form-control::placeholder{color:#94a3b8}
+.pw-toggle{position:absolute;right:13px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#94a3b8;padding:4px;transition:color .2s}
+.pw-toggle:hover{color:#0D47A1}
+.pw-toggle svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2}
+.form-options{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px}
+.check-label{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:#475569}
+.check-label input{accent-color:#0D47A1;width:15px;height:15px;cursor:pointer}
+.forgot-link{font-size:13px;font-weight:600;color:#0D47A1;text-decoration:none;transition:color .2s}
+.forgot-link:hover{color:#0a3880}
+.btn-primary{width:100%;padding:13px;background:linear-gradient(135deg,#0D47A1,#1565C0);color:white;border:none;border-radius:10px;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;transition:all .2s;letter-spacing:.2px}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(13,71,161,.35)}
+.btn-primary:disabled{opacity:.6;cursor:not-allowed;transform:none}
+.divider{display:flex;align-items:center;gap:12px;margin:22px 0}
+.divider-line{flex:1;height:1px;background:#e2e8f0}
+.divider-text{font-size:12px;color:#94a3b8;font-weight:500}
+.btn-register{width:100%;padding:12px;background:transparent;color:#0D47A1;border:1.5px solid #1565C0;border-radius:10px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s}
+.btn-register:hover{background:rgba(13,71,161,.05)}
+.alert{padding:12px 14px;border-radius:10px;font-size:13px;font-weight:500;margin-bottom:18px;display:flex;align-items:flex-start;gap:9px;animation:fadeIn .2s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+.alert-error{background:#fef2f2;color:#b91c1c;border:1px solid #fee2e2}
+.alert-success{background:#f0fdf4;color:#166534;border:1px solid #bbf7d0}
+.alert-warning{background:#fffbeb;color:#92400e;border:1px solid #fde68a}
+.alert svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;flex-shrink:0;margin-top:1px}
+.footer-note{text-align:center;margin-top:22px;font-size:11px;color:#94a3b8}
+</style>
+</head>
+<body>
+<div class="bg-shape bg-shape-1"></div>
+<div class="bg-shape bg-shape-2"></div>
+
+<div class="login-wrapper">
+  <div class="card">
+    <div class="card-header">
+      <div class="logo-icon">
+        <svg viewBox="0 0 32 32"><path d="M4 4h10v10H4zm14 0h10v10H18zM4 18h10v10H4zm14 0h10v10H18z" opacity=".4"/><path d="M6 6h6v6H6zm14 0h6v6h-6zM6 20h6v6H6zm14 0h6v6h-6z"/></svg>
+      </div>
+      <h1>iLedgerV2</h1>
+      <p>Sistem Manajemen Keuangan Enterprise</p>
+    </div>
+
+    <div class="card-body">
+      <div id="alertArea"></div>
+
+      <div class="form-group">
+        <label class="form-label" for="email">Email</label>
+        <div class="input-wrap">
+          <span class="input-icon"><svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 7 10-7"/></svg></span>
+          <input type="email" id="email" class="form-control" placeholder="email@perusahaan.com" autocomplete="email">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="password">Password</label>
+        <div class="input-wrap">
+          <span class="input-icon"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
+          <input type="password" id="password" class="form-control" placeholder="Masukkan password" autocomplete="current-password">
+          <button class="pw-toggle" onclick="togglePwd('password', this)" type="button">
+            <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="form-options">
+        <label class="check-label">
+          <input type="checkbox" id="rememberMe"> Ingat saya 30 hari
+        </label>
+        <a href="forgotPassword.html" class="forgot-link">Lupa password?</a>
+      </div>
+
+      <button class="btn-primary" id="btnLogin" onclick="handleLogin()">
+        <span id="btnText">Masuk</span>
+      </button>
+
+      <div class="divider">
+        <div class="divider-line"></div>
+        <span class="divider-text">Belum punya akun PT?</span>
+        <div class="divider-line"></div>
+      </div>
+
+      <button class="btn-register" onclick="window.location.href='registerPT.html'">
+        Daftar Perusahaan Baru
+      </button>
+
+      <div class="footer-note">© 2024 iLedgerV2 · Enterprise Fleet Management · v2.0</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Redirect jika sudah login
+(function() {
+  if (getToken()) window.location.href = 'dashboard.html';
+})();
+
+// Enter key
+document.addEventListener('keydown', e => { if (e.key === 'Enter') handleLogin(); });
+
+function togglePwd(id, btn) {
+  const inp = document.getElementById(id);
+  const isText = inp.type === 'text';
+  inp.type = isText ? 'password' : 'text';
+  btn.querySelector('svg').innerHTML = isText
+    ? '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>'
+    : '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
+}
+
+async function handleLogin() {
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+  const rememberMe = document.getElementById('rememberMe').checked;
+
+  clearAlert();
+  if (!email) { showAlert('Email wajib diisi.', 'error'); return; }
+  if (!password) { showAlert('Password wajib diisi.', 'error'); return; }
+
+  setLoading(true);
+
+  const res = await callAPI('login', { email, password, rememberMe });
+
+  setLoading(false);
+
+  if (res.success) {
+    setSession(res.token, res.user);
+    showAlert('Login berhasil! Memuat dashboard...', 'success');
+    setTimeout(() => window.location.href = 'dashboard.html', 700);
+  } else {
+    const code = res.code;
+    if (code === 'PENDING_APPROVAL') {
+      showAlert('Akun Anda menunggu persetujuan HRD.', 'warning');
+    } else {
+      showAlert(res.error || 'Email atau password salah.', 'error');
+      document.getElementById('password').classList.add('error');
+      setTimeout(() => document.getElementById('password').classList.remove('error'), 1800);
+    }
+  }
+}
+
+function setLoading(on) {
+  const btn = document.getElementById('btnLogin');
+  const txt = document.getElementById('btnText');
+  btn.disabled = on;
+  txt.innerHTML = on
+    ? '<span style="display:inline-block;width:15px;height:15px;border:2px solid rgba(255,255,255,.4);border-top-color:white;border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;margin-right:6px"></span>Memverifikasi...'
+    : 'Masuk';
+}
+
+function showAlert(msg, type) {
+  const icons = {
+    error: '<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/>',
+    success: '<polyline points="20 6 9 17 4 12"/>',
+    warning: '<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>'
+  };
+  document.getElementById('alertArea').innerHTML = `
+    <div class="alert alert-${type}">
+      <svg viewBox="0 0 24 24">${icons[type]||icons.error}</svg>
+      <span>${msg}</span>
+    </div>`;
+}
+
+function clearAlert() { document.getElementById('alertArea').innerHTML = ''; }
+</script>
+</body>
+</html>

@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="light">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>iLedgerV2 – Pengeluaran</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<script src="js/config.js"></script>
+<script src="js/page-template.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<style>
+.toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:20px}
+.toolbar-left{display:flex;align-items:center;gap:10px;flex:1;flex-wrap:wrap}
+.summary-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.s-item{background:var(--bg-card);border-radius:var(--radius);border:1px solid var(--border-color);padding:14px 16px}
+.s-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--text-secondary)}
+.s-value{font-size:16px;font-weight:800;color:var(--text-primary);margin-top:4px;letter-spacing:-.3px}
+.nota-thumb{width:34px;height:34px;border-radius:6px;object-fit:cover;cursor:pointer;border:1.5px solid var(--border-color);transition:transform .2s}
+.nota-thumb:hover{transform:scale(1.1)}
+.no-nota{width:34px;height:34px;border-radius:6px;background:var(--gray-100);border:1.5px dashed var(--border-color);display:flex;align-items:center;justify-content:center}
+.pos-suggest{display:none;position:absolute;left:0;right:0;top:100%;z-index:50;background:var(--bg-card);border:1.5px solid var(--primary);border-radius:0 0 var(--radius) var(--radius);box-shadow:var(--shadow-md);padding:10px 14px;animation:fadeIn .15s ease}
+.pos-suggest.show{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:translateY(0)}}
+.pos-suggest-label{font-size:11px;color:var(--text-secondary);margin-bottom:4px}
+.pos-suggest-val{font-size:13px;font-weight:600;color:var(--primary);cursor:pointer}
+.pos-suggest-val:hover{text-decoration:underline}
+.upload-preview{position:relative;margin-top:10px;border-radius:var(--radius);overflow:hidden;border:1.5px solid var(--border-color)}
+.upload-preview img{width:100%;max-height:160px;object-fit:cover;display:block}
+.upload-preview-rm{position:absolute;top:6px;right:6px;width:26px;height:26px;border-radius:6px;background:rgba(0,0,0,.6);color:white;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.upload-preview-rm svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2}
+.lightbox{position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:2000;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .2s}
+.lightbox.show{opacity:1;pointer-events:all}
+.lightbox img{max-width:100%;max-height:90vh;border-radius:8px;object-fit:contain}
+.lightbox-close{position:absolute;top:20px;right:20px;width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.15);border:none;cursor:pointer;color:white;display:flex;align-items:center;justify-content:center}
+@media(max-width:768px){.summary-bar{grid-template-columns:repeat(2,1fr)}.toolbar{flex-direction:column;align-items:stretch}}
+@media(max-width:480px){.summary-bar{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div id="navbarMount"></div>
+
+<header class="main-header" id="mainHeader">
+  <button class="header-toggle" onclick="toggleSidebar()">
+    <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+  </button>
+  <div class="header-breadcrumb">
+    <span>iLedgerV2</span><span class="breadcrumb-sep">/</span>
+    <span class="breadcrumb-current">Pengeluaran</span>
+  </div>
+  <div class="header-actions">
+    <button class="header-btn" onclick="toggleTheme()"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/></svg></button>
+  </div>
+</header>
+
+<main class="main-content" id="mainContent">
+  <div class="page-header">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px">
+      <div><h1 class="page-title">Pengeluaran</h1><p class="page-subtitle">Kelola semua transaksi pengeluaran perusahaan</p></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-outline btn-sm" onclick="exportPDF()">
+          <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> PDF
+        </button>
+        <button class="btn btn-primary" onclick="openModal('modalAdd')">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Tambah Pengeluaran
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="summary-bar">
+    <div class="s-item"><div class="s-label">Total Pengeluaran</div><div class="s-value" id="sumTotal">Rp 0</div></div>
+    <div class="s-item"><div class="s-label">Jumlah Transaksi</div><div class="s-value" id="sumCount">0</div></div>
+    <div class="s-item"><div class="s-label">Rata-rata</div><div class="s-value" id="sumAvg">Rp 0</div></div>
+    <div class="s-item"><div class="s-label">Terbesar</div><div class="s-value" id="sumMax">Rp 0</div></div>
+  </div>
+
+  <div class="toolbar">
+    <div class="toolbar-left">
+      <div class="search-bar" style="min-width:240px">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input class="search-input" id="searchInput" placeholder="Cari nama, uraian, pos..." oninput="debounceSearch()">
+      </div>
+      <select class="filter-select" id="filterPos" onchange="loadData()"><option value="">Semua Pos</option></select>
+      <input type="month" class="filter-select" id="filterMonth" onchange="loadData()" style="min-width:155px">
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <span style="font-size:12px;color:var(--text-secondary)" id="resultInfo">-</span>
+      <select class="filter-select" id="limitSelect" onchange="loadData()" style="min-width:95px">
+        <option value="10">10/hal</option><option value="20" selected>20/hal</option><option value="50">50/hal</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="table-wrapper">
+      <table class="data-table">
+        <thead><tr><th>No</th><th>Tanggal</th><th>Nama</th><th>Uraian</th><th>Pos</th><th>Nominal</th><th>Metode</th><th>Nota</th><th>Aksi</th></tr></thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+    <div style="padding:12px 16px;border-top:1px solid var(--border-color);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+      <span style="font-size:12px;color:var(--text-secondary)" id="pageInfo">-</span>
+      <div id="paginationContainer" style="display:flex;gap:6px"></div>
+    </div>
+  </div>
+</main>
+
+<!-- MODAL ADD/EDIT -->
+<div class="modal-overlay" id="modalAdd">
+  <div class="modal" style="max-width:600px">
+    <div class="modal-header">
+      <h3 class="modal-title" id="modalTitle">Tambah Pengeluaran</h3>
+      <button class="modal-close" onclick="closeModal('modalAdd');resetForm()">
+        <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="editId">
+      <div class="form-row-m">
+        <div class="form-group-m">
+          <label class="form-label-m">Tanggal & Waktu *</label>
+          <input type="datetime-local" id="fTimestamp" class="form-control-m">
+        </div>
+        <div class="form-group-m">
+          <label class="form-label-m">Metode Pembayaran</label>
+          <select id="fMetode" class="form-control-m">
+            <option>Tunai</option><option>Transfer Bank</option><option>Kartu Debit</option><option>E-Wallet</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group-m">
+        <label class="form-label-m">Nama Penerima *</label>
+        <input type="text" id="fNama" class="form-control-m" placeholder="Nama supplier/penerima">
+      </div>
+      <div class="form-group-m" style="position:relative">
+        <label class="form-label-m">Uraian *</label>
+        <input type="text" id="fUraian" class="form-control-m" placeholder="Contoh: Isi solar 50L untuk B 1234 CD" oninput="handleUraian(this.value)">
+        <div class="pos-suggest" id="posSuggest">
+          <div class="pos-suggest-label">🤖 Smart Pos Terdeteksi:</div>
+          <div class="pos-suggest-val" id="posSuggestVal" onclick="acceptPos()"></div>
+        </div>
+      </div>
+      <div class="form-row-m">
+        <div class="form-group-m">
+          <label class="form-label-m">Pos *</label>
+          <select id="fPos" class="form-control-m" onchange="onPosChange()">
+            <option value="">-- Pilih Pos --</option>
+          </select>
+          <input type="hidden" id="fPosId">
+        </div>
+        <div class="form-group-m">
+          <label class="form-label-m">Nominal (Rp) *</label>
+          <input type="number" id="fNominal" class="form-control-m" placeholder="0" min="0" oninput="showNominalPreview()">
+        </div>
+      </div>
+      <!-- BBM Extra -->
+      <div id="bbmExtra" style="display:none;background:rgba(13,71,161,.05);border:1px solid rgba(13,71,161,.15);border-radius:var(--radius);padding:14px;margin-bottom:14px">
+        <div style="font-size:12px;font-weight:700;color:var(--primary);margin-bottom:10px">⛽ Detail BBM</div>
+        <div class="form-row-m">
+          <div class="form-group-m">
+            <label class="form-label-m">Armada</label>
+            <select id="fArmada" class="form-control-m"><option value="">-- Pilih --</option></select>
+          </div>
+          <div class="form-group-m">
+            <label class="form-label-m">Jenis BBM</label>
+            <select id="fJenisBBM" class="form-control-m">
+              <option>Solar</option><option>Pertalite</option><option>Dexlite</option><option>Pertamax</option><option>Pertamina Dex</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row-m">
+          <div class="form-group-m"><label class="form-label-m">Liter</label><input type="number" id="fLiter" class="form-control-m" placeholder="0.0" step="0.01" oninput="calcBBM()"></div>
+          <div class="form-group-m"><label class="form-label-m">Harga/Liter</label><input type="number" id="fHargaL" class="form-control-m" placeholder="0" oninput="calcBBM()"></div>
+        </div>
+      </div>
+      <!-- Perawatan Extra -->
+      <div id="perawatanExtra" style="display:none;background:rgba(245,158,11,.05);border:1px solid rgba(245,158,11,.2);border-radius:var(--radius);padding:14px;margin-bottom:14px">
+        <div style="font-size:12px;font-weight:700;color:#D97706;margin-bottom:10px">🔧 Detail Perawatan</div>
+        <div class="form-row-m">
+          <div class="form-group-m"><label class="form-label-m">Armada</label><select id="fArmadaPrw" class="form-control-m"><option value="">-- Pilih --</option></select></div>
+          <div class="form-group-m">
+            <label class="form-label-m">Jenis Perawatan</label>
+            <select id="fJenisPrw" class="form-control-m"><option>Service</option><option>Ganti Oli</option><option>Ganti Ban</option><option>Kampas Rem</option><option>Kopling</option><option>Tune Up</option></select>
+          </div>
+        </div>
+      </div>
+      <div id="nominalPreview" style="display:none;background:var(--gray-50);border-radius:var(--radius);padding:11px;text-align:center;font-size:18px;font-weight:800;color:var(--primary);margin-bottom:12px"></div>
+      <!-- Upload -->
+      <div class="form-row-m">
+        <div class="form-group-m">
+          <label class="form-label-m">Foto Nota</label>
+          <div class="upload-zone" ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleDrop(event,'nota')">
+            <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            <p><strong>Klik atau drag</strong> foto nota</p>
+            <input type="file" accept="image/*" onchange="handleFile(event,'nota')">
+          </div>
+          <div id="previewNota" style="display:none" class="upload-preview">
+            <img id="previewNotaImg" src="" alt="Nota">
+            <button class="upload-preview-rm" onclick="removeFile('nota')"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+          </div>
+        </div>
+        <div class="form-group-m">
+          <label class="form-label-m">Bukti Transfer</label>
+          <div class="upload-zone" ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleDrop(event,'bukti')">
+            <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            <p><strong>Klik atau drag</strong> bukti</p>
+            <input type="file" accept="image/*" onchange="handleFile(event,'bukti')">
+          </div>
+          <div id="previewBukti" style="display:none" class="upload-preview">
+            <img id="previewBuktiImg" src="" alt="Bukti">
+            <button class="upload-preview-rm" onclick="removeFile('bukti')"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modalAdd');resetForm()">Batal</button>
+      <button class="btn btn-primary" id="btnSave" onclick="saveData()">
+        <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" fill="none" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Simpan
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Lightbox -->
+<div class="lightbox" id="lightbox" onclick="this.classList.remove('show')">
+  <button class="lightbox-close"><svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+  <img id="lightboxImg" src="" alt="">
+</div>
+
+<script>
+let pg = 1, totalPg = 1, allPos = [], allArmada = [];
+let notaB64 = null, notaMime = null, buktiB64 = null, buktiMime = null;
+let detectedPos = null, posDebounce = null, searchTimeout = null;
+
+document.addEventListener('DOMContentLoaded', async () => {
+  initPage('pengeluaran');
+  setDefaultDT();
+  await Promise.all([loadPos(), loadArmada()]);
+  loadData();
+});
+
+function setDefaultDT() {
+  const now = new Date(), pad = n => String(n).padStart(2,'0');
+  document.getElementById('fTimestamp').value = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  document.getElementById('filterMonth').value = `${now.getFullYear()}-${pad(now.getMonth()+1)}`;
+}
+
+async function loadPos() {
+  const r = await callAPI('getPos', { status:'ACTIVE' });
+  if (!r.success) return;
+  allPos = r.data;
+  const filterSel = document.getElementById('filterPos');
+  const fPos = document.getElementById('fPos');
+  allPos.forEach(p => {
+    filterSel.innerHTML += `<option value="${p.id}">${p.namaPos}</option>`;
+    fPos.innerHTML += `<option value="${p.id}" data-name="${p.namaPos}">${p.namaPos}</option>`;
+  });
+}
+
+async function loadArmada() {
+  const r = await callAPI('getArmada', { status:'ACTIVE' });
+  if (!r.success) return;
+  allArmada = r.data;
+  ['fArmada','fArmadaPrw'].forEach(id => {
+    const sel = document.getElementById(id);
+    allArmada.forEach(a => { sel.innerHTML += `<option value="${a.id}" data-nopol="${a.noPolisi}">${a.noPolisi} – ${a.merk}</option>`; });
+  });
+}
+
+async function loadData() {
+  showSkeleton('tableBody', 5, 9);
+  const r = await callAPI('getPengeluaran', {
+    page: pg, limit: document.getElementById('limitSelect').value,
+    search: document.getElementById('searchInput').value,
+    filterPos: document.getElementById('filterPos').value,
+    filterMonth: document.getElementById('filterMonth').value
+  });
+  if (!r.success) { showToast('Gagal memuat data.','error'); return; }
+  totalPg = r.totalPages || 1;
+  document.getElementById('resultInfo').textContent = r.total + ' data';
+  document.getElementById('pageInfo').textContent = `Hal ${r.page} dari ${totalPg}`;
+  renderTable(r.data, r.page, parseInt(document.getElementById('limitSelect').value));
+  renderPagination('paginationContainer', pg, totalPg, 'changePage');
+  updateSummary(r.data);
+}
+
+function updateSummary(data) {
+  const total = data.reduce((s,r) => s+r.nominal, 0);
+  const max = data.length ? Math.max(...data.map(r => r.nominal)) : 0;
+  document.getElementById('sumTotal').textContent = formatRupiah(total);
+  document.getElementById('sumCount').textContent = data.length + ' transaksi';
+  document.getElementById('sumAvg').textContent = formatRupiah(data.length ? Math.round(total/data.length) : 0);
+  document.getElementById('sumMax').textContent = formatRupiah(max);
+}
+
+function renderTable(data, page, limit) {
+  const tbody = document.getElementById('tableBody');
+  if (!data || !data.length) {
+    tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state">
+      <svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+      <h3>Belum ada pengeluaran</h3><p>Klik "Tambah Pengeluaran" untuk mencatat</p>
+    </div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = data.map((r,i) => {
+    const no = (page-1)*limit+i+1;
+    const nota = r.fotoNotaURL
+      ? `<img class="nota-thumb" src="${r.fotoNotaURL}" onclick="openLB('${r.fotoNotaURL}')">`
+      : `<div class="no-nota"><svg viewBox="0 0 24 24" width="14" height="14" stroke="var(--gray-400)" fill="none" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/></svg></div>`;
+    return `<tr>
+      <td style="font-weight:600;color:var(--text-secondary)">${no}</td>
+      <td style="font-size:12px;white-space:nowrap">${r.timestamp}</td>
+      <td style="font-weight:500;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.nama}</td>
+      <td style="max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px" title="${r.uraian}">${r.uraian}</td>
+      <td><span class="badge badge-info">${r.namaPos||'-'}</span></td>
+      <td style="font-weight:700;white-space:nowrap">${formatRupiah(r.nominal)}</td>
+      <td><span class="badge ${r.metodePembayaran==='Tunai'?'badge-success':'badge-gray'}">${r.metodePembayaran}</span></td>
+      <td>${nota}</td>
+      <td><div style="display:flex;gap:5px">
+        <button class="btn btn-outline btn-sm btn-icon" onclick='editRow(${JSON.stringify(r).replace(/'/g,"&#39;")})'>
+          <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </button>
+        <button class="btn btn-danger btn-sm btn-icon" onclick="delRow('${r.id}','${r.uraian}')">
+          <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+        </button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+function changePage(p) { pg = p; loadData(); window.scrollTo({top:0,behavior:'smooth'}); }
+function debounceSearch() { clearTimeout(searchTimeout); searchTimeout = setTimeout(() => { pg=1; loadData(); }, 400); }
+
+// Smart Pos
+function handleUraian(val) {
+  clearTimeout(posDebounce);
+  posDebounce = setTimeout(async () => {
+    if (!val || val.length < 3) { hideSuggest(); return; }
+    const r = await callAPI('detectPos', { uraian: val });
+    if (r.success && r.data) {
+      detectedPos = r.data;
+      document.getElementById('posSuggestVal').textContent = '📌 ' + r.data.namaPos + ' — klik untuk pilih';
+      document.getElementById('posSuggest').classList.add('show');
+    } else hideSuggest();
+  }, 400);
+}
+function hideSuggest() { document.getElementById('posSuggest').classList.remove('show'); }
+function acceptPos() {
+  if (!detectedPos) return;
+  const fPos = document.getElementById('fPos');
+  for (let i = 0; i < fPos.options.length; i++) {
+    if (fPos.options[i].value === detectedPos.idPos) { fPos.selectedIndex = i; break; }
+  }
+  document.getElementById('fPosId').value = detectedPos.idPos;
+  hideSuggest(); onPosChange();
+  showToast('Pos "' + detectedPos.namaPos + '" dipilih otomatis.','info');
+}
+function onPosChange() {
+  const sel = document.getElementById('fPos');
+  const name = (sel.options[sel.selectedIndex]?.dataset.name || '').toLowerCase();
+  document.getElementById('fPosId').value = sel.value;
+  document.getElementById('bbmExtra').style.display = name.includes('bbm') || name.includes('bahan bakar') ? 'block' : 'none';
+  document.getElementById('perawatanExtra').style.display = name.includes('perawatan') ? 'block' : 'none';
+}
+function calcBBM() {
+  const l = parseFloat(document.getElementById('fLiter').value)||0;
+  const h = parseFloat(document.getElementById('fHargaL').value)||0;
+  if (l*h > 0) { document.getElementById('fNominal').value = l*h; showNominalPreview(); }
+}
+function showNominalPreview() {
+  const v = parseFloat(document.getElementById('fNominal').value)||0;
+  const el = document.getElementById('nominalPreview');
+  el.style.display = v > 0 ? 'block' : 'none';
+  el.textContent = formatRupiah(v);
+}
+
+// File upload
+function handleFile(e, type) {
+  const file = e.target.files[0]; if (!file) return;
+  if (file.size > 5*1024*1024) { showToast('File terlalu besar (max 5MB).','error'); return; }
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const b64 = ev.target.result.split(',')[1], mime = file.type;
+    if (type === 'nota') { notaB64=b64; notaMime=mime; document.getElementById('previewNotaImg').src=ev.target.result; document.getElementById('previewNota').style.display='block'; }
+    else { buktiB64=b64; buktiMime=mime; document.getElementById('previewBuktiImg').src=ev.target.result; document.getElementById('previewBukti').style.display='block'; }
+  };
+  reader.readAsDataURL(file);
+}
+function handleDrop(e, type) {
+  e.preventDefault(); e.currentTarget.classList.remove('dragover');
+  const file = e.dataTransfer.files[0]; if (file) handleFile({target:{files:[file]}}, type);
+}
+function removeFile(type) {
+  if (type==='nota') { notaB64=null; document.getElementById('previewNota').style.display='none'; }
+  else { buktiB64=null; document.getElementById('previewBukti').style.display='none'; }
+}
+
+// Save
+async function saveData() {
+  const id = document.getElementById('editId').value;
+  const ts = document.getElementById('fTimestamp').value;
+  const nama = document.getElementById('fNama').value.trim();
+  const uraian = document.getElementById('fUraian').value.trim();
+  const fPosSel = document.getElementById('fPos');
+  const idPos = fPosSel.value;
+  const namaPos = fPosSel.options[fPosSel.selectedIndex]?.dataset.name || fPosSel.options[fPosSel.selectedIndex]?.text || '';
+  const nominal = document.getElementById('fNominal').value;
+  if (!ts||!nama||!uraian||!idPos||!nominal||Number(nominal)<=0) { showToast('Semua field wajib diisi.','error'); return; }
+  const btn = document.getElementById('btnSave');
+  btn.disabled=true; btn.innerHTML='<span class="spinner"></span> Menyimpan...';
+  const armSel = document.getElementById('fArmada');
+  const nopol = armSel.options[armSel.selectedIndex]?.dataset.nopol || '';
+  const r = await callAPI(id?'updatePengeluaran':'addPengeluaran', {
+    id, timestamp:ts, nama, uraian, idPos, namaPos, nominal:Number(nominal),
+    metodePembayaran:document.getElementById('fMetode').value, noPolisi:nopol,
+    idArmada:armSel.value, jenisBBM:document.getElementById('fJenisBBM').value,
+    liter:document.getElementById('fLiter').value, hargaPerLiter:document.getElementById('fHargaL').value,
+    fotoNotaBase64:notaB64, fotoNotaMimeType:notaMime, buktiBase64:buktiB64, buktiMimeType:buktiMime
+  });
+  btn.disabled=false;
+  btn.innerHTML='<svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" fill="none" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Simpan';
+  if (r.success) { showToast(r.message,'success'); closeModal('modalAdd'); resetForm(); pg=1; loadData(); }
+  else showToast(r.error,'error');
+}
+
+function editRow(row) {
+  document.getElementById('editId').value = row.id;
+  document.getElementById('modalTitle').textContent = 'Edit Pengeluaran';
+  document.getElementById('fTimestamp').value = row.timestamp ? row.timestamp.replace(' ','T').substring(0,16) : '';
+  document.getElementById('fNama').value = row.nama;
+  document.getElementById('fUraian').value = row.uraian;
+  document.getElementById('fNominal').value = row.nominal;
+  document.getElementById('fMetode').value = row.metodePembayaran || 'Tunai';
+  const fPos = document.getElementById('fPos');
+  for (let i=0; i<fPos.options.length; i++) { if (fPos.options[i].value===row.idPos) { fPos.selectedIndex=i; break; } }
+  showNominalPreview();
+  openModal('modalAdd');
+}
+
+async function delRow(id, uraian) {
+  confirmAction(`Hapus pengeluaran "${uraian}"?`, async () => {
+    const r = await callAPI('deletePengeluaran', { id });
+    if (r.success) { showToast('Dihapus.','success'); loadData(); } else showToast(r.error,'error');
+  });
+}
+
+function resetForm() {
+  document.getElementById('editId').value = '';
+  document.getElementById('modalTitle').textContent = 'Tambah Pengeluaran';
+  ['fNama','fUraian','fNominal','fLiter','fHargaL'].forEach(i => document.getElementById(i).value='');
+  document.getElementById('fPos').selectedIndex=0;
+  document.getElementById('fMetode').value='Tunai';
+  document.getElementById('bbmExtra').style.display='none';
+  document.getElementById('perawatanExtra').style.display='none';
+  document.getElementById('nominalPreview').style.display='none';
+  removeFile('nota'); removeFile('bukti'); setDefaultDT();
+}
+
+function openLB(url) { document.getElementById('lightboxImg').src=url; document.getElementById('lightbox').classList.add('show'); }
+
+function exportPDF() {
+  const {jsPDF} = window.jspdf;
+  const doc = new jsPDF({orientation:'landscape'});
+  doc.setFont('helvetica','bold'); doc.setFontSize(16);
+  doc.text('Laporan Pengeluaran', 14, 18);
+  doc.setFont('helvetica','normal'); doc.setFontSize(10);
+  doc.text('Dicetak: '+new Date().toLocaleString('id-ID'), 14, 26);
+  const rows=[];
+  document.querySelectorAll('#tableBody tr').forEach(tr => {
+    const tds = tr.querySelectorAll('td');
+    if (tds.length>=7) rows.push([tds[0].textContent,tds[1].textContent,tds[2].textContent,tds[3].textContent,tds[4].textContent,tds[5].textContent,tds[6].textContent]);
+  });
+  doc.autoTable({head:[['No','Tanggal','Nama','Uraian','Pos','Nominal','Metode']],body:rows,startY:32,styles:{fontSize:9},headStyles:{fillColor:[13,71,161],textColor:255,fontStyle:'bold'},alternateRowStyles:{fillColor:[245,249,255]}});
+  doc.save('Pengeluaran_'+new Date().toLocaleDateString('id-ID').replace(/\//g,'-')+'.pdf');
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="light">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>iLedgerV2 – Data Armada</title>
+<link rel="stylesheet" href="css/style.css">
+<script src="js/config.js"></script>
+<script src="js/page-template.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script> window.CURRENT_PAGE='armada';</script>
+<div id="navbarMount"></div>
+<style>
+.armada-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.armada-card{background:var(--bg-card);border-radius:var(--radius-lg);border:1px solid var(--border-color);overflow:hidden;transition:transform .2s,box-shadow .2s}
+.armada-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-md)}
+.armada-photo{height:160px;background:linear-gradient(135deg,var(--primary) 0%,var(--primary-light) 100%);position:relative;overflow:hidden}
+.armada-photo img{width:100%;height:100%;object-fit:cover}
+.armada-photo-placeholder{display:flex;align-items:center;justify-content:center;height:100%;color:rgba(255,255,255,.4)}
+.armada-photo-placeholder svg{width:64px;height:64px;stroke:currentColor;fill:none;stroke-width:1}
+.armada-nopol{position:absolute;bottom:10px;left:10px;background:rgba(0,0,0,.7);color:white;padding:4px 12px;border-radius:20px;font-size:14px;font-weight:700;letter-spacing:.5px;backdrop-filter:blur(4px)}
+.armada-status-dot{position:absolute;top:10px;right:10px;width:10px;height:10px;border-radius:50%;border:2px solid white}
+.armada-status-dot.active{background:var(--success)}
+.armada-status-dot.inactive{background:var(--error)}
+.armada-body{padding:16px}
+.armada-name{font-size:15px;font-weight:700;color:var(--text-primary);margin-bottom:2px}
+.armada-type{font-size:12px;color:var(--text-secondary);margin-bottom:12px}
+.armada-detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.armada-detail-item .d-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--text-secondary)}
+.armada-detail-item .d-value{font-size:12px;font-weight:600;color:var(--text-primary);margin-top:1px}
+.armada-footer{padding:12px 16px;border-top:1px solid var(--border-color);display:flex;gap:8px}
+.stnk-status{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;display:inline-flex;align-items:center;gap:4px}
+.stnk-aman{background:#dcfce7;color:#166534}
+.stnk-warning{background:#fef3c7;color:#92400e}
+.stnk-danger{background:#fee2e2;color:#991b1b}
+.search-toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:20px}
+.filter-select{padding:9px 14px;border:1.5px solid var(--border-color);border-radius:var(--radius);font-family:var(--font);font-size:13px;color:var(--text-primary);background:var(--bg-card);cursor:pointer;outline:none;min-width:130px}
+.upload-zone{border:2px dashed var(--border-color);border-radius:var(--radius);padding:18px;text-align:center;cursor:pointer;background:var(--gray-50);position:relative;transition:all .2s}
+.upload-zone:hover{border-color:var(--primary)}
+.upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.upload-zone svg{width:26px;height:26px;stroke:var(--gray-400);fill:none;stroke-width:1.5;margin-bottom:4px}
+.upload-zone p{font-size:12px;color:var(--text-secondary)}
+.upload-preview{position:relative;margin-top:8px;border-radius:var(--radius);overflow:hidden;border:1.5px solid var(--border-color)}
+.upload-preview img{width:100%;height:140px;object-fit:cover;display:block}
+.upload-preview-remove{position:absolute;top:6px;right:6px;width:26px;height:26px;border-radius:6px;background:rgba(0,0,0,.6);color:white;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.upload-preview-remove svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2}
+.view-toggle{display:flex;gap:4px;background:var(--gray-100);padding:3px;border-radius:8px}
+.view-btn{width:32px;height:32px;border:none;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text-secondary);background:transparent;transition:all .2s}
+.view-btn.active{background:var(--bg-card);color:var(--primary);box-shadow:0 1px 4px rgba(0,0,0,.1)}
+.view-btn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2}
+</style>
+</head>
+<body>
+
+<header class="main-header">
+  <button class="header-toggle" onclick="toggleSidebar()">
+    <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+  </button>
+  <div class="header-breadcrumb">
+    <span>iLedgerV2</span><span class="breadcrumb-sep">/</span>
+    <span class="breadcrumb-current">Data Armada</span>
+  </div>
+  <div class="header-actions">
+    <button class="header-btn" onclick="toggleTheme()">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/></svg>
+    </button>
+  </div>
+</header>
+
+<main class="main-content" id="mainContent">
+  <div class="page-header">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+      <div>
+        <h1 class="page-title">Data Armada</h1>
+        <p class="page-subtitle">Kelola semua kendaraan operasional perusahaan</p>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-outline btn-sm" onclick="exportPDF()">
+          <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> PDF
+        </button>
+        <button class="btn btn-primary" onclick="openModal('modalAdd')">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Tambah Armada
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats Row -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:20px" id="statsRow">
+    <div class="kpi-card"><div class="kpi-icon" style="background:#DBEAFE;color:#1D4ED8"><svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" fill="none" stroke-width="1.8"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div><div><div class="kpi-label">Total Armada</div><div class="kpi-value sm" id="statTotal">-</div></div></div>
+    <div class="kpi-card"><div class="kpi-icon" style="background:#DCFCE7;color:#16A34A"><svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" fill="none" stroke-width="1.8"><polyline points="20 6 9 17 4 12"/></svg></div><div><div class="kpi-label">Aktif</div><div class="kpi-value sm" id="statActive">-</div></div></div>
+    <div class="kpi-card"><div class="kpi-icon" style="background:#FEF3C7;color:#D97706"><svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" fill="none" stroke-width="1.8"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg></div><div><div class="kpi-label">STNK Segera</div><div class="kpi-value sm" id="statSTNK">-</div></div></div>
+    <div class="kpi-card"><div class="kpi-icon" style="background:#FEE2E2;color:#DC2626"><svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" fill="none" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div><div><div class="kpi-label">Terlambat</div><div class="kpi-value sm" id="statLate">-</div></div></div>
+  </div>
+
+  <div class="search-toolbar">
+    <div class="search-bar" style="flex:1;min-width:200px">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input class="search-input" placeholder="Cari nomor polisi, merk..." id="searchInput" oninput="debounceSearch()">
+    </div>
+    <select class="filter-select" id="filterStatus" onchange="loadData()">
+      <option value="">Semua Status</option>
+      <option value="ACTIVE">Aktif</option>
+      <option value="INACTIVE">Tidak Aktif</option>
+    </select>
+    <div class="view-toggle">
+      <button class="view-btn active" id="btnGrid" onclick="setView('grid')">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      </button>
+      <button class="view-btn" id="btnList" onclick="setView('list')">
+        <svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+      </button>
+    </div>
+    <span style="font-size:12px;color:var(--text-secondary)" id="resultInfo">-</span>
+  </div>
+
+  <div id="armadaGrid" class="armada-grid"></div>
+  <div id="armadaList" style="display:none" class="card">
+    <div class="table-wrapper">
+      <table class="data-table">
+        <thead><tr><th>No</th><th>No Polisi</th><th>Jenis</th><th>Merk</th><th>Tahun</th><th>Pemilik</th><th>STNK</th><th>KIR</th><th>Status</th><th>Aksi</th></tr></thead>
+        <tbody id="armadaTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalAdd">
+  <div class="modal" style="max-width:680px">
+    <div class="modal-header">
+      <h3 class="modal-title" id="modalTitle">Tambah Armada</h3>
+      <button class="modal-close" onclick="closeModal('modalAdd');resetForm()">
+        <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="editId">
+      <div class="form-row-m">
+        <div class="form-group-m">
+          <label class="form-label-m">No. Polisi <span style="color:var(--error)">*</span></label>
+          <input type="text" id="fNopol" class="form-control-m" placeholder="B 1234 CD" style="text-transform:uppercase">
+        </div>
+        <div class="form-group-m">
+          <label class="form-label-m">Jenis Kendaraan</label>
+          <select id="fJenis" class="form-control-m">
+            <option>Truk</option><option>Pickup</option><option>Box</option>
+            <option>Minibus</option><option>Motor</option><option>Mobil</option><option>Lainnya</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row-m">
+        <div class="form-group-m">
+          <label class="form-label-m">Merk / Model</label>
+          <input type="text" id="fMerk" class="form-control-m" placeholder="Mitsubishi Colt Diesel">
+        </div>
+        <div class="form-group-m">
+          <label class="form-label-m">Tahun</label>
+          <input type="number" id="fTahun" class="form-control-m" placeholder="2022" min="1990" max="2030">
+        </div>
+      </div>
+      <div class="form-row-m">
+        <div class="form-group-m">
+          <label class="form-label-m">Pemilik / Pengemudi</label>
+          <input type="text" id="fPemilik" class="form-control-m" placeholder="Nama pemilik kendaraan">
+        </div>
+        <div class="form-group-m">
+          <label class="form-label-m">No. STNK</label>
+          <input type="text" id="fNoSTNK" class="form-control-m" placeholder="1234567890">
+        </div>
+      </div>
+      <div class="form-row-m">
+        <div class="form-group-m">
+          <label class="form-label-m">Tanggal STNK</label>
+          <input type="date" id="fTglSTNK" class="form-control-m">
+        </div>
+        <div class="form-group-m">
+          <label class="form-label-m">Tanggal KIR</label>
+          <input type="date" id="fTglKIR" class="form-control-m">
+        </div>
+      </div>
+      <div class="form-group-m">
+        <label class="form-label-m">Barcode Subsidi Tepat</label>
+        <input type="text" id="fBarcode" class="form-control-m" placeholder="Kode barcode subsidi">
+      </div>
+      <div class="form-group-m">
+        <label class="form-label-m">Foto Kendaraan</label>
+        <div class="upload-zone" id="uploadFoto">
+          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          <p><strong>Klik</strong> untuk upload foto kendaraan</p>
+          <input type="file" accept="image/*" onchange="handleFotoSelect(event)">
+        </div>
+        <div id="previewFoto" style="display:none" class="upload-preview">
+          <img id="previewFotoImg" src="" alt="Foto Kendaraan">
+          <button class="upload-preview-remove" onclick="removeFoto()">
+            <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+      </div>
+      <div id="editStatusGroup" style="display:none">
+        <div class="form-group-m">
+          <label class="form-label-m">Status</label>
+          <select id="fStatus" class="form-control-m">
+            <option value="ACTIVE">Aktif</option>
+            <option value="INACTIVE">Tidak Aktif</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modalAdd');resetForm()">Batal</button>
+      <button class="btn btn-primary" id="btnSave" onclick="saveData()">
+        <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" fill="none" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+        Simpan
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+let allData = [], currentView = 'grid';
+let selectedFotoBase64 = null, selectedFotoMime = null;
+let searchTimeout = null;
+
+document.addEventListener('DOMContentLoaded', loadData);
+
+async function loadData() {
+  const res = await callAPI('getArmada', {
+    search: document.getElementById('searchInput').value,
+    status: document.getElementById('filterStatus').value
+  });
+  if (!res.success) { showToast('Gagal memuat data.','error'); return; }
+  allData = res.data;
+  document.getElementById('resultInfo').textContent = allData.length + ' armada';
+  updateStats(allData);
+  if (currentView === 'grid') renderGrid(allData);
+  else renderList(allData);
+}
+
+function updateStats(data) {
+  const active = data.filter(d => d.status === 'ACTIVE').length;
+  const now = new Date();
+  let stnkWarn = 0, late = 0;
+  data.forEach(d => {
+    if (d.tanggalSTNK) {
+      const tgl = new Date(d.tanggalSTNK.split('/').reverse().join('-'));
+      const diff = Math.floor((tgl - now) / 86400000);
+      if (diff < 0) late++;
+      else if (diff <= 30) stnkWarn++;
+    }
+  });
+  document.getElementById('statTotal').textContent = data.length + ' unit';
+  document.getElementById('statActive').textContent = active + ' unit';
+  document.getElementById('statSTNK').textContent = stnkWarn + ' unit';
+  document.getElementById('statLate').textContent = late + ' unit';
+}
+
+function renderGrid(data) {
+  const container = document.getElementById('armadaGrid');
+  if (!data.length) {
+    container.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--text-secondary)"><svg viewBox="0 0 24 24" width="64" height="64" stroke="var(--gray-200)" fill="none" stroke-width="1"><rect x="1" y="3" width="15" height="13" rx="1"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg><h3 style="font-size:16px;font-weight:700;color:var(--text-primary);margin:12px 0 6px">Belum ada armada</h3><p style="font-size:13px">Klik "Tambah Armada" untuk mendaftarkan kendaraan</p></div>';
+    return;
+  }
+  container.innerHTML = data.map(a => {
+    const stStatus = getStnkStatus(a.tanggalSTNK);
+    const photoHtml = a.fotoURL
+      ? `<img src="${a.fotoURL}" alt="${a.noPolisi}" onerror="this.parentElement.innerHTML='<div class=armada-photo-placeholder><svg viewBox=\'0 0 24 24\'><rect x=\'1\' y=\'3\' width=\'15\' height=\'13\' rx=\'1\'/></svg></div>'">`
+      : `<div class="armada-photo-placeholder"><svg viewBox="0 0 24 24" width="64" height="64" stroke="currentColor" fill="none" stroke-width="0.8"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div>`;
+    return `
+    <div class="armada-card">
+      <div class="armada-photo">
+        ${photoHtml}
+        <div class="armada-nopol">${a.noPolisi}</div>
+        <div class="armada-status-dot ${a.status === 'ACTIVE' ? 'active' : 'inactive'}"></div>
+      </div>
+      <div class="armada-body">
+        <div class="armada-name">${a.merk || '-'}</div>
+        <div class="armada-type">${a.jenisKendaraan} · ${a.tahun || '-'}</div>
+        <div class="armada-detail-grid">
+          <div class="armada-detail-item"><div class="d-label">Pemilik</div><div class="d-value">${a.pemilik || '-'}</div></div>
+          <div class="armada-detail-item"><div class="d-label">No. STNK</div><div class="d-value">${a.noSTNK || '-'}</div></div>
+          <div class="armada-detail-item"><div class="d-label">Tgl STNK</div><div class="d-value">${a.tanggalSTNK || '-'}</div></div>
+          <div class="armada-detail-item"><div class="d-label">Tgl KIR</div><div class="d-value">${a.tanggalKIR || '-'}</div></div>
+        </div>
+        ${a.tanggalSTNK ? `<div style="margin-top:10px"><span class="stnk-status ${stStatus.cls}">${stStatus.text}</span></div>` : ''}
+      </div>
+      <div class="armada-footer">
+        <button class="btn btn-outline btn-sm" style="flex:1" onclick='editRow(${JSON.stringify(a).replace(/'/g,"&#39;")})'>
+          <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          Edit
+        </button>
+        <button class="btn btn-danger btn-sm" onclick="deleteRow('${a.id}','${a.noPolisi}')">
+          <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+        </button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderList(data) {
+  const tbody = document.getElementById('armadaTableBody');
+  if (!data.length) { tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--text-secondary)">Belum ada armada</td></tr>'; return; }
+  tbody.innerHTML = data.map((a, i) => {
+    const st = getStnkStatus(a.tanggalSTNK);
+    return `<tr>
+      <td>${i+1}</td><td style="font-weight:700">${a.noPolisi}</td><td>${a.jenisKendaraan}</td>
+      <td>${a.merk}</td><td>${a.tahun}</td><td>${a.pemilik}</td>
+      <td>${a.tanggalSTNK || '-'}</td><td>${a.tanggalKIR || '-'}</td>
+      <td><span class="badge ${a.status === 'ACTIVE' ? 'badge-success' : 'badge-gray'}">${a.status}</span></td>
+      <td><div style="display:flex;gap:6px">
+        <button class="btn btn-outline btn-sm btn-icon" onclick='editRow(${JSON.stringify(a).replace(/'/g,"&#39;")})'>
+          <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/></svg>
+        </button>
+        <button class="btn btn-danger btn-sm btn-icon" onclick="deleteRow('${a.id}','${a.noPolisi}')">
+          <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+        </button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+function getStnkStatus(tglStr) {
+  if (!tglStr) return { cls: '', text: '' };
+  const tgl = new Date(tglStr.split('/').reverse().join('-'));
+  const diff = Math.floor((tgl - new Date()) / 86400000);
+  if (diff < 0) return { cls: 'stnk-danger', text: '⛔ Terlambat ' + Math.abs(diff) + ' hari' };
+  if (diff <= 30) return { cls: 'stnk-warning', text: '⚠️ ' + diff + ' hari lagi' };
+  return { cls: 'stnk-aman', text: '✅ Aman' };
+}
+
+function setView(v) {
+  currentView = v;
+  document.getElementById('armadaGrid').style.display = v === 'grid' ? 'grid' : 'none';
+  document.getElementById('armadaList').style.display = v === 'list' ? 'block' : 'none';
+  document.getElementById('btnGrid').classList.toggle('active', v === 'grid');
+  document.getElementById('btnList').classList.toggle('active', v === 'list');
+  if (v === 'list') renderList(allData);
+}
+
+function handleFotoSelect(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    selectedFotoBase64 = ev.target.result.split(',')[1]; selectedFotoMime = file.type;
+    document.getElementById('previewFotoImg').src = ev.target.result;
+    document.getElementById('previewFoto').style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+function removeFoto() { selectedFotoBase64 = null; document.getElementById('previewFoto').style.display = 'none'; }
+
+async function saveData() {
+  const id = document.getElementById('editId').value;
+  const noPolisi = document.getElementById('fNopol').value.trim().toUpperCase();
+  if (!noPolisi) { showToast('Nomor polisi wajib diisi.','error'); return; }
+  
+  const btn = document.getElementById('btnSave');
+  btn.disabled = true; btn.textContent = 'Menyimpan...';
+  
+  const res = await callAPI(id ? 'updateArmada' : 'addArmada', {
+    id, noPolisi, jenisKendaraan: document.getElementById('fJenis').value,
+    merk: document.getElementById('fMerk').value, tahun: document.getElementById('fTahun').value,
+    pemilik: document.getElementById('fPemilik').value, noSTNK: document.getElementById('fNoSTNK').value,
+    tanggalSTNK: document.getElementById('fTglSTNK').value,
+    tanggalKIR: document.getElementById('fTglKIR').value,
+    barcodeSubsidiTepat: document.getElementById('fBarcode').value,
+    status: id ? document.getElementById('fStatus').value : 'ACTIVE',
+    fotoBase64: selectedFotoBase64, fotoMimeType: selectedFotoMime
+  });
+  
+  btn.disabled = false;
+  btn.innerHTML = '<svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" fill="none" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Simpan';
+  
+  if (res.success) { showToast(res.message, 'success'); closeModal('modalAdd'); resetForm(); loadData(); }
+  else showToast(res.error, 'error');
+}
+
+function editRow(row) {
+  document.getElementById('editId').value = row.id;
+  document.getElementById('modalTitle').textContent = 'Edit Armada';
+  document.getElementById('fNopol').value = row.noPolisi;
+  document.getElementById('fJenis').value = row.jenisKendaraan;
+  document.getElementById('fMerk').value = row.merk;
+  document.getElementById('fTahun').value = row.tahun;
+  document.getElementById('fPemilik').value = row.pemilik;
+  document.getElementById('fNoSTNK').value = row.noSTNK;
+  document.getElementById('fTglSTNK').value = row.tanggalSTNK ? row.tanggalSTNK.split('/').reverse().join('-') : '';
+  document.getElementById('fTglKIR').value = row.tanggalKIR ? row.tanggalKIR.split('/').reverse().join('-') : '';
+  document.getElementById('fBarcode').value = row.barcodeSubsidiTepat || '';
+  document.getElementById('fStatus').value = row.status;
+  document.getElementById('editStatusGroup').style.display = 'block';
+  openModal('modalAdd');
+}
+
+async function deleteRow(id, nopol) {
+  confirmAction(`Hapus armada "${nopol}"?`, async () => {
+    const res = await callAPI('deleteArmada', { id });
+    if (res.success) { showToast('Armada dihapus.','success'); loadData(); }
+    else showToast(res.error,'error');
+  });
+}
+
+function resetForm() {
+  document.getElementById('editId').value = '';
+  document.getElementById('modalTitle').textContent = 'Tambah Armada';
+  ['fNopol','fMerk','fTahun','fPemilik','fNoSTNK','fTglSTNK','fTglKIR','fBarcode'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('editStatusGroup').style.display = 'none';
+  removeFoto();
+}
+
+function debounceSearch() { clearTimeout(searchTimeout); searchTimeout = setTimeout(loadData, 400); }
+
+function exportPDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'landscape' });
+  doc.setFont('helvetica','bold'); doc.setFontSize(16);
+  doc.text('Data Armada', 14, 18);
+  doc.setFont('helvetica','normal'); doc.setFontSize(10);
+  doc.text('Dicetak: ' + new Date().toLocaleString('id-ID'), 14, 26);
+  doc.autoTable({
+    head: [['No','No Polisi','Jenis','Merk','Tahun','Pemilik','STNK','KIR','Status']],
+    body: allData.map((a,i) => [i+1, a.noPolisi, a.jenisKendaraan, a.merk, a.tahun, a.pemilik, a.tanggalSTNK||'-', a.tanggalKIR||'-', a.status]),
+    startY: 32, styles:{fontSize:9}, headStyles:{fillColor:[13,71,161],textColor:255,fontStyle:'bold'}, alternateRowStyles:{fillColor:[245,249,255]}
+  });
+  doc.save('Armada_' + new Date().toLocaleDateString('id-ID').replace(/\//g,'-') + '.pdf');
+}
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => initPage('armada'));
+</script>
+</body>
+</html>

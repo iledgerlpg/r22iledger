@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>iLedgerV2</title>
+<meta http-equiv="refresh" content="0; url=login.html">
+<style>
+body{font-family:'Plus Jakarta Sans',sans-serif;min-height:100vh;background:linear-gradient(135deg,#0D47A1,#1565C0);display:flex;align-items:center;justify-content:center;color:white;text-align:center}
+.loader{animation:pulse 1.5s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+h1{font-size:32px;font-weight:800;margin-bottom:12px;letter-spacing:-1px}
+p{opacity:.7;font-size:14px}
+</style>
+</head>
+<body>
+<div class="loader">
+  <h1>iLedgerV2</h1>
+  <p>Memuat aplikasi...</p>
+</div>
+<script>
+  // Cek session - redirect ke dashboard jika sudah login
+  const token = localStorage.getItem('il_token');
+  if (token) {
+    window.location.href = 'dashboard.html';
+  } else {
+    window.location.href = 'login.html';
+  }
+</script>
+</body>
+</html>

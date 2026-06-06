@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="light">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>iLedgerV2 – Kelola Pos</title>
+<link rel="stylesheet" href="css/style.css">
+<script src="js/config.js"></script>
+<script src="js/page-template.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script> window.CURRENT_PAGE='pos';</script>
+<div id="navbarMount"></div>
+<style>
+.tab-nav{display:flex;gap:0;border-bottom:2px solid var(--border-color);margin-bottom:24px}
+.tab-btn{padding:12px 24px;border:none;background:transparent;font-family:var(--font);font-size:14px;font-weight:600;color:var(--text-secondary);cursor:pointer;position:relative;transition:color .2s}
+.tab-btn.active{color:var(--primary)}
+.tab-btn.active::after{content:'';position:absolute;bottom:-2px;left:0;right:0;height:2px;background:var(--primary)}
+.tab-content{display:none}.tab-content.active{display:block}
+
+.pos-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;margin-top:16px}
+.pos-card{background:var(--bg-card);border-radius:var(--radius-lg);border:1px solid var(--border-color);padding:18px;transition:transform .2s,box-shadow .2s;position:relative;overflow:hidden}
+.pos-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-md)}
+.pos-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--primary),var(--accent))}
+.pos-name{font-size:15px;font-weight:700;color:var(--text-primary);margin-bottom:4px}
+.pos-kategori{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--text-secondary);margin-bottom:8px}
+.pos-keterangan{font-size:12px;color:var(--text-secondary);line-height:1.5;margin-bottom:12px;min-height:36px}
+.pos-footer{display:flex;align-items:center;justify-content:space-between;padding-top:10px;border-top:1px solid var(--border-color)}
+
+.mapping-table-row{display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border-color);font-size:13px;transition:background .15s}
+.mapping-table-row:last-child{border-bottom:none}
+.mapping-table-row:hover{background:var(--gray-50)}
+.mapping-keyword{
+  background:var(--gray-100);color:var(--primary);
+  padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;
+  font-family:'JetBrains Mono',monospace;border:1px solid var(--gray-200);
+}
+.mapping-arrow{color:var(--gray-400)}
+.mapping-pos{font-weight:600;color:var(--text-primary)}
+.mapping-delete{margin-left:auto;width:28px;height:28px;border-radius:6px;border:none;background:transparent;cursor:pointer;color:var(--gray-400);display:flex;align-items:center;justify-content:center;transition:all .2s}
+.mapping-delete:hover{background:#fee2e2;color:var(--error)}
+.mapping-delete svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2}
+
+.search-toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.filter-select{padding:9px 14px;border:1.5px solid var(--border-color);border-radius:var(--radius);font-family:var(--font);font-size:13px;color:var(--text-primary);background:var(--bg-card);cursor:pointer;outline:none}
+
+.smart-pos-demo{background:linear-gradient(135deg,rgba(13,71,161,.06) 0%,rgba(0,188,212,.06) 100%);border:1.5px solid rgba(13,71,161,.15);border-radius:var(--radius-lg);padding:20px;margin-bottom:20px}
+.demo-title{font-size:14px;font-weight:700;color:var(--primary);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.demo-title svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2}
+.demo-input{display:flex;gap:10px}
+.demo-input input{flex:1;padding:10px 14px;border:1.5px solid var(--border-color);border-radius:var(--radius);font-family:var(--font);font-size:13px;outline:none;transition:border-color .2s;background:var(--bg-card);color:var(--text-primary)}
+.demo-input input:focus{border-color:var(--primary)}
+.demo-result{margin-top:12px;font-size:13px;display:none;padding:10px 14px;border-radius:var(--radius);background:var(--bg-card);border:1px solid var(--border-color)}
+.demo-result.found{border-color:var(--success);background:#f0fdf4}
+.demo-result.notfound{border-color:var(--warning);background:#fffbeb}
+
+.add-mapping-form{background:var(--gray-50);border-radius:var(--radius);padding:16px;margin-bottom:16px;border:1px solid var(--border-color)}
+.add-mapping-title{font-size:13px;font-weight:700;color:var(--text-primary);margin-bottom:12px}
+</style>
+</head>
+<body>
+
+<header class="main-header">
+  <button class="header-toggle" onclick="toggleSidebar()">
+    <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+  </button>
+  <div class="header-breadcrumb">
+    <span>iLedgerV2</span><span class="breadcrumb-sep">/</span>
+    <span class="breadcrumb-current">Kelola Pos</span>
+  </div>
+  <div class="header-actions">
+    <button class="header-btn" onclick="toggleTheme()"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/></svg></button>
+  </div>
+</header>
+
+<main class="main-content" id="mainContent">
+  <div class="page-header">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+      <div>
+        <h1 class="page-title">Kelola Pos</h1>
+        <p class="page-subtitle">Atur kategori pengeluaran dan Smart Pos otomatis</p>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-outline btn-sm" onclick="exportPDF()">
+          <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> PDF
+        </button>
+        <button class="btn btn-primary" id="btnAdd" onclick="showAddModal()">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <span id="btnAddText">Tambah Pos</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab Navigation -->
+  <div class="tab-nav">
+    <button class="tab-btn active" onclick="switchTab('tabPos', this)">
+      <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" fill="none" stroke-width="2" style="vertical-align:middle;margin-right:6px"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/></svg>
+      Daftar Pos (<span id="posCount">0</span>)
+    </button>
+    <button class="tab-btn" onclick="switchTab('tabMapping', this)">
+      <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" fill="none" stroke-width="2" style="vertical-align:middle;margin-right:6px"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 1 1 7.072 0l-.548.547A3.374 3.374 0 0 0 14 18.469V19a2 2 0 1 1-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+      Smart Pos Mapping (<span id="mappingCount">0</span>)
+    </button>
+  </div>
+
+  <!-- TAB: POS LIST -->
+  <div class="tab-content active" id="tabPos">
+    <div class="search-toolbar">
+      <div class="search-bar" style="flex:1;min-width:200px">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input class="search-input" id="searchPos" placeholder="Cari pos..." oninput="filterPos()">
+      </div>
+      <select class="filter-select" id="filterKategori" onchange="filterPos()">
+        <option value="">Semua Kategori</option>
+        <option value="Operasional">Operasional</option>
+        <option value="Administrasi">Administrasi</option>
+        <option value="SDM">SDM</option>
+        <option value="Utilitas">Utilitas</option>
+        <option value="Umum">Umum</option>
+      </select>
+      <select class="filter-select" id="filterStatusPos" onchange="filterPos()">
+        <option value="">Semua Status</option>
+        <option value="ACTIVE">Aktif</option>
+        <option value="INACTIVE">Tidak Aktif</option>
+      </select>
+    </div>
+    <div class="pos-grid" id="posGrid">
+      <div class="skeleton" style="height:160px;border-radius:var(--radius-lg)"></div>
+      <div class="skeleton" style="height:160px;border-radius:var(--radius-lg)"></div>
+      <div class="skeleton" style="height:160px;border-radius:var(--radius-lg)"></div>
+    </div>
+  </div>
+
+  <!-- TAB: SMART POS MAPPING -->
+  <div class="tab-content" id="tabMapping">
+
+    <div class="smart-pos-demo">
+      <div class="demo-title">
+        <svg viewBox="0 0 24 24"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 1 1 7.072 0l-.548.547A3.374 3.374 0 0 0 14 18.469V19a2 2 0 1 1-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+        🤖 Test Smart Pos Detection
+      </div>
+      <div class="demo-input">
+        <input type="text" id="demoUraian" placeholder="Ketik uraian pengeluaran, contoh: Isi solar untuk truk..." oninput="testSmartPos()">
+        <button class="btn btn-primary btn-sm" onclick="testSmartPos()">Test</button>
+      </div>
+      <div class="demo-result" id="demoResult"></div>
+    </div>
+
+    <div class="add-mapping-form">
+      <div class="add-mapping-title">➕ Tambah Keyword Baru</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+        <div>
+          <label style="display:block;font-size:11px;font-weight:600;color:var(--text-secondary);margin-bottom:5px;text-transform:uppercase;letter-spacing:.4px">Keyword</label>
+          <input type="text" id="newKeyword" style="padding:9px 14px;border:1.5px solid var(--border-color);border-radius:var(--radius);font-family:var(--font);font-size:13px;outline:none;min-width:180px;background:var(--bg-card);color:var(--text-primary)" placeholder="contoh: ban dalam">
+        </div>
+        <div>
+          <label style="display:block;font-size:11px;font-weight:600;color:var(--text-secondary);margin-bottom:5px;text-transform:uppercase;letter-spacing:.4px">Pos Tujuan</label>
+          <select id="newMappingPos" style="padding:9px 14px;border:1.5px solid var(--border-color);border-radius:var(--radius);font-family:var(--font);font-size:13px;outline:none;min-width:180px;background:var(--bg-card);color:var(--text-primary);cursor:pointer">
+            <option value="">-- Pilih Pos --</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" onclick="addMapping()">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Tambah Mapping
+        </button>
+      </div>
+    </div>
+
+    <div class="search-toolbar">
+      <div class="search-bar" style="flex:1;min-width:200px">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input class="search-input" id="searchMapping" placeholder="Cari keyword atau pos..." oninput="filterMapping()">
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="padding:12px 16px;border-bottom:1px solid var(--border-color);display:grid;grid-template-columns:1fr auto 1fr auto;gap:12px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-secondary)">
+        <span>Keyword</span><span></span><span>Pos Tujuan</span><span>Aksi</span>
+      </div>
+      <div id="mappingList"></div>
+    </div>
+  </div>
+</main>
+
+<!-- MODAL ADD/EDIT POS -->
+<div class="modal-overlay" id="modalPos">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-header">
+      <h3 class="modal-title" id="modalPosTitle">Tambah Pos</h3>
+      <button class="modal-close" onclick="closeModal('modalPos');resetPosForm()">
+        <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="editPosId">
+      <div class="form-group-m">
+        <label class="form-label-m">Nama Pos <span style="color:var(--error)">*</span></label>
+        <input type="text" id="fPosNama" class="form-control-m" placeholder="Contoh: Perawatan Gedung">
+      </div>
+      <div class="form-row-m">
+        <div class="form-group-m">
+          <label class="form-label-m">Kategori</label>
+          <select id="fPosKategori" class="form-control-m">
+            <option value="Operasional">Operasional</option>
+            <option value="Administrasi">Administrasi</option>
+            <option value="SDM">SDM</option>
+            <option value="Utilitas">Utilitas</option>
+            <option value="Umum">Umum</option>
+          </select>
+        </div>
+        <div class="form-group-m" id="statusGroup" style="display:none">
+          <label class="form-label-m">Status</label>
+          <select id="fPosStatus" class="form-control-m">
+            <option value="ACTIVE">Aktif</option>
+            <option value="INACTIVE">Tidak Aktif</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group-m">
+        <label class="form-label-m">Keterangan</label>
+        <textarea id="fPosKeterangan" class="form-control-m" rows="3" placeholder="Deskripsi singkat pos ini..." style="resize:none"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modalPos');resetPosForm()">Batal</button>
+      <button class="btn btn-primary" id="btnSavePos" onclick="savePos()">
+        <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" fill="none" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+        Simpan
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+let allPosData = [], allMappingData = [];
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadPos();
+  loadMapping();
+});
+
+// ============================================================
+// POS
+async function loadPos() {
+  const res = await callAPI('getPos', {});
+  if (!res.success) return;
+  allPosData = res.data;
+  document.getElementById('posCount').textContent = allPosData.length;
+  renderPos(allPosData);
+}
+
+function renderPos(data) {
+  const container = document.getElementById('posGrid');
+  if (!data.length) {
+    container.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text-secondary)">Belum ada pos. Klik "Tambah Pos" untuk memulai.</div>';
+    return;
+  }
+
+  const kategoriColors = {
+    Operasional: '#DBEAFE', Administrasi: '#FEF3C7', SDM: '#DCFCE7',
+    Utilitas: '#F3E8FF', Umum: '#F1F5F9'
+  };
+  const kategoriText = {
+    Operasional: '#1D4ED8', Administrasi: '#D97706', SDM: '#16A34A',
+    Utilitas: '#7C3AED', Umum: '#475569'
+  };
+
+  container.innerHTML = data.map(p => {
+    const bg = kategoriColors[p.kategori] || '#F1F5F9';
+    const tc = kategoriText[p.kategori] || '#475569';
+    return `
+    <div class="pos-card">
+      <div class="pos-name">${p.namaPos}</div>
+      <div class="pos-kategori">
+        <span style="background:${bg};color:${tc};padding:2px 10px;border-radius:10px;font-size:10px">${p.kategori}</span>
+      </div>
+      <div class="pos-keterangan">${p.keterangan || '<span style="color:var(--gray-300);font-style:italic">Tidak ada keterangan</span>'}</div>
+      <div class="pos-footer">
+        <span class="badge ${p.status === 'ACTIVE' ? 'badge-success' : 'badge-gray'}">${p.status === 'ACTIVE' ? 'Aktif' : 'Tidak Aktif'}</span>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-outline btn-sm btn-icon" onclick='editPos(${JSON.stringify(p).replace(/'/g,"&#39;")})' title="Edit">
+            <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </button>
+          <button class="btn btn-danger btn-sm btn-icon" onclick="deletePos('${p.id}','${p.namaPos}')" title="Hapus">
+            <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function filterPos() {
+  const q = document.getElementById('searchPos').value.toLowerCase();
+  const kat = document.getElementById('filterKategori').value;
+  const st = document.getElementById('filterStatusPos').value;
+  const filtered = allPosData.filter(p => {
+    const matchQ = !q || p.namaPos.toLowerCase().includes(q) || (p.keterangan||'').toLowerCase().includes(q);
+    const matchK = !kat || p.kategori === kat;
+    const matchS = !st || p.status === st;
+    return matchQ && matchK && matchS;
+  });
+  renderPos(filtered);
+}
+
+function showAddModal() {
+  resetPosForm();
+  openModal('modalPos');
+}
+
+function editPos(pos) {
+  document.getElementById('editPosId').value = pos.id;
+  document.getElementById('modalPosTitle').textContent = 'Edit Pos';
+  document.getElementById('fPosNama').value = pos.namaPos;
+  document.getElementById('fPosKategori').value = pos.kategori;
+  document.getElementById('fPosKeterangan').value = pos.keterangan || '';
+  document.getElementById('fPosStatus').value = pos.status;
+  document.getElementById('statusGroup').style.display = 'block';
+  openModal('modalPos');
+}
+
+async function savePos() {
+  const id = document.getElementById('editPosId').value;
+  const namaPos = document.getElementById('fPosNama').value.trim();
+  if (!namaPos) { showToast('Nama pos wajib diisi.','error'); return; }
+
+  const btn = document.getElementById('btnSavePos');
+  btn.disabled = true; btn.textContent = 'Menyimpan...';
+
+  const res = await callAPI(id ? 'updatePos' : 'addPos', {
+    id, namaPos,
+    kategori: document.getElementById('fPosKategori').value,
+    keterangan: document.getElementById('fPosKeterangan').value,
+    status: id ? document.getElementById('fPosStatus').value : 'ACTIVE'
+  });
+
+  btn.disabled = false;
+  btn.innerHTML = '<svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" fill="none" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Simpan';
+
+  if (res.success) {
+    showToast(res.message || 'Pos berhasil disimpan.', 'success');
+    closeModal('modalPos'); resetPosForm();
+    loadPos(); loadMapping(); // Refresh mapping pos list too
+  } else showToast(res.error, 'error');
+}
+
+async function deletePos(id, nama) {
+  confirmAction(`Nonaktifkan pos "${nama}"?`, async () => {
+    const res = await callAPI('deletePos', { id });
+    if (res.success) { showToast('Pos dinonaktifkan.','success'); loadPos(); }
+    else showToast(res.error,'error');
+  });
+}
+
+function resetPosForm() {
+  document.getElementById('editPosId').value = '';
+  document.getElementById('modalPosTitle').textContent = 'Tambah Pos';
+  ['fPosNama','fPosKeterangan'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('fPosKategori').value = 'Operasional';
+  document.getElementById('statusGroup').style.display = 'none';
+}
+
+// ============================================================
+// MAPPING
+async function loadMapping() {
+  const [mappingRes, posRes] = await Promise.all([
+    callAPI('getPosMapping', {}),
+    callAPI('getPos', { status: 'ACTIVE' })
+  ]);
+
+  if (mappingRes.success) {
+    allMappingData = mappingRes.data;
+    document.getElementById('mappingCount').textContent = allMappingData.length;
+    renderMapping(allMappingData);
+  }
+
+  if (posRes.success) {
+    const sel = document.getElementById('newMappingPos');
+    sel.innerHTML = '<option value="">-- Pilih Pos --</option>';
+    posRes.data.forEach(p => {
+      sel.innerHTML += `<option value="${p.id}" data-name="${p.namaPos}">${p.namaPos}</option>`;
+    });
+  }
+}
+
+function renderMapping(data) {
+  const container = document.getElementById('mappingList');
+  if (!data.length) {
+    container.innerHTML = '<div style="padding:30px;text-align:center;color:var(--text-secondary);font-size:13px">Belum ada mapping. Tambahkan keyword di atas.</div>';
+    return;
+  }
+  container.innerHTML = data.map(m => `
+    <div class="mapping-table-row">
+      <span class="mapping-keyword">${m.keyword}</span>
+      <span class="mapping-arrow">
+        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </span>
+      <span class="mapping-pos">${m.namaPos}</span>
+      <span style="font-size:11px;color:var(--text-secondary);flex:1;text-align:right;padding-right:12px">${m.createdAt ? m.createdAt.split(' ')[0] : ''}</span>
+      <button class="mapping-delete" onclick="deleteMapping('${m.id}','${m.keyword}')" title="Hapus">
+        <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+      </button>
+    </div>`).join('');
+}
+
+function filterMapping() {
+  const q = document.getElementById('searchMapping').value.toLowerCase();
+  const filtered = allMappingData.filter(m =>
+    m.keyword.toLowerCase().includes(q) || m.namaPos.toLowerCase().includes(q)
+  );
+  renderMapping(filtered);
+}
+
+async function addMapping() {
+  const keyword = document.getElementById('newKeyword').value.trim().toLowerCase();
+  const sel = document.getElementById('newMappingPos');
+  const idPos = sel.value;
+  const namaPos = sel.options[sel.selectedIndex]?.dataset.name || '';
+
+  if (!keyword) { showToast('Keyword wajib diisi.','error'); return; }
+  if (!idPos) { showToast('Pos tujuan wajib dipilih.','error'); return; }
+
+  const res = await callAPI('addPosMapping', { keyword, idPos, namaPos });
+  if (res.success) {
+    showToast('Mapping berhasil ditambahkan.','success');
+    document.getElementById('newKeyword').value = '';
+    sel.value = '';
+    loadMapping();
+  } else showToast(res.error, 'error');
+}
+
+async function deleteMapping(id, keyword) {
+  confirmAction(`Hapus mapping keyword "${keyword}"?`, async () => {
+    const res = await callAPI('deletePosMapping', { id });
+    if (res.success) { showToast('Mapping dihapus.','success'); loadMapping(); }
+    else showToast(res.error,'error');
+  });
+}
+
+// Smart Pos Live Test
+let testTimeout = null;
+function testSmartPos() {
+  clearTimeout(testTimeout);
+  testTimeout = setTimeout(async () => {
+    const uraian = document.getElementById('demoUraian').value.trim();
+    const result = document.getElementById('demoResult');
+    if (!uraian || uraian.length < 2) { result.style.display = 'none'; return; }
+
+    const res = await callAPI('detectPos', { uraian });
+    result.style.display = 'block';
+    if (res.success && res.data) {
+      result.className = 'demo-result found';
+      result.innerHTML = `✅ <strong>Pos Terdeteksi: ${res.data.namaPos}</strong> — sistem akan otomatis memilih pos ini saat input pengeluaran.`;
+    } else {
+      result.className = 'demo-result notfound';
+      result.innerHTML = `⚠️ Tidak ada pos yang cocok. Tambahkan keyword baru di form di bawah.`;
+    }
+  }, 400);
+}
+
+// Tab switcher
+function switchTab(tabId, btn) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(tabId).classList.add('active');
+  btn.classList.add('active');
+
+  const btnAdd = document.getElementById('btnAdd');
+  const btnText = document.getElementById('btnAddText');
+  if (tabId === 'tabMapping') {
+    btnAdd.style.display = 'none';
+  } else {
+    btnAdd.style.display = 'flex';
+    btnText.textContent = 'Tambah Pos';
+  }
+}
+
+function exportPDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  doc.setFont('helvetica','bold'); doc.setFontSize(16);
+  doc.text('Daftar Pos Pengeluaran', 14, 18);
+  doc.setFont('helvetica','normal'); doc.setFontSize(10);
+  doc.text('Dicetak: ' + new Date().toLocaleString('id-ID'), 14, 26);
+  doc.autoTable({
+    head: [['No','Nama Pos','Kategori','Keterangan','Status']],
+    body: allPosData.map((p,i) => [i+1, p.namaPos, p.kategori, p.keterangan||'-', p.status]),
+    startY: 32, styles:{fontSize:10}, headStyles:{fillColor:[13,71,161],textColor:255,fontStyle:'bold'}, alternateRowStyles:{fillColor:[245,249,255]}
+  });
+  doc.save('Pos_' + new Date().toLocaleDateString('id-ID').replace(/\//g,'-') + '.pdf');
+}
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => initPage('pos'));
+</script>
+</body>
+</html>
