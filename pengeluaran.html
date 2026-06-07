@@ -10,49 +10,158 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <style>
+/* ===== TOOLBAR & SUMMARY ===== */
 .toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:20px}
 .toolbar-left{display:flex;align-items:center;gap:10px;flex:1;flex-wrap:wrap}
 .summary-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
 .s-item{background:var(--bg-card);border-radius:var(--radius);border:1px solid var(--border-color);padding:14px 16px}
 .s-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--text-secondary)}
 .s-value{font-size:16px;font-weight:800;color:var(--text-primary);margin-top:4px;letter-spacing:-.3px}
-.nota-thumb{width:34px;height:34px;border-radius:6px;object-fit:cover;cursor:pointer;border:1.5px solid var(--border-color);transition:transform .2s}
-.nota-thumb:hover{transform:scale(1.1)}
-.no-nota{width:34px;height:34px;border-radius:6px;background:var(--gray-100);border:1.5px dashed var(--border-color);display:flex;align-items:center;justify-content:center}
-.pos-suggest{display:none;position:absolute;left:0;right:0;top:100%;z-index:50;background:var(--bg-card);border:1.5px solid var(--primary);border-radius:0 0 var(--radius) var(--radius);box-shadow:var(--shadow-md);padding:10px 14px;animation:fadeIn .15s ease}
-.pos-suggest.show{display:block}
-@keyframes fadeIn{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:translateY(0)}}
-.pos-suggest-label{font-size:11px;color:var(--text-secondary);margin-bottom:4px}
-.pos-suggest-val{font-size:13px;font-weight:600;color:var(--primary);cursor:pointer}
-.pos-suggest-val:hover{text-decoration:underline}
-.upload-preview{position:relative;margin-top:10px;border-radius:var(--radius);overflow:hidden;border:1.5px solid var(--border-color)}
-.upload-preview img{width:100%;max-height:160px;object-fit:cover;display:block}
-.upload-preview-rm{position:absolute;top:6px;right:6px;width:26px;height:26px;border-radius:6px;background:rgba(0,0,0,.6);color:white;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center}
-.upload-preview-rm svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2}
-.lightbox{position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:2000;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .2s}
+
+/* ===== TABLE ===== */
+.nota-thumb{width:36px;height:36px;border-radius:6px;object-fit:cover;cursor:pointer;border:1.5px solid var(--border-color);transition:transform .2s}
+.nota-thumb:hover{transform:scale(1.15)}
+.no-nota{width:36px;height:36px;border-radius:6px;background:var(--gray-100);border:1.5px dashed var(--border-color);display:flex;align-items:center;justify-content:center}
+
+/* ===== NAMA DROPDOWN CUSTOM ===== */
+.custom-select-wrap{position:relative}
+.custom-select-input{width:100%;padding:10px 36px 10px 14px;border:1.5px solid var(--border-color);border-radius:var(--radius);font-family:var(--font);font-size:13.5px;color:var(--text-primary);background:var(--bg-card);outline:none;transition:border-color .2s;cursor:pointer}
+.custom-select-input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(13,71,161,.1)}
+.custom-select-arrow{position:absolute;right:12px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--gray-400)}
+.custom-select-arrow svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2}
+.custom-dropdown{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:100;background:var(--bg-card);border:1.5px solid var(--primary);border-radius:var(--radius);box-shadow:var(--shadow-md);max-height:220px;overflow-y:auto;display:none;animation:ddFadeIn .15s ease}
+.custom-dropdown.show{display:block}
+@keyframes ddFadeIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+.dd-item{padding:10px 14px;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:8px;transition:background .15s}
+.dd-item:hover{background:rgba(13,71,161,.06)}
+.dd-item.dd-custom{color:var(--primary);font-weight:600;border-top:1px solid var(--border-color)}
+.dd-item .dd-avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--accent));color:white;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.dd-item .dd-label{flex:1;min-width:0}
+.dd-item .dd-sub{font-size:11px;color:var(--text-secondary)}
+.dd-custom-input{display:none;padding:10px 14px;border-top:1px solid var(--border-color)}
+.dd-custom-input input{width:100%;padding:8px 12px;border:1.5px solid var(--border-color);border-radius:8px;font-family:var(--font);font-size:13px;outline:none;background:var(--bg-card);color:var(--text-primary)}
+.dd-custom-input input:focus{border-color:var(--primary)}
+
+/* ===== URAIAN + POS DROPDOWN ===== */
+.uraian-wrap{position:relative}
+.pos-dropdown{position:absolute;left:0;right:0;top:calc(100% + 2px);z-index:99;background:var(--bg-card);border:1.5px solid var(--primary);border-radius:var(--radius);box-shadow:var(--shadow-md);display:none;animation:ddFadeIn .15s ease;overflow:hidden}
+.pos-dropdown.show{display:block}
+.pos-dd-header{padding:8px 14px;font-size:11px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.5px;background:var(--gray-50);border-bottom:1px solid var(--border-color)}
+.pos-dd-item{padding:10px 14px;cursor:pointer;display:flex;align-items:center;gap:10px;font-size:13px;transition:background .15s;border-bottom:1px solid var(--border-color)}
+.pos-dd-item:last-child{border:none}
+.pos-dd-item:hover{background:rgba(13,71,161,.06)}
+.pos-dd-item.highlight{background:rgba(13,71,161,.08)}
+.pos-dd-keyword{font-size:11px;font-weight:700;color:var(--primary);background:rgba(13,71,161,.1);padding:2px 8px;border-radius:10px;flex-shrink:0}
+.pos-dd-name{font-weight:600;color:var(--text-primary)}
+.pos-dd-cat{font-size:11px;color:var(--text-secondary);margin-top:1px}
+.pos-dd-check{margin-left:auto;color:var(--success);flex-shrink:0}
+.pos-dd-check svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2.5}
+.pos-selected-chip{display:none;margin-top:8px;padding:7px 12px;background:rgba(13,71,161,.08);border:1px solid rgba(13,71,161,.2);border-radius:8px;font-size:12px;font-weight:600;color:var(--primary);align-items:center;gap:6px}
+.pos-selected-chip.show{display:flex}
+.pos-selected-chip svg{width:14px;height:14px;stroke:var(--success);fill:none;stroke-width:2.5}
+.pos-chip-clear{margin-left:auto;width:18px;height:18px;border-radius:50%;background:rgba(13,71,161,.15);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--primary)}
+.pos-chip-clear svg{width:10px;height:10px;stroke:currentColor;fill:none;stroke-width:2}
+
+/* ===== POS SELECT (hidden, auto-filled) ===== */
+
+/* ===== MEDIA UPLOAD (Kamera + Gallery) ===== */
+.media-upload-box{border-radius:var(--radius);border:1.5px solid var(--border-color);overflow:hidden;background:var(--bg-card)}
+.media-upload-preview{display:none;position:relative}
+.media-upload-preview img{width:100%;height:160px;object-fit:cover;display:block}
+.media-preview-actions{position:absolute;top:8px;right:8px;display:flex;gap:6px}
+.media-action-btn{width:30px;height:30px;border-radius:8px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.media-action-btn.delete{background:rgba(239,68,68,.8);color:white}
+.media-action-btn.retake{background:rgba(255,255,255,.85);color:var(--primary)}
+.media-action-btn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2}
+.media-upload-btns{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border-color)}
+.media-upload-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:18px 10px;background:var(--bg-card);cursor:pointer;transition:background .2s;border:none;font-family:var(--font)}
+.media-upload-btn:hover{background:rgba(13,71,161,.04)}
+.media-upload-btn svg{width:24px;height:24px;stroke:var(--gray-400);fill:none;stroke-width:1.5}
+.media-upload-btn span{font-size:11px;font-weight:600;color:var(--text-secondary);text-align:center}
+.media-upload-btn.active-cam svg{stroke:var(--primary)}
+.media-upload-btn.active-cam span{color:var(--primary)}
+/* Hidden file inputs */
+.media-file-input{display:none}
+
+/* ===== KAMERA MODAL ===== */
+.cam-modal{position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:3000;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .25s}
+.cam-modal.show{opacity:1;pointer-events:all}
+.cam-title{color:white;font-size:16px;font-weight:700;margin-bottom:16px}
+.cam-video-wrap{position:relative;border-radius:16px;overflow:hidden;background:#000;max-width:480px;width:100%}
+.cam-video{width:100%;display:block;border-radius:16px}
+.cam-overlay{position:absolute;inset:0;border:3px solid rgba(255,255,255,.2);border-radius:16px;pointer-events:none}
+.cam-controls{display:flex;align-items:center;gap:20px;margin-top:20px}
+.cam-shutter{width:64px;height:64px;border-radius:50%;background:white;border:4px solid rgba(255,255,255,.4);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .15s;box-shadow:0 0 0 4px rgba(255,255,255,.2)}
+.cam-shutter:active{transform:scale(.92)}
+.cam-shutter svg{width:28px;height:28px;stroke:#0D47A1;fill:none;stroke-width:2}
+.cam-btn-cancel{width:46px;height:46px;border-radius:50%;background:rgba(255,255,255,.15);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:white;transition:background .2s}
+.cam-btn-cancel:hover{background:rgba(255,255,255,.25)}
+.cam-btn-cancel svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2}
+.cam-btn-flip{width:46px;height:46px;border-radius:50%;background:rgba(255,255,255,.15);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:white;transition:background .2s}
+.cam-btn-flip:hover{background:rgba(255,255,255,.25)}
+.cam-btn-flip svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2}
+.cam-error{color:#fca5a5;font-size:13px;margin-top:12px;text-align:center}
+.cam-canvas{display:none}
+
+/* ===== LIGHTBOX ===== */
+.lightbox{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:2000;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .2s}
 .lightbox.show{opacity:1;pointer-events:all}
-.lightbox img{max-width:100%;max-height:90vh;border-radius:8px;object-fit:contain}
-.lightbox-close{position:absolute;top:20px;right:20px;width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.15);border:none;cursor:pointer;color:white;display:flex;align-items:center;justify-content:center}
+.lightbox img{max-width:100%;max-height:90vh;border-radius:10px;object-fit:contain;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.lightbox-close{position:absolute;top:18px;right:18px;width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.15);border:none;cursor:pointer;color:white;display:flex;align-items:center;justify-content:center;transition:background .2s}
+.lightbox-close:hover{background:rgba(255,255,255,.25)}
+.lightbox-close svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2}
+
+/* ===== BBM/PERAWATAN EXTRAS ===== */
+.extra-box{border-radius:var(--radius);padding:14px;margin-bottom:14px;display:none}
+.extra-box.bbm{background:rgba(13,71,161,.05);border:1px solid rgba(13,71,161,.15)}
+.extra-box.prw{background:rgba(245,158,11,.05);border:1px solid rgba(245,158,11,.2)}
+.extra-title{font-size:12px;font-weight:700;margin-bottom:10px}
+.extra-box.bbm .extra-title{color:var(--primary)}
+.extra-box.prw .extra-title{color:#D97706}
+
 @media(max-width:768px){.summary-bar{grid-template-columns:repeat(2,1fr)}.toolbar{flex-direction:column;align-items:stretch}}
-@media(max-width:480px){.summary-bar{grid-template-columns:1fr}}
+@media(max-width:480px){.summary-bar{grid-template-columns:1fr}.media-upload-btn{padding:14px 8px}}
+
+/* ===== ENHANCED EXTRA BOXES ===== */
+.extra-box{border-radius:var(--radius-lg);padding:18px;margin-bottom:16px;display:none;border:1.5px solid transparent;animation:extraSlide .25s ease}
+@keyframes extraSlide{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+.extra-box.show{display:block}
+.extra-box.bbm{background:linear-gradient(135deg,rgba(13,71,161,.05),rgba(0,188,212,.04));border-color:rgba(13,71,161,.18)}
+.extra-box.prw{background:linear-gradient(135deg,rgba(245,158,11,.05),rgba(234,88,12,.04));border-color:rgba(245,158,11,.2)}
+.extra-box.pajak{background:linear-gradient(135deg,rgba(124,58,237,.05),rgba(99,102,241,.04));border-color:rgba(124,58,237,.18)}
+.extra-header{display:flex;align-items:flex-start;gap:12px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid rgba(0,0,0,.06)}
+.extra-icon{font-size:22px;flex-shrink:0;margin-top:2px}
+.extra-title{font-size:14px;font-weight:700;color:var(--text-primary)}
+.extra-subtitle{font-size:11px;color:var(--text-secondary);margin-top:2px}
+.extra-badge{margin-left:auto;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;background:rgba(13,71,161,.12);color:var(--primary);white-space:nowrap;flex-shrink:0}
+.extra-badge.prw-badge{background:rgba(245,158,11,.12);color:#D97706}
+.extra-badge.pajak-badge{background:rgba(124,58,237,.12);color:#7C3AED}
+.extra-info-row{display:flex;align-items:flex-start;gap:8px;padding:8px 12px;background:rgba(0,0,0,.03);border-radius:8px;font-size:12px;color:var(--text-secondary);line-height:1.5;margin-top:12px}
+.extra-info-row svg{width:14px;height:14px;stroke:var(--info);fill:none;stroke-width:2;flex-shrink:0;margin-top:1px}
+.pajak-date-field{margin-bottom:12px;animation:extraSlide .2s ease}
+.status-pill{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700}
+.status-aman{background:#dcfce7;color:#166534}
+.status-warn{background:#fef3c7;color:#92400e}
+.status-late{background:#fee2e2;color:#991b1b}
 </style>
 </head>
 <body>
 <div id="navbarMount"></div>
 
+<!-- HEADER -->
 <header class="main-header" id="mainHeader">
   <button class="header-toggle" onclick="toggleSidebar()">
     <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
   </button>
   <div class="header-breadcrumb">
-    <span>iLedgerV2</span><span class="breadcrumb-sep">/</span>
-    <span class="breadcrumb-current">Pengeluaran</span>
+    <span>iLedgerV2</span><span class="breadcrumb-sep">/</span><span class="breadcrumb-current">Pengeluaran</span>
   </div>
   <div class="header-actions">
-    <button class="header-btn" onclick="toggleTheme()"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/></svg></button>
+    <button class="header-btn" onclick="toggleTheme()"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/></svg></button>
   </div>
 </header>
 
+<!-- MAIN -->
 <main class="main-content" id="mainContent">
   <div class="page-header">
     <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px">
@@ -68,6 +177,7 @@
     </div>
   </div>
 
+  <!-- Summary -->
   <div class="summary-bar">
     <div class="s-item"><div class="s-label">Total Pengeluaran</div><div class="s-value" id="sumTotal">Rp 0</div></div>
     <div class="s-item"><div class="s-label">Jumlah Transaksi</div><div class="s-value" id="sumCount">0</div></div>
@@ -75,23 +185,25 @@
     <div class="s-item"><div class="s-label">Terbesar</div><div class="s-value" id="sumMax">Rp 0</div></div>
   </div>
 
+  <!-- Toolbar -->
   <div class="toolbar">
     <div class="toolbar-left">
-      <div class="search-bar" style="min-width:240px">
+      <div class="search-bar" style="min-width:230px">
         <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         <input class="search-input" id="searchInput" placeholder="Cari nama, uraian, pos..." oninput="debounceSearch()">
       </div>
       <select class="filter-select" id="filterPos" onchange="loadData()"><option value="">Semua Pos</option></select>
-      <input type="month" class="filter-select" id="filterMonth" onchange="loadData()" style="min-width:155px">
+      <input type="month" class="filter-select" id="filterMonth" onchange="loadData()" style="min-width:150px">
     </div>
     <div style="display:flex;align-items:center;gap:8px">
       <span style="font-size:12px;color:var(--text-secondary)" id="resultInfo">-</span>
-      <select class="filter-select" id="limitSelect" onchange="loadData()" style="min-width:95px">
+      <select class="filter-select" id="limitSelect" onchange="loadData()" style="min-width:92px">
         <option value="10">10/hal</option><option value="20" selected>20/hal</option><option value="50">50/hal</option>
       </select>
     </div>
   </div>
 
+  <!-- Table -->
   <div class="card">
     <div class="table-wrapper">
       <table class="data-table">
@@ -106,17 +218,19 @@
   </div>
 </main>
 
-<!-- MODAL ADD/EDIT -->
+<!-- ==================== MODAL ==================== -->
 <div class="modal-overlay" id="modalAdd">
-  <div class="modal" style="max-width:600px">
+  <div class="modal" style="max-width:620px">
     <div class="modal-header">
       <h3 class="modal-title" id="modalTitle">Tambah Pengeluaran</h3>
       <button class="modal-close" onclick="closeModal('modalAdd');resetForm()">
         <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
     </div>
-    <div class="modal-body">
+    <div class="modal-body" style="max-height:75vh;overflow-y:auto">
       <input type="hidden" id="editId">
+
+      <!-- ROW 1: Tanggal + Metode -->
       <div class="form-row-m">
         <div class="form-group-m">
           <label class="form-label-m">Tanggal & Waktu *</label>
@@ -129,22 +243,62 @@
           </select>
         </div>
       </div>
+
+      <!-- NAMA PENERIMA — Custom Searchable Dropdown -->
       <div class="form-group-m">
         <label class="form-label-m">Nama Penerima *</label>
-        <input type="text" id="fNama" class="form-control-m" placeholder="Nama supplier/penerima">
-      </div>
-      <div class="form-group-m" style="position:relative">
-        <label class="form-label-m">Uraian *</label>
-        <input type="text" id="fUraian" class="form-control-m" placeholder="Contoh: Isi solar 50L untuk B 1234 CD" oninput="handleUraian(this.value)">
-        <div class="pos-suggest" id="posSuggest">
-          <div class="pos-suggest-label">🤖 Smart Pos Terdeteksi:</div>
-          <div class="pos-suggest-val" id="posSuggestVal" onclick="acceptPos()"></div>
+        <div class="custom-select-wrap" id="namaWrap">
+          <input type="text" id="fNama" class="custom-select-input" 
+            placeholder="Pilih karyawan atau ketik nama supplier..."
+            autocomplete="off"
+            oninput="onNamaInput(this.value)"
+            onfocus="showNamaDropdown()"
+            onblur="setTimeout(hideNamaDropdown, 200)">
+          <span class="custom-select-arrow">
+            <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+          </span>
+          <div class="custom-dropdown" id="namaDropdown">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+        <div id="namaIsCustom" style="display:none;font-size:11px;color:var(--text-secondary);margin-top:4px">
+          ✏️ Mode ketik manual aktif
         </div>
       </div>
+
+      <!-- URAIAN — dengan Pos Keyword Dropdown -->
+      <div class="form-group-m">
+        <label class="form-label-m">Uraian *</label>
+        <div class="uraian-wrap" id="uraianWrap">
+          <input type="text" id="fUraian" class="form-control-m"
+            placeholder="Ketik uraian... contoh: Isi solar 50L B 1234 CD"
+            autocomplete="off"
+            oninput="onUraianInput(this.value)">
+          <!-- Pos Keyword Dropdown -->
+          <div class="pos-dropdown" id="posDropdown">
+            <div class="pos-dd-header">🤖 Pilih Pos — cocok dengan kata kunci:</div>
+            <div id="posDropdownItems"></div>
+          </div>
+        </div>
+        <!-- Pos terpilih chip -->
+        <div class="pos-selected-chip" id="posSelectedChip">
+          <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+          <span id="posSelectedName">-</span>
+          <button class="pos-chip-clear" onclick="clearPos()" title="Ganti pos">
+            <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- POS (hidden, auto-filled) + NOMINAL -->
       <div class="form-row-m">
         <div class="form-group-m">
-          <label class="form-label-m">Pos *</label>
-          <select id="fPos" class="form-control-m" onchange="onPosChange()">
+          <label class="form-label-m">Pos Pengeluaran *</label>
+          <select id="fPos" class="form-control-m" onchange="onPosSelectChange()" style="display:none">
+            <option value="">-- Pilih Pos --</option>
+          </select>
+          <!-- Visible Pos selector (fallback manual) -->
+          <select id="fPosVisible" class="form-control-m" onchange="onPosVisibleChange()">
             <option value="">-- Pilih Pos --</option>
           </select>
           <input type="hidden" id="fPosId">
@@ -154,121 +308,356 @@
           <input type="number" id="fNominal" class="form-control-m" placeholder="0" min="0" oninput="showNominalPreview()">
         </div>
       </div>
-      <!-- BBM Extra -->
-      <div id="bbmExtra" style="display:none;background:rgba(13,71,161,.05);border:1px solid rgba(13,71,161,.15);border-radius:var(--radius);padding:14px;margin-bottom:14px">
-        <div style="font-size:12px;font-weight:700;color:var(--primary);margin-bottom:10px">⛽ Detail BBM</div>
+
+      <!-- ===== BBM DETAIL (muncul otomatis saat pos BBM terpilih) ===== -->
+      <div class="extra-box bbm" id="bbmExtra">
+        <div class="extra-header">
+          <span class="extra-icon">⛽</span>
+          <div>
+            <div class="extra-title">Detail BBM</div>
+            <div class="extra-subtitle">Otomatis tercatat di modul BBM</div>
+          </div>
+          <span class="extra-badge">Auto-Sync</span>
+        </div>
         <div class="form-row-m">
           <div class="form-group-m">
-            <label class="form-label-m">Armada</label>
-            <select id="fArmada" class="form-control-m"><option value="">-- Pilih --</option></select>
+            <label class="form-label-m">Armada *</label>
+            <select id="fArmada" class="form-control-m">
+              <option value="">-- Pilih Armada --</option>
+            </select>
           </div>
           <div class="form-group-m">
-            <label class="form-label-m">Jenis BBM</label>
+            <label class="form-label-m">Jenis BBM *</label>
             <select id="fJenisBBM" class="form-control-m">
-              <option>Solar</option><option>Pertalite</option><option>Dexlite</option><option>Pertamax</option><option>Pertamina Dex</option>
+              <option value="Solar">⛽ Solar</option>
+              <option value="Pertalite">⛽ Pertalite</option>
+              <option value="Dexlite">⛽ Dexlite</option>
+              <option value="Pertamax">⛽ Pertamax</option>
+              <option value="Pertamina Dex">⛽ Pertamina Dex</option>
+              <option value="Custom">✏️ Jenis Lain</option>
             </select>
           </div>
         </div>
         <div class="form-row-m">
-          <div class="form-group-m"><label class="form-label-m">Liter</label><input type="number" id="fLiter" class="form-control-m" placeholder="0.0" step="0.01" oninput="calcBBM()"></div>
-          <div class="form-group-m"><label class="form-label-m">Harga/Liter</label><input type="number" id="fHargaL" class="form-control-m" placeholder="0" oninput="calcBBM()"></div>
-        </div>
-      </div>
-      <!-- Perawatan Extra -->
-      <div id="perawatanExtra" style="display:none;background:rgba(245,158,11,.05);border:1px solid rgba(245,158,11,.2);border-radius:var(--radius);padding:14px;margin-bottom:14px">
-        <div style="font-size:12px;font-weight:700;color:#D97706;margin-bottom:10px">🔧 Detail Perawatan</div>
-        <div class="form-row-m">
-          <div class="form-group-m"><label class="form-label-m">Armada</label><select id="fArmadaPrw" class="form-control-m"><option value="">-- Pilih --</option></select></div>
           <div class="form-group-m">
-            <label class="form-label-m">Jenis Perawatan</label>
-            <select id="fJenisPrw" class="form-control-m"><option>Service</option><option>Ganti Oli</option><option>Ganti Ban</option><option>Kampas Rem</option><option>Kopling</option><option>Tune Up</option></select>
+            <label class="form-label-m">Jumlah Liter *</label>
+            <div style="position:relative">
+              <input type="number" id="fLiter" class="form-control-m" placeholder="0.00" step="0.01" min="0" oninput="calcBBM()" style="padding-right:36px">
+              <span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:11px;font-weight:700;color:var(--text-secondary)">L</span>
+            </div>
           </div>
+          <div class="form-group-m">
+            <label class="form-label-m">Harga per Liter *</label>
+            <div style="position:relative">
+              <input type="number" id="fHargaL" class="form-control-m" placeholder="0" oninput="calcBBM()" style="padding-left:36px">
+              <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:11px;font-weight:700;color:var(--text-secondary)">Rp</span>
+            </div>
+          </div>
+        </div>
+        <!-- BBM Total Preview -->
+        <div id="bbmTotalPreview" style="display:none;background:rgba(13,71,161,.08);border-radius:8px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between">
+          <span style="font-size:12px;color:var(--text-secondary)">Total BBM</span>
+          <span id="bbmTotalVal" style="font-size:16px;font-weight:800;color:var(--primary)">Rp 0</span>
+        </div>
+        <div class="extra-info-row" style="margin-top:10px">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          Data ini otomatis tercatat di halaman <strong>BBM</strong> — tidak perlu input ulang.
         </div>
       </div>
-      <div id="nominalPreview" style="display:none;background:var(--gray-50);border-radius:var(--radius);padding:11px;text-align:center;font-size:18px;font-weight:800;color:var(--primary);margin-bottom:12px"></div>
-      <!-- Upload -->
-      <div class="form-row-m">
-        <div class="form-group-m">
-          <label class="form-label-m">Foto Nota</label>
-          <div class="upload-zone" ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleDrop(event,'nota')">
-            <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-            <p><strong>Klik atau drag</strong> foto nota</p>
-            <input type="file" accept="image/*" onchange="handleFile(event,'nota')">
+
+      <!-- ===== PERAWATAN DETAIL (muncul otomatis saat pos Perawatan terpilih) ===== -->
+      <div class="extra-box prw" id="perawatanExtra">
+        <div class="extra-header">
+          <span class="extra-icon">🔧</span>
+          <div>
+            <div class="extra-title">Detail Perawatan Armada</div>
+            <div class="extra-subtitle">Otomatis tercatat di modul Perawatan</div>
           </div>
-          <div id="previewNota" style="display:none" class="upload-preview">
-            <img id="previewNotaImg" src="" alt="Nota">
-            <button class="upload-preview-rm" onclick="removeFile('nota')"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+          <span class="extra-badge prw-badge">Auto-Sync</span>
+        </div>
+        <div class="form-row-m">
+          <div class="form-group-m">
+            <label class="form-label-m">Armada *</label>
+            <select id="fArmadaPrw" class="form-control-m">
+              <option value="">-- Pilih Armada --</option>
+            </select>
+          </div>
+          <div class="form-group-m">
+            <label class="form-label-m">Jenis Perawatan *</label>
+            <select id="fJenisPrw" class="form-control-m">
+              <option value="Service">🔩 Service Berkala</option>
+              <option value="Ganti Oli">🛢️ Ganti Oli</option>
+              <option value="Ganti Ban">🛞 Ganti Ban</option>
+              <option value="Kampas Rem">🛑 Kampas Rem</option>
+              <option value="Kopling">⚙️ Kopling</option>
+              <option value="Tune Up">🔧 Tune Up</option>
+              <option value="Custom">✏️ Lainnya</option>
+            </select>
           </div>
         </div>
+        <div class="form-row-m">
+          <div class="form-group-m">
+            <label class="form-label-m">Keterangan</label>
+            <input type="text" id="fPrwKet" class="form-control-m" placeholder="Contoh: Ganti oli mesin 10W40, km 120.000">
+          </div>
+          <div class="form-group-m">
+            <label class="form-label-m">Jadwal Service Berikutnya</label>
+            <input type="date" id="fNextService" class="form-control-m">
+          </div>
+        </div>
+        <div class="extra-info-row">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          Data ini otomatis tercatat di halaman <strong>Perawatan Armada</strong> — tidak perlu input ulang.
+        </div>
+      </div>
+
+      <!-- ===== PAJAK / STNK / KIR DETAIL (muncul otomatis saat pos Pajak terpilih) ===== -->
+      <div class="extra-box pajak" id="pajakExtra">
+        <div class="extra-header">
+          <span class="extra-icon">📋</span>
+          <div>
+            <div class="extra-title">Update Tanggal Pajak / STNK / KIR</div>
+            <div class="extra-subtitle">Otomatis update di modul Pajak Kendaraan</div>
+          </div>
+          <span class="extra-badge pajak-badge">Auto-Sync</span>
+        </div>
+        <div class="form-group-m">
+          <label class="form-label-m">Armada *</label>
+          <select id="fArmadaPajak" class="form-control-m" onchange="onArmadaPajakChange()">
+            <option value="">-- Pilih Armada --</option>
+          </select>
+        </div>
+        <!-- Current status (shown after armada selected) -->
+        <div id="pajakCurrentStatus" style="display:none;background:var(--gray-50);border-radius:8px;padding:10px 14px;margin-bottom:12px;border:1px solid var(--border-color)">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--text-secondary);margin-bottom:8px">Status Saat Ini</div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+            <div><div style="font-size:10px;color:var(--text-secondary)">STNK</div><div id="currSTNK" style="font-size:12px;font-weight:600">-</div><div id="statSTNK" style="margin-top:2px"></div></div>
+            <div><div style="font-size:10px;color:var(--text-secondary)">KIR</div><div id="currKIR" style="font-size:12px;font-weight:600">-</div><div id="statKIR" style="margin-top:2px"></div></div>
+            <div><div style="font-size:10px;color:var(--text-secondary)">Pajak</div><div id="currPajak" style="font-size:12px;font-weight:600">-</div><div id="statPajak" style="margin-top:2px"></div></div>
+          </div>
+        </div>
+        <!-- Checkboxes untuk pilih yang mau diupdate -->
+        <div style="margin-bottom:12px">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--text-secondary);margin-bottom:8px">Yang Dibayar / Diperpanjang:</div>
+          <div style="display:flex;gap:16px;flex-wrap:wrap">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:500">
+              <input type="checkbox" id="cbSTNK" style="accent-color:var(--primary);width:16px;height:16px" onchange="togglePajakField('STNK')">
+              📄 Perpanjang STNK
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:500">
+              <input type="checkbox" id="cbKIR" style="accent-color:var(--primary);width:16px;height:16px" onchange="togglePajakField('KIR')">
+              🔍 Uji KIR
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:500">
+              <input type="checkbox" id="cbPajak" style="accent-color:var(--primary);width:16px;height:16px" onchange="togglePajakField('Pajak')">
+              💰 Bayar Pajak
+            </label>
+          </div>
+        </div>
+        <!-- Date fields (shown per checkbox) -->
+        <div id="fieldSTNK" style="display:none" class="pajak-date-field">
+          <label class="form-label-m">Tanggal STNK Baru (berlaku s/d) *</label>
+          <input type="date" id="fTglSTNK" class="form-control-m">
+        </div>
+        <div id="fieldKIR" style="display:none" class="pajak-date-field">
+          <label class="form-label-m">Tanggal KIR Baru (berlaku s/d) *</label>
+          <input type="date" id="fTglKIR" class="form-control-m">
+        </div>
+        <div id="fieldPajak" style="display:none" class="pajak-date-field">
+          <label class="form-label-m">Tanggal Pajak Baru (berlaku s/d) *</label>
+          <input type="date" id="fTglPajak" class="form-control-m">
+        </div>
+        <div class="extra-info-row">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          Tanggal otomatis terupdate di <strong>Pajak Kendaraan</strong> — tidak perlu input ulang.
+        </div>
+      </div>
+
+      <!-- Nominal Preview -->
+      <div id="nominalPreview" style="display:none;background:var(--gray-50);border-radius:var(--radius);padding:11px;text-align:center;font-size:20px;font-weight:800;color:var(--primary);margin-bottom:14px"></div>
+
+      <!-- ===== FOTO NOTA & BUKTI TF ===== -->
+      <div class="form-row-m">
+
+        <!-- FOTO NOTA -->
+        <div class="form-group-m">
+          <label class="form-label-m">Foto Nota / Kwitansi</label>
+          <div class="media-upload-box" id="notaBox">
+            <!-- Preview -->
+            <div class="media-upload-preview" id="previewNota">
+              <img id="previewNotaImg" src="" alt="Nota">
+              <div class="media-preview-actions">
+                <button class="media-action-btn retake" onclick="retakePhoto('nota')" title="Ambil ulang">
+                  <svg viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.98"/></svg>
+                </button>
+                <button class="media-action-btn delete" onclick="removeFile('nota')" title="Hapus">
+                  <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+              </div>
+            </div>
+            <!-- Upload buttons (shown when no preview) -->
+            <div class="media-upload-btns" id="notaBtns">
+              <button class="media-upload-btn" onclick="openCamera('nota')" type="button">
+                <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                <span>📸 Buka Kamera</span>
+              </button>
+              <label class="media-upload-btn" style="cursor:pointer">
+                <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                <span>🖼️ Pilih Galeri</span>
+                <input class="media-file-input" id="notaFileInput" type="file" accept="image/*" onchange="handleFile(event,'nota')">
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- BUKTI TRANSFER -->
         <div class="form-group-m">
           <label class="form-label-m">Bukti Transfer</label>
-          <div class="upload-zone" ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleDrop(event,'bukti')">
-            <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-            <p><strong>Klik atau drag</strong> bukti</p>
-            <input type="file" accept="image/*" onchange="handleFile(event,'bukti')">
-          </div>
-          <div id="previewBukti" style="display:none" class="upload-preview">
-            <img id="previewBuktiImg" src="" alt="Bukti">
-            <button class="upload-preview-rm" onclick="removeFile('bukti')"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+          <div class="media-upload-box" id="buktiBox">
+            <div class="media-upload-preview" id="previewBukti">
+              <img id="previewBuktiImg" src="" alt="Bukti">
+              <div class="media-preview-actions">
+                <button class="media-action-btn retake" onclick="retakePhoto('bukti')" title="Ambil ulang">
+                  <svg viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.98"/></svg>
+                </button>
+                <button class="media-action-btn delete" onclick="removeFile('bukti')" title="Hapus">
+                  <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+              </div>
+            </div>
+            <div class="media-upload-btns" id="buktiBtns">
+              <button class="media-upload-btn" onclick="openCamera('bukti')" type="button">
+                <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                <span>📸 Buka Kamera</span>
+              </button>
+              <label class="media-upload-btn" style="cursor:pointer">
+                <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                <span>🖼️ Pilih Galeri</span>
+                <input class="media-file-input" id="buktiFileInput" type="file" accept="image/*" onchange="handleFile(event,'bukti')">
+              </label>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
+
+      </div><!-- /form-row-m -->
+    </div><!-- /modal-body -->
+
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeModal('modalAdd');resetForm()">Batal</button>
-      <button class="btn btn-primary" id="btnSave" onclick="saveData()">
+      <button class="btn btn-primary" id="btnSave" onclick="saveDataFull()">
         <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" fill="none" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Simpan
       </button>
     </div>
   </div>
 </div>
 
-<!-- Lightbox -->
+<!-- ===== KAMERA MODAL ===== -->
+<div class="cam-modal" id="camModal">
+  <div class="cam-title" id="camTitle">📸 Ambil Foto</div>
+  <div class="cam-video-wrap">
+    <video id="camVideo" class="cam-video" autoplay playsinline muted></video>
+    <div class="cam-overlay"></div>
+  </div>
+  <canvas id="camCanvas" class="cam-canvas"></canvas>
+  <div class="cam-error" id="camError" style="display:none"></div>
+  <div class="cam-controls">
+    <button class="cam-btn-cancel" onclick="closeCamera()" title="Batal">
+      <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <button class="cam-shutter" id="camShutter" onclick="capturePhoto()" title="Ambil foto">
+      <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+    </button>
+    <button class="cam-btn-flip" onclick="flipCamera()" title="Ganti kamera">
+      <svg viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.98"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- LIGHTBOX -->
 <div class="lightbox" id="lightbox" onclick="this.classList.remove('show')">
-  <button class="lightbox-close"><svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+  <button class="lightbox-close"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
   <img id="lightboxImg" src="" alt="">
 </div>
 
 <script>
-let pg = 1, totalPg = 1, allPos = [], allArmada = [];
+// ============================================================
+// STATE
+// ============================================================
+let pg = 1, totalPg = 1;
+let allPos = [], allKaryawan = [], allArmada = [], allMappings = [];
 let notaB64 = null, notaMime = null, buktiB64 = null, buktiMime = null;
-let detectedPos = null, posDebounce = null, searchTimeout = null;
+let searchTimeout = null, uraianDebounce = null;
+let camStream = null, camTarget = null, facingMode = 'environment'; // environment = belakang
+let selectedPosId = null, selectedPosName = null;
 
+// ============================================================
+// INIT
+// ============================================================
 document.addEventListener('DOMContentLoaded', async () => {
   initPage('pengeluaran');
   setDefaultDT();
-  await Promise.all([loadPos(), loadArmada()]);
+  await Promise.all([loadPos(), loadKaryawan(), loadArmada(), loadMappings()]);
   loadData();
+
+  // Close dropdown on outside click
+  document.addEventListener('click', e => {
+    if (!e.target.closest('#uraianWrap')) hidePosDropdown();
+    if (!e.target.closest('#namaWrap')) hideNamaDropdown();
+  });
 });
 
 function setDefaultDT() {
-  const now = new Date(), pad = n => String(n).padStart(2,'0');
-  document.getElementById('fTimestamp').value = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
-  document.getElementById('filterMonth').value = `${now.getFullYear()}-${pad(now.getMonth()+1)}`;
+  const now = new Date(), p = n => String(n).padStart(2,'0');
+  document.getElementById('fTimestamp').value =
+    `${now.getFullYear()}-${p(now.getMonth()+1)}-${p(now.getDate())}T${p(now.getHours())}:${p(now.getMinutes())}`;
+  document.getElementById('filterMonth').value =
+    `${now.getFullYear()}-${p(now.getMonth()+1)}`;
 }
 
+// ============================================================
+// LOAD DATA SOURCES
+// ============================================================
 async function loadPos() {
-  const r = await callAPI('getPos', { status:'ACTIVE' });
+  const r = await callAPI('getPos', { status: 'ACTIVE' });
   if (!r.success) return;
   allPos = r.data;
-  const filterSel = document.getElementById('filterPos');
-  const fPos = document.getElementById('fPos');
+  // Populate filter select
+  const fs = document.getElementById('filterPos');
+  // Populate modal selects (both hidden and visible)
+  const fPosV = document.getElementById('fPosVisible');
   allPos.forEach(p => {
-    filterSel.innerHTML += `<option value="${p.id}">${p.namaPos}</option>`;
-    fPos.innerHTML += `<option value="${p.id}" data-name="${p.namaPos}">${p.namaPos}</option>`;
+    fs.innerHTML += `<option value="${p.id}">${p.namaPos}</option>`;
+    fPosV.innerHTML += `<option value="${p.id}" data-name="${p.namaPos}">${p.namaPos}</option>`;
   });
+}
+
+async function loadMappings() {
+  const r = await callAPI('getPosMapping', {});
+  if (!r.success) return;
+  allMappings = r.data; // [{keyword, idPos, namaPos}]
+}
+
+async function loadKaryawan() {
+  const r = await callAPI('getKaryawan', { status: 'ACTIVE' });
+  allKaryawan = r.success ? r.data : [];
 }
 
 async function loadArmada() {
-  const r = await callAPI('getArmada', { status:'ACTIVE' });
+  const r = await callAPI('getArmada', { status: 'ACTIVE' });
   if (!r.success) return;
   allArmada = r.data;
-  ['fArmada','fArmadaPrw'].forEach(id => {
+  ['fArmada','fArmadaPrw','fArmadaPajak'].forEach(id => {
     const sel = document.getElementById(id);
-    allArmada.forEach(a => { sel.innerHTML += `<option value="${a.id}" data-nopol="${a.noPolisi}">${a.noPolisi} – ${a.merk}</option>`; });
+    if (!sel) return;
+    allArmada.forEach(a => {
+      sel.innerHTML += `<option value="${a.id}" data-nopol="${a.noPolisi}">${a.noPolisi} – ${a.merk}</option>`;
+    });
   });
 }
 
+// ============================================================
+// LOAD TABLE DATA
+// ============================================================
 async function loadData() {
   showSkeleton('tableBody', 5, 9);
   const r = await callAPI('getPengeluaran', {
@@ -277,7 +666,7 @@ async function loadData() {
     filterPos: document.getElementById('filterPos').value,
     filterMonth: document.getElementById('filterMonth').value
   });
-  if (!r.success) { showToast('Gagal memuat data.','error'); return; }
+  if (!r.success) { showToast('Gagal memuat data.', 'error'); return; }
   totalPg = r.totalPages || 1;
   document.getElementById('resultInfo').textContent = r.total + ' data';
   document.getElementById('pageInfo').textContent = `Hal ${r.page} dari ${totalPg}`;
@@ -288,11 +677,11 @@ async function loadData() {
 
 function updateSummary(data) {
   const total = data.reduce((s,r) => s+r.nominal, 0);
-  const max = data.length ? Math.max(...data.map(r => r.nominal)) : 0;
+  const max   = data.length ? Math.max(...data.map(r => r.nominal)) : 0;
   document.getElementById('sumTotal').textContent = formatRupiah(total);
   document.getElementById('sumCount').textContent = data.length + ' transaksi';
-  document.getElementById('sumAvg').textContent = formatRupiah(data.length ? Math.round(total/data.length) : 0);
-  document.getElementById('sumMax').textContent = formatRupiah(max);
+  document.getElementById('sumAvg').textContent   = formatRupiah(data.length ? Math.round(total/data.length) : 0);
+  document.getElementById('sumMax').textContent   = formatRupiah(max);
 }
 
 function renderTable(data, page, limit) {
@@ -308,12 +697,12 @@ function renderTable(data, page, limit) {
     const no = (page-1)*limit+i+1;
     const nota = r.fotoNotaURL
       ? `<img class="nota-thumb" src="${r.fotoNotaURL}" onclick="openLB('${r.fotoNotaURL}')">`
-      : `<div class="no-nota"><svg viewBox="0 0 24 24" width="14" height="14" stroke="var(--gray-400)" fill="none" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/></svg></div>`;
+      : `<div class="no-nota"><svg viewBox="0 0 24 24" width="13" height="13" stroke="var(--gray-400)" fill="none" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/></svg></div>`;
     return `<tr>
       <td style="font-weight:600;color:var(--text-secondary)">${no}</td>
       <td style="font-size:12px;white-space:nowrap">${r.timestamp}</td>
-      <td style="font-weight:500;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.nama}</td>
-      <td style="max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px" title="${r.uraian}">${r.uraian}</td>
+      <td style="font-weight:500;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r.nama}">${r.nama}</td>
+      <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px" title="${r.uraian}">${r.uraian}</td>
       <td><span class="badge badge-info">${r.namaPos||'-'}</span></td>
       <td style="font-weight:700;white-space:nowrap">${formatRupiah(r.nominal)}</td>
       <td><span class="badge ${r.metodePembayaran==='Tunai'?'badge-success':'badge-gray'}">${r.metodePembayaran}</span></td>
@@ -333,42 +722,202 @@ function renderTable(data, page, limit) {
 function changePage(p) { pg = p; loadData(); window.scrollTo({top:0,behavior:'smooth'}); }
 function debounceSearch() { clearTimeout(searchTimeout); searchTimeout = setTimeout(() => { pg=1; loadData(); }, 400); }
 
-// Smart Pos
-function handleUraian(val) {
-  clearTimeout(posDebounce);
-  posDebounce = setTimeout(async () => {
-    if (!val || val.length < 3) { hideSuggest(); return; }
-    const r = await callAPI('detectPos', { uraian: val });
-    if (r.success && r.data) {
-      detectedPos = r.data;
-      document.getElementById('posSuggestVal').textContent = '📌 ' + r.data.namaPos + ' — klik untuk pilih';
-      document.getElementById('posSuggest').classList.add('show');
-    } else hideSuggest();
-  }, 400);
+// ============================================================
+// NAMA DROPDOWN — Karyawan + Custom
+// ============================================================
+let namaMode = 'dropdown'; // 'dropdown' | 'custom'
+
+function onNamaInput(val) {
+  if (namaMode === 'custom') return; // ketik bebas
+  showNamaDropdown(val);
 }
-function hideSuggest() { document.getElementById('posSuggest').classList.remove('show'); }
-function acceptPos() {
-  if (!detectedPos) return;
-  const fPos = document.getElementById('fPos');
-  for (let i = 0; i < fPos.options.length; i++) {
-    if (fPos.options[i].value === detectedPos.idPos) { fPos.selectedIndex = i; break; }
+
+function showNamaDropdown(filter = '') {
+  const dd = document.getElementById('namaDropdown');
+  const q  = filter.toLowerCase();
+
+  const filtered = allKaryawan.filter(k =>
+    !q || k.nama.toLowerCase().includes(q) || (k.jabatan||'').toLowerCase().includes(q)
+  ).slice(0, 8);
+
+  const colors = ['#0D47A1','#1565C0','#0288D1','#00838F','#558B2F','#6A1B9A'];
+  let html = filtered.map((k, i) => {
+    const initials = k.nama.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
+    return `<div class="dd-item" onclick="selectNama('${k.nama.replace(/'/g,"\\'")}')" >
+      <div class="dd-avatar" style="background:${colors[i%colors.length]}">${initials}</div>
+      <div class="dd-label">
+        <div style="font-weight:600;color:var(--text-primary)">${k.nama}</div>
+        <div class="dd-sub">${k.jabatan||''}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Custom option
+  html += `<div class="dd-item dd-custom" onclick="enableCustomNama()">
+    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    Ketik nama lainnya (supplier/vendor)
+  </div>`;
+
+  if (!filtered.length && !q) {
+    html = `<div class="dd-item dd-custom" onclick="enableCustomNama()">
+      <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Ketik nama supplier/vendor/lainnya
+    </div>`;
   }
-  document.getElementById('fPosId').value = detectedPos.idPos;
-  hideSuggest(); onPosChange();
-  showToast('Pos "' + detectedPos.namaPos + '" dipilih otomatis.','info');
+
+  dd.innerHTML = html;
+  dd.classList.add('show');
 }
-function onPosChange() {
-  const sel = document.getElementById('fPos');
-  const name = (sel.options[sel.selectedIndex]?.dataset.name || '').toLowerCase();
-  document.getElementById('fPosId').value = sel.value;
-  document.getElementById('bbmExtra').style.display = name.includes('bbm') || name.includes('bahan bakar') ? 'block' : 'none';
-  document.getElementById('perawatanExtra').style.display = name.includes('perawatan') ? 'block' : 'none';
+
+function selectNama(nama) {
+  document.getElementById('fNama').value = nama;
+  namaMode = 'dropdown';
+  document.getElementById('namaIsCustom').style.display = 'none';
+  hideNamaDropdown();
 }
+
+function enableCustomNama() {
+  namaMode = 'custom';
+  const input = document.getElementById('fNama');
+  input.value = '';
+  input.placeholder = 'Ketik nama supplier/vendor...';
+  input.focus();
+  document.getElementById('namaIsCustom').style.display = 'block';
+  hideNamaDropdown();
+}
+
+function hideNamaDropdown() {
+  document.getElementById('namaDropdown').classList.remove('show');
+}
+
+// ============================================================
+// URAIAN — Pos Keyword Dropdown
+// ============================================================
+function onUraianInput(val) {
+  clearTimeout(uraianDebounce);
+  uraianDebounce = setTimeout(() => {
+    if (!val || val.length < 2) { hidePosDropdown(); return; }
+    showPosDropdown(val);
+    // Juga auto-detect lewat API
+    autoDetectPos(val);
+  }, 300);
+}
+
+function showPosDropdown(query) {
+  const q = query.toLowerCase();
+  // Filter allMappings yang keyword-nya ada di uraian
+  const matched = allMappings.filter(m => q.includes(m.keyword.toLowerCase()));
+  // Juga tampilkan semua pos sebagai fallback (tapi yang match duluan)
+  const unmatchedPos = allPos.filter(p => !matched.find(m => m.idPos === p.id));
+
+  const itemsEl = document.getElementById('posDropdownItems');
+  let html = '';
+
+  if (matched.length) {
+    matched.forEach(m => {
+      html += `<div class="pos-dd-item highlight" onclick="selectPos('${m.idPos}','${m.namaPos.replace(/'/g,"\\'")}')">
+        <span class="pos-dd-keyword">${m.keyword}</span>
+        <div>
+          <div class="pos-dd-name">${m.namaPos}</div>
+        </div>
+        <span class="pos-dd-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>
+      </div>`;
+    });
+  }
+
+  // Tampilkan pos lain yang tidak match
+  if (!matched.length) {
+    allPos.slice(0,6).forEach(p => {
+      html += `<div class="pos-dd-item" onclick="selectPos('${p.id}','${p.namaPos.replace(/'/g,"\\'")}')">
+        <div>
+          <div class="pos-dd-name">${p.namaPos}</div>
+          <div class="pos-dd-cat">${p.kategori||''}</div>
+        </div>
+      </div>`;
+    });
+  }
+
+  if (!html) { hidePosDropdown(); return; }
+  itemsEl.innerHTML = html;
+  document.getElementById('posDropdown').classList.add('show');
+}
+
+function hidePosDropdown() {
+  document.getElementById('posDropdown').classList.remove('show');
+}
+
+async function autoDetectPos(uraian) {
+  const r = await callAPI('detectPos', { uraian });
+  if (r.success && r.data && !selectedPosId) {
+    // Auto-set pos jika belum dipilih
+    selectPos(r.data.idPos, r.data.namaPos);
+  }
+}
+
+function selectPos(idPos, namaPos) {
+  selectedPosId = idPos;
+  selectedPosName = namaPos;
+  // Update visible select
+  const fPosV = document.getElementById('fPosVisible');
+  for (let i=0; i<fPosV.options.length; i++) {
+    if (fPosV.options[i].value === idPos) { fPosV.selectedIndex = i; break; }
+  }
+  document.getElementById('fPosId').value = idPos;
+  // Show chip
+  document.getElementById('posSelectedName').textContent = namaPos;
+  document.getElementById('posSelectedChip').classList.add('show');
+  hidePosDropdown();
+  handlePosExtras(namaPos);
+  showToast('Pos "' + namaPos + '" dipilih.', 'info', 2000);
+}
+
+function clearPos() {
+  selectedPosId = null; selectedPosName = null;
+  document.getElementById('fPosVisible').selectedIndex = 0;
+  document.getElementById('fPosId').value = '';
+  document.getElementById('posSelectedChip').classList.remove('show');
+  ['bbmExtra','perawatanExtra','pajakExtra'].forEach(id => {
+    document.getElementById(id).classList.remove('show');
+  });
+  // Reset pajak checkboxes
+  ['cbSTNK','cbKIR','cbPajak'].forEach(id => { const el = document.getElementById(id); if(el) el.checked = false; });
+  ['fieldSTNK','fieldKIR','fieldPajak'].forEach(id => { const el = document.getElementById(id); if(el) el.style.display='none'; });
+  ['fTglSTNK','fTglKIR','fTglPajak','fPrwKet','fNextService'].forEach(id => { const el = document.getElementById(id); if(el) el.value=''; });
+  document.getElementById('pajakCurrentStatus').style.display = 'none';
+  document.getElementById('fArmadaPajak').value = '';
+  document.getElementById('bbmTotalPreview').style.display = 'none';
+}
+
+function onPosVisibleChange() {
+  const sel = document.getElementById('fPosVisible');
+  const name = sel.options[sel.selectedIndex]?.dataset.name || sel.options[sel.selectedIndex]?.text || '';
+  selectPos(sel.value, name);
+}
+
+function handlePosExtras(name) {
+  const n = name.toLowerCase();
+  const isBBM      = n.includes('bbm') || n.includes('bahan bakar') || n.includes('solar') || n.includes('pertalite');
+  const isPrw      = n.includes('perawatan');
+  const isPajak    = n.includes('pajak') || n.includes('stnk') || n.includes('kir');
+
+  document.getElementById('bbmExtra').classList.toggle('show', isBBM);
+  document.getElementById('perawatanExtra').classList.toggle('show', isPrw);
+  document.getElementById('pajakExtra').classList.toggle('show', isPajak);
+
+  // Update nominalPreview positioning
+  if (!isBBM && !isPrw && !isPajak) {
+    document.getElementById('bbmExtra').classList.remove('show');
+    document.getElementById('perawatanExtra').classList.remove('show');
+    document.getElementById('pajakExtra').classList.remove('show');
+  }
+}
+
 function calcBBM() {
   const l = parseFloat(document.getElementById('fLiter').value)||0;
   const h = parseFloat(document.getElementById('fHargaL').value)||0;
   if (l*h > 0) { document.getElementById('fNominal').value = l*h; showNominalPreview(); }
 }
+
 function showNominalPreview() {
   const v = parseFloat(document.getElementById('fNominal').value)||0;
   const el = document.getElementById('nominalPreview');
@@ -376,65 +925,187 @@ function showNominalPreview() {
   el.textContent = formatRupiah(v);
 }
 
-// File upload
+// ============================================================
+// FILE UPLOAD — Gallery
+// ============================================================
 function handleFile(e, type) {
   const file = e.target.files[0]; if (!file) return;
-  if (file.size > 5*1024*1024) { showToast('File terlalu besar (max 5MB).','error'); return; }
+  if (file.size > 10*1024*1024) { showToast('File terlalu besar (max 10MB).','error'); return; }
+  processImageFile(file, type);
+}
+
+function processImageFile(file, type) {
   const reader = new FileReader();
   reader.onload = ev => {
-    const b64 = ev.target.result.split(',')[1], mime = file.type;
-    if (type === 'nota') { notaB64=b64; notaMime=mime; document.getElementById('previewNotaImg').src=ev.target.result; document.getElementById('previewNota').style.display='block'; }
-    else { buktiB64=b64; buktiMime=mime; document.getElementById('previewBuktiImg').src=ev.target.result; document.getElementById('previewBukti').style.display='block'; }
+    const src = ev.target.result;
+    const b64 = src.split(',')[1];
+    const mime = file.type || 'image/jpeg';
+    setMediaPreview(type, src, b64, mime);
   };
   reader.readAsDataURL(file);
 }
-function handleDrop(e, type) {
-  e.preventDefault(); e.currentTarget.classList.remove('dragover');
-  const file = e.dataTransfer.files[0]; if (file) handleFile({target:{files:[file]}}, type);
-}
-function removeFile(type) {
-  if (type==='nota') { notaB64=null; document.getElementById('previewNota').style.display='none'; }
-  else { buktiB64=null; document.getElementById('previewBukti').style.display='none'; }
+
+function setMediaPreview(type, src, b64, mime) {
+  if (type === 'nota') {
+    notaB64 = b64; notaMime = mime;
+    document.getElementById('previewNotaImg').src = src;
+    document.getElementById('previewNota').style.display = 'block';
+    document.getElementById('notaBtns').style.display = 'none';
+  } else {
+    buktiB64 = b64; buktiMime = mime;
+    document.getElementById('previewBuktiImg').src = src;
+    document.getElementById('previewBukti').style.display = 'block';
+    document.getElementById('buktiBtns').style.display = 'none';
+  }
 }
 
-// Save
+function removeFile(type) {
+  if (type === 'nota') {
+    notaB64 = null; notaMime = null;
+    document.getElementById('previewNota').style.display = 'none';
+    document.getElementById('notaBtns').style.display = 'grid';
+    document.getElementById('notaFileInput').value = '';
+  } else {
+    buktiB64 = null; buktiMime = null;
+    document.getElementById('previewBukti').style.display = 'none';
+    document.getElementById('buktiBtns').style.display = 'grid';
+    document.getElementById('buktiFileInput').value = '';
+  }
+}
+
+function retakePhoto(type) {
+  removeFile(type);
+}
+
+// ============================================================
+// KAMERA
+// ============================================================
+async function openCamera(target) {
+  camTarget = target;
+  document.getElementById('camTitle').textContent = target === 'nota' ? '📸 Ambil Foto Nota' : '📸 Ambil Foto Bukti Transfer';
+  document.getElementById('camError').style.display = 'none';
+  document.getElementById('camModal').classList.add('show');
+
+  await startCamera();
+}
+
+async function startCamera() {
+  // Stop existing stream
+  if (camStream) { camStream.getTracks().forEach(t => t.stop()); camStream = null; }
+
+  try {
+    camStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode, width: { ideal: 1920 }, height: { ideal: 1080 } },
+      audio: false
+    });
+    const video = document.getElementById('camVideo');
+    video.srcObject = camStream;
+    await video.play();
+    document.getElementById('camError').style.display = 'none';
+  } catch (err) {
+    console.error('Camera error:', err);
+    const errEl = document.getElementById('camError');
+    if (err.name === 'NotAllowedError') {
+      errEl.textContent = '⛔ Izin kamera ditolak. Aktifkan izin kamera di pengaturan browser.';
+    } else if (err.name === 'NotFoundError') {
+      errEl.textContent = '📷 Kamera tidak ditemukan di perangkat ini.';
+    } else {
+      errEl.textContent = '❌ Gagal membuka kamera: ' + err.message;
+    }
+    errEl.style.display = 'block';
+  }
+}
+
+async function flipCamera() {
+  facingMode = facingMode === 'environment' ? 'user' : 'environment';
+  await startCamera();
+}
+
+function capturePhoto() {
+  const video   = document.getElementById('camVideo');
+  const canvas  = document.getElementById('camCanvas');
+  if (!camStream || !video.videoWidth) {
+    showToast('Kamera belum siap.', 'warning'); return;
+  }
+  canvas.width  = video.videoWidth;
+  canvas.height = video.videoHeight;
+  canvas.getContext('2d').drawImage(video, 0, 0);
+
+  const src  = canvas.toDataURL('image/jpeg', 0.92);
+  const b64  = src.split(',')[1];
+  const mime = 'image/jpeg';
+
+  setMediaPreview(camTarget, src, b64, mime);
+  closeCamera();
+  showToast('Foto berhasil diambil!', 'success', 2000);
+}
+
+function closeCamera() {
+  if (camStream) { camStream.getTracks().forEach(t => t.stop()); camStream = null; }
+  document.getElementById('camModal').classList.remove('show');
+  camTarget = null;
+}
+
+// ============================================================
+// SAVE / EDIT / DELETE
+// ============================================================
 async function saveData() {
-  const id = document.getElementById('editId').value;
-  const ts = document.getElementById('fTimestamp').value;
-  const nama = document.getElementById('fNama').value.trim();
+  const id     = document.getElementById('editId').value;
+  const ts     = document.getElementById('fTimestamp').value;
+  const nama   = document.getElementById('fNama').value.trim();
   const uraian = document.getElementById('fUraian').value.trim();
-  const fPosSel = document.getElementById('fPos');
-  const idPos = fPosSel.value;
-  const namaPos = fPosSel.options[fPosSel.selectedIndex]?.dataset.name || fPosSel.options[fPosSel.selectedIndex]?.text || '';
-  const nominal = document.getElementById('fNominal').value;
-  if (!ts||!nama||!uraian||!idPos||!nominal||Number(nominal)<=0) { showToast('Semua field wajib diisi.','error'); return; }
+  const idPos  = document.getElementById('fPosId').value || document.getElementById('fPosVisible').value;
+  const fPosV  = document.getElementById('fPosVisible');
+  const namaPos= selectedPosName || fPosV.options[fPosV.selectedIndex]?.dataset.name || '';
+  const nominal= document.getElementById('fNominal').value;
+
+  if (!ts)     { showToast('Tanggal wajib diisi.','error'); return; }
+  if (!nama)   { showToast('Nama penerima wajib diisi.','error'); return; }
+  if (!uraian) { showToast('Uraian wajib diisi.','error'); return; }
+  if (!idPos)  { showToast('Pos wajib dipilih.','error'); return; }
+  if (!nominal || Number(nominal)<=0) { showToast('Nominal wajib diisi.','error'); return; }
+
   const btn = document.getElementById('btnSave');
-  btn.disabled=true; btn.innerHTML='<span class="spinner"></span> Menyimpan...';
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Menyimpan...';
+
   const armSel = document.getElementById('fArmada');
-  const nopol = armSel.options[armSel.selectedIndex]?.dataset.nopol || '';
-  const r = await callAPI(id?'updatePengeluaran':'addPengeluaran', {
-    id, timestamp:ts, nama, uraian, idPos, namaPos, nominal:Number(nominal),
-    metodePembayaran:document.getElementById('fMetode').value, noPolisi:nopol,
-    idArmada:armSel.value, jenisBBM:document.getElementById('fJenisBBM').value,
-    liter:document.getElementById('fLiter').value, hargaPerLiter:document.getElementById('fHargaL').value,
-    fotoNotaBase64:notaB64, fotoNotaMimeType:notaMime, buktiBase64:buktiB64, buktiMimeType:buktiMime
+  const nopol  = armSel.options[armSel.selectedIndex]?.dataset.nopol || '';
+
+  const r = await callAPI(id ? 'updatePengeluaran' : 'addPengeluaran', {
+    id, timestamp: ts, nama, uraian, idPos, namaPos,
+    nominal: Number(nominal),
+    metodePembayaran: document.getElementById('fMetode').value,
+    noPolisi: nopol, idArmada: armSel.value,
+    jenisBBM: document.getElementById('fJenisBBM').value,
+    liter: document.getElementById('fLiter').value,
+    hargaPerLiter: document.getElementById('fHargaL').value,
+    fotoNotaBase64: notaB64, fotoNotaMimeType: notaMime,
+    buktiBase64: buktiB64, buktiMimeType: buktiMime
   });
-  btn.disabled=false;
-  btn.innerHTML='<svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" fill="none" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Simpan';
-  if (r.success) { showToast(r.message,'success'); closeModal('modalAdd'); resetForm(); pg=1; loadData(); }
-  else showToast(r.error,'error');
+
+  btn.disabled = false;
+  btn.innerHTML = '<svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" fill="none" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Simpan';
+
+  if (r.success) {
+    showToast(r.message || 'Pengeluaran disimpan.', 'success');
+    closeModal('modalAdd'); resetForm(); pg = 1; loadData();
+  } else showToast(r.error || 'Gagal menyimpan.', 'error');
 }
 
 function editRow(row) {
   document.getElementById('editId').value = row.id;
   document.getElementById('modalTitle').textContent = 'Edit Pengeluaran';
   document.getElementById('fTimestamp').value = row.timestamp ? row.timestamp.replace(' ','T').substring(0,16) : '';
+  // Set nama
+  namaMode = 'custom';
   document.getElementById('fNama').value = row.nama;
+  document.getElementById('namaIsCustom').style.display = 'block';
   document.getElementById('fUraian').value = row.uraian;
   document.getElementById('fNominal').value = row.nominal;
   document.getElementById('fMetode').value = row.metodePembayaran || 'Tunai';
-  const fPos = document.getElementById('fPos');
-  for (let i=0; i<fPos.options.length; i++) { if (fPos.options[i].value===row.idPos) { fPos.selectedIndex=i; break; } }
+  // Set pos
+  if (row.idPos) selectPos(row.idPos, row.namaPos);
   showNominalPreview();
   openModal('modalAdd');
 }
@@ -442,24 +1113,47 @@ function editRow(row) {
 async function delRow(id, uraian) {
   confirmAction(`Hapus pengeluaran "${uraian}"?`, async () => {
     const r = await callAPI('deletePengeluaran', { id });
-    if (r.success) { showToast('Dihapus.','success'); loadData(); } else showToast(r.error,'error');
+    if (r.success) { showToast('Pengeluaran dihapus.','success'); loadData(); }
+    else showToast(r.error,'error');
   });
 }
 
 function resetForm() {
   document.getElementById('editId').value = '';
   document.getElementById('modalTitle').textContent = 'Tambah Pengeluaran';
-  ['fNama','fUraian','fNominal','fLiter','fHargaL'].forEach(i => document.getElementById(i).value='');
-  document.getElementById('fPos').selectedIndex=0;
-  document.getElementById('fMetode').value='Tunai';
-  document.getElementById('bbmExtra').style.display='none';
-  document.getElementById('perawatanExtra').style.display='none';
-  document.getElementById('nominalPreview').style.display='none';
-  removeFile('nota'); removeFile('bukti'); setDefaultDT();
+  ['fNama','fUraian','fNominal','fLiter','fHargaL'].forEach(i => document.getElementById(i).value = '');
+  document.getElementById('fPosVisible').selectedIndex = 0;
+  document.getElementById('fMetode').value = 'Tunai';
+  ['bbmExtra','perawatanExtra','pajakExtra'].forEach(id => {
+    document.getElementById(id).classList.remove('show');
+  });
+  // Reset pajak checkboxes
+  ['cbSTNK','cbKIR','cbPajak'].forEach(id => { const el = document.getElementById(id); if(el) el.checked = false; });
+  ['fieldSTNK','fieldKIR','fieldPajak'].forEach(id => { const el = document.getElementById(id); if(el) el.style.display='none'; });
+  ['fTglSTNK','fTglKIR','fTglPajak','fPrwKet','fNextService'].forEach(id => { const el = document.getElementById(id); if(el) el.value=''; });
+  document.getElementById('pajakCurrentStatus').style.display = 'none';
+  document.getElementById('fArmadaPajak').value = '';
+  document.getElementById('bbmTotalPreview').style.display = 'none';
+  document.getElementById('nominalPreview').style.display = 'none';
+  namaMode = 'dropdown';
+  document.getElementById('namaIsCustom').style.display = 'none';
+  document.getElementById('fNama').placeholder = 'Pilih karyawan atau ketik nama supplier...';
+  clearPos();
+  removeFile('nota'); removeFile('bukti');
+  setDefaultDT();
 }
 
-function openLB(url) { document.getElementById('lightboxImg').src=url; document.getElementById('lightbox').classList.add('show'); }
+// ============================================================
+// LIGHTBOX
+// ============================================================
+function openLB(url) {
+  document.getElementById('lightboxImg').src = url;
+  document.getElementById('lightbox').classList.add('show');
+}
 
+// ============================================================
+// EXPORT PDF
+// ============================================================
 function exportPDF() {
   const {jsPDF} = window.jspdf;
   const doc = new jsPDF({orientation:'landscape'});
@@ -467,14 +1161,212 @@ function exportPDF() {
   doc.text('Laporan Pengeluaran', 14, 18);
   doc.setFont('helvetica','normal'); doc.setFontSize(10);
   doc.text('Dicetak: '+new Date().toLocaleString('id-ID'), 14, 26);
-  const rows=[];
+  const rows = [];
   document.querySelectorAll('#tableBody tr').forEach(tr => {
     const tds = tr.querySelectorAll('td');
-    if (tds.length>=7) rows.push([tds[0].textContent,tds[1].textContent,tds[2].textContent,tds[3].textContent,tds[4].textContent,tds[5].textContent,tds[6].textContent]);
+    if (tds.length >= 7) rows.push([tds[0].textContent,tds[1].textContent,tds[2].textContent,tds[3].textContent,tds[4].textContent,tds[5].textContent,tds[6].textContent]);
   });
-  doc.autoTable({head:[['No','Tanggal','Nama','Uraian','Pos','Nominal','Metode']],body:rows,startY:32,styles:{fontSize:9},headStyles:{fillColor:[13,71,161],textColor:255,fontStyle:'bold'},alternateRowStyles:{fillColor:[245,249,255]}});
+  doc.autoTable({
+    head:[['No','Tanggal','Nama','Uraian','Pos','Nominal','Metode']],
+    body: rows, startY:32, styles:{fontSize:9},
+    headStyles:{fillColor:[13,71,161],textColor:255,fontStyle:'bold'},
+    alternateRowStyles:{fillColor:[245,249,255]}
+  });
   doc.save('Pengeluaran_'+new Date().toLocaleDateString('id-ID').replace(/\//g,'-')+'.pdf');
 }
+
+// ============================================================
+// BBM CALC
+// ============================================================
+function calcBBM() {
+  const l = parseFloat(document.getElementById('fLiter').value) || 0;
+  const h = parseFloat(document.getElementById('fHargaL').value) || 0;
+  const total = l * h;
+  const preview = document.getElementById('bbmTotalPreview');
+  if (total > 0) {
+    preview.style.display = 'flex';
+    document.getElementById('bbmTotalVal').textContent = formatRupiah(total);
+    // Auto-fill nominal
+    document.getElementById('fNominal').value = total;
+    showNominalPreview();
+  } else {
+    preview.style.display = 'none';
+  }
+}
+
+// ============================================================
+// PAJAK ARMADA CHANGE — Load current status
+// ============================================================
+async function onArmadaPajakChange() {
+  const sel   = document.getElementById('fArmadaPajak');
+  const id    = sel.value;
+  const nopol = sel.options[sel.selectedIndex]?.dataset.nopol || '';
+  if (!id) { document.getElementById('pajakCurrentStatus').style.display = 'none'; return; }
+
+  // Fetch pajak data for this armada
+  const r = await callAPI('getPajak', { search: nopol });
+  if (!r.success || !r.data.length) {
+    document.getElementById('pajakCurrentStatus').style.display = 'none'; return;
+  }
+  const d = r.data.find(p => p.idArmada === id) || r.data[0];
+
+  document.getElementById('currSTNK').textContent  = d.tanggalSTNK  || 'Belum diisi';
+  document.getElementById('currKIR').textContent   = d.tanggalKIR   || 'Belum diisi';
+  document.getElementById('currPajak').textContent = d.tanggalPajak || 'Belum diisi';
+
+  const renderStat = (status) => {
+    if (!status || status === 'N/A') return '';
+    if (status === 'TERLAMBAT')        return '<span class="status-pill status-late">🚨 Terlambat</span>';
+    if (status === 'SEGERA_JATUH_TEMPO') return '<span class="status-pill status-warn">⚠️ Segera</span>';
+    return '<span class="status-pill status-aman">✅ Aman</span>';
+  };
+
+  document.getElementById('statSTNK').innerHTML  = renderStat(d.statusSTNK);
+  document.getElementById('statKIR').innerHTML   = renderStat(d.statusKIR);
+  document.getElementById('statPajak').innerHTML = renderStat(d.statusPajak);
+
+  // Store pajak ID for later update
+  document.getElementById('fArmadaPajak').dataset.pajakId = d.id || '';
+  document.getElementById('pajakCurrentStatus').style.display = 'block';
+}
+
+function togglePajakField(type) {
+  const cb    = document.getElementById('cb' + type);
+  const field = document.getElementById('field' + type);
+  field.style.display = cb.checked ? 'block' : 'none';
+}
+
+// ============================================================
+// OVERWRITE saveData to also sync BBM / Perawatan / Pajak
+// ============================================================
+const _originalSaveData = saveData;
+// We'll redefine saveData below to handle the new modules
+
+async function saveDataFull() {
+  const id     = document.getElementById('editId').value;
+  const ts     = document.getElementById('fTimestamp').value;
+  const nama   = document.getElementById('fNama').value.trim();
+  const uraian = document.getElementById('fUraian').value.trim();
+  const idPos  = document.getElementById('fPosId').value || document.getElementById('fPosVisible').value;
+  const fPosV  = document.getElementById('fPosVisible');
+  const namaPos = selectedPosName || fPosV.options[fPosV.selectedIndex]?.dataset.name || '';
+  const nominal = document.getElementById('fNominal').value;
+
+  if (!ts)     { showToast('Tanggal wajib diisi.','error'); return; }
+  if (!nama)   { showToast('Nama penerima wajib diisi.','error'); return; }
+  if (!uraian) { showToast('Uraian wajib diisi.','error'); return; }
+  if (!idPos)  { showToast('Pos wajib dipilih.','error'); return; }
+  if (!nominal || Number(nominal)<=0) { showToast('Nominal wajib diisi.','error'); return; }
+
+  // Validate BBM if shown
+  const bbmShown = document.getElementById('bbmExtra').classList.contains('show');
+  if (bbmShown) {
+    if (!document.getElementById('fArmada').value) { showToast('Pilih armada untuk BBM.','error'); return; }
+    if (!document.getElementById('fLiter').value)  { showToast('Liter BBM wajib diisi.','error'); return; }
+    if (!document.getElementById('fHargaL').value) { showToast('Harga per liter wajib diisi.','error'); return; }
+  }
+
+  // Validate Pajak if shown
+  const pajakShown = document.getElementById('pajakExtra').classList.contains('show');
+  if (pajakShown) {
+    if (!document.getElementById('fArmadaPajak').value) { showToast('Pilih armada untuk update pajak.','error'); return; }
+    const anyChecked = ['cbSTNK','cbKIR','cbPajak'].some(id => document.getElementById(id).checked);
+    if (!anyChecked) { showToast('Centang minimal satu jenis pajak yang dibayar.','error'); return; }
+  }
+
+  const btn = document.getElementById('btnSave');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Menyimpan...';
+
+  try {
+    // 1. Save pengeluaran utama
+    const armSel = document.getElementById('fArmada');
+    const nopol  = armSel.options[armSel.selectedIndex]?.dataset.nopol || '';
+
+    const r = await callAPI(id ? 'updatePengeluaran' : 'addPengeluaran', {
+      id, timestamp: ts, nama, uraian, idPos, namaPos,
+      nominal: Number(nominal),
+      metodePembayaran: document.getElementById('fMetode').value,
+      noPolisi: nopol, idArmada: armSel.value,
+      jenisBBM: document.getElementById('fJenisBBM').value,
+      liter: document.getElementById('fLiter').value,
+      hargaPerLiter: document.getElementById('fHargaL').value,
+      fotoNotaBase64: notaB64, fotoNotaMimeType: notaMime,
+      buktiBase64: buktiB64, buktiMimeType: buktiMime
+    });
+
+    if (!r.success) { showToast(r.error || 'Gagal menyimpan pengeluaran.','error'); return; }
+
+    const pengeluaranId = r.id || id;
+    const results = ['✅ Pengeluaran disimpan'];
+
+    // 2. Sync BBM
+    if (bbmShown && !id) {
+      const liter        = parseFloat(document.getElementById('fLiter').value) || 0;
+      const hargaPerLiter= parseFloat(document.getElementById('fHargaL').value) || 0;
+      const armadaPilih  = document.getElementById('fArmada');
+      const noPolBBM     = armadaPilih.options[armadaPilih.selectedIndex]?.dataset.nopol || '';
+
+      const rBBM = await callAPI('addBBM', {
+        tanggal: ts.split('T')[0],
+        idArmada: armadaPilih.value,
+        noPolisi: noPolBBM,
+        jenisBBM: document.getElementById('fJenisBBM').value,
+        liter, hargaPerLiter
+      });
+      results.push(rBBM.success ? '⛽ Data BBM tersimpan' : '⚠️ BBM gagal sync');
+    }
+
+    // 3. Sync Perawatan
+    const prwShown = document.getElementById('perawatanExtra').classList.contains('show');
+    if (prwShown && !id) {
+      const armPrw   = document.getElementById('fArmadaPrw');
+      const noPolPrw = armPrw.options[armPrw.selectedIndex]?.dataset.nopol || '';
+      const rPrw = await callAPI('addPerawatan', {
+        tanggal: ts.split('T')[0],
+        idArmada: armPrw.value,
+        noPolisi: noPolPrw,
+        jenisPerawatan: document.getElementById('fJenisPrw').value,
+        biaya: Number(nominal),
+        keterangan: document.getElementById('fPrwKet').value,
+        nextServiceDate: document.getElementById('fNextService').value
+      });
+      results.push(rPrw.success ? '🔧 Data Perawatan tersimpan' : '⚠️ Perawatan gagal sync');
+    }
+
+    // 4. Sync Pajak
+    if (pajakShown && !id) {
+      const armPajak = document.getElementById('fArmadaPajak');
+      const pajakId  = armPajak.dataset.pajakId;
+
+      if (pajakId) {
+        const updateData = { id: pajakId };
+        if (document.getElementById('cbSTNK').checked)  updateData.tanggalSTNK  = document.getElementById('fTglSTNK').value;
+        if (document.getElementById('cbKIR').checked)   updateData.tanggalKIR   = document.getElementById('fTglKIR').value;
+        if (document.getElementById('cbPajak').checked) updateData.tanggalPajak = document.getElementById('fTglPajak').value;
+
+        const rPajak = await callAPI('updatePajak', updateData);
+        results.push(rPajak.success ? '📋 Pajak Kendaraan terupdate' : '⚠️ Pajak gagal sync');
+      } else {
+        results.push('⚠️ Pajak: armada tidak ditemukan di database pajak');
+      }
+    }
+
+    // Show all results
+    showToast(results.join(' · '), 'success', 5000);
+    closeModal('modalAdd');
+    resetForm();
+    pg = 1;
+    loadData();
+
+  } catch(e) {
+    showToast('Terjadi error: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" fill="none" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Simpan';
+  }
+}
+
 </script>
 </body>
 </html>
