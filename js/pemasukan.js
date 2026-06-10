@@ -62,7 +62,7 @@ function extractFileId(url) {
     return directId ? directId[1] : (fileId ? fileId[1] : null);
 }
 
-unction renderThumb(url) {
+function renderThumb(url) {
     const id = extractFileId(url);
     if (!id) return '-';
     
