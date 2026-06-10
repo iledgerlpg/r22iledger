@@ -33,22 +33,30 @@ function setDefaultDT() {
 }
 async function loadData() {
   showSkeleton('tableBody', 5);
+  
   const res = await callAPI('getArmada', {
     search: document.getElementById('searchInput').value,
     status: document.getElementById('filterStatus').value
   });
-  if (!res.success) { showToast('Gagal memuat data.','error'); return; }
-  allData = res.data;
+
+  // 1. TARUH DI SINI! Biar kebaca sebelum fungsinya mati kena 'return'
+  console.log("👉 ISI RESPON DARI APPS SCRIPT:", res);
+  
+  // 2. Jika res.success nilainya false, dia bakal berhenti di sini
+  if (!res.success) { 
+    showToast('Gagal memuat data. Pesan: ' + (res.error || 'Tidak diketahui'), 'error'); 
+    return; 
+  }
+  
+  // 3. Jalur aman jika sukses memuat data armada
+  allData = res.data || [];
   document.getElementById('resultInfo').textContent = allData.length + ' armada';
   updateStats(allData);
-  if (currentView === 'grid') renderGrid(allData);
-  else renderList(allData);
-console.log("👉 ISI RESPON DARI APPS SCRIPT:", res); // <--- SELIPIN INI BUAT NGINTIP
   
-  if (res && res.success) {
-    // ... render data ...
+  if (currentView === 'grid') {
+    renderGrid(allData);
   } else {
-    alert("Gagal memuat data");
+    renderList(allData);
   }
 }
 
