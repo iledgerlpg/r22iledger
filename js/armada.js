@@ -3,6 +3,14 @@ let allData = [], currentView = 'grid';
 let selectedFotoBase64 = null, selectedFotoMime = null;
 let searchTimeout = null;
 
+let uploadState = {
+  stnk: { base64: null, mime: null },
+  kir: { base64: null, mime: null },
+  barcode: { base64: null, mime: null }
+};
+
+let searchTimeout = null;
+
 document.addEventListener('DOMContentLoaded', loadData);
 
 async function loadData() {
@@ -44,8 +52,12 @@ function renderGrid(data) {
   }
   container.innerHTML = data.map(a => {
     const stStatus = getStnkStatus(a.tanggalSTNK);
-    const photoHtml = a.fotoURL
-      ? `<img src="${a.fotoURL}" alt="${a.noPolisi}" onerror="this.parentElement.innerHTML='<div class=armada-photo-placeholder><svg viewBox=\'0 0 24 24\'><rect x=\'1\' y=\'3\' width=\'15\' height=\'13\' rx=\'1\'/></svg></div>'">`
+    
+    // Asumsi: Kalau nggak ada foto kendaraan utama, kita pakai FotoSTNK atau FotoKIR sebagai thumbnail di grid
+    const mainPhotoUrl = a.fotoURL || a.FotoSTNK || a.FotoKIR; 
+    
+    const photoHtml = mainPhotoUrl
+      ? `<img src="${mainPhotoUrl}" alt="${a.noPolisi}" onerror="this.parentElement.innerHTML='<div class=armada-photo-placeholder><svg viewBox=\'0 0 24 24\'><rect x=\'1\' y=\'3\' width=\'15\' height=\'13\' rx=\'1\'/></svg></div>'">`
       : `<div class="armada-photo-placeholder"><svg viewBox="0 0 24 24" width="64" height="64" stroke="currentColor" fill="none" stroke-width="0.8"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div>`;
     return `
     <div class="armada-card">
@@ -118,18 +130,45 @@ function setView(v) {
   if (v === 'list') renderList(allData);
 }
 
-function handleFotoSelect(e) {
+// --- 2. UPDATE HANDLER FOTO MULTIPLE ---
+// Parameter `jenis` akan bernilai 'stnk', 'kir', atau 'barcode'
+function handleFotoSelect(e, jenis) {
   const file = e.target.files[0]; if (!file) return;
   const reader = new FileReader();
   reader.onload = ev => {
-    selectedFotoBase64 = ev.target.result.split(',')[1]; selectedFotoMime = file.type;
-    document.getElementById('previewFotoImg').src = ev.target.result;
-    document.getElementById('previewFoto').style.display = 'block';
+    uploadState[jenis].base64 = ev.target.result.split(',')[1]; 
+    uploadState[jenis].mime = file.type;
+    document.getElementById(`preview${jenis}Img`).src = ev.target.result;
+    document.getElementById(`preview${jenis}`).style.display = 'block';
   };
   reader.readAsDataURL(file);
 }
-function removeFoto() { selectedFotoBase64 = null; document.getElementById('previewFoto').style.display = 'none'; }
 
+function removeFoto(jenis) { 
+  uploadState[jenis] = { base64: null, mime: null }; 
+  document.getElementById(`preview${jenis}`).style.display = 'none'; 
+  const fileInput = document.getElementById(`fFoto${jenis}`);
+  if(fileInput) fileInput.value = '';
+}
+
+// Helper untuk menampilkan foto yang sudah ada saat tombol Edit diklik
+function setupEditPreview(jenis, url) {
+    const previewBox = document.getElementById(`preview${jenis}`);
+    const previewImg = document.getElementById(`preview${jenis}Img`);
+    
+    // Reset state upload
+    uploadState[jenis] = { base64: null, mime: null };
+    
+    if (url) {
+        previewImg.src = url;
+        previewBox.style.display = 'block';
+    } else {
+        previewImg.src = '';
+        previewBox.style.display = 'none';
+    }
+}
+
+// --- 3. UBAH PAYLOAD DATA SAAT SAVE ---
 async function saveData() {
   const id = document.getElementById('editId').value;
   const noPolisi = document.getElementById('fNopol').value.trim().toUpperCase();
@@ -138,6 +177,7 @@ async function saveData() {
   const btn = document.getElementById('btnSave');
   btn.disabled = true; btn.textContent = 'Menyimpan...';
   
+  // Kirim payload dengan masing-masing Base64 & MimeType untuk STNK, KIR, Barcode
   const res = await callAPI(id ? 'updateArmada' : 'addArmada', {
     id, noPolisi, jenisKendaraan: document.getElementById('fJenis').value,
     merk: document.getElementById('fMerk').value, tahun: document.getElementById('fTahun').value,
@@ -146,7 +186,11 @@ async function saveData() {
     tanggalKIR: document.getElementById('fTglKIR').value,
     barcodeSubsidiTepat: document.getElementById('fBarcode').value,
     status: id ? document.getElementById('fStatus').value : 'ACTIVE',
-    fotoBase64: selectedFotoBase64, fotoMimeType: selectedFotoMime
+    
+    // Parsing data foto ke properti API
+    fotoSTNKBase64: uploadState.stnk.base64, fotoSTNKMimeType: uploadState.stnk.mime,
+    fotoKIRBase64: uploadState.kir.base64, fotoKIRMimeType: uploadState.kir.mime,
+    fotoBarcodeBase64: uploadState.barcode.base64, fotoBarcodeMimeType: uploadState.barcode.mime
   });
   
   btn.disabled = false;
@@ -170,15 +214,13 @@ function editRow(row) {
   document.getElementById('fBarcode').value = row.barcodeSubsidiTepat || '';
   document.getElementById('fStatus').value = row.status;
   document.getElementById('editStatusGroup').style.display = 'block';
-  openModal('modalAdd');
-}
+  
+  // Tampilkan preview foto yang udah ada di database pas form Edit kebuka
+  setupEditPreview('stnk', row.FotoSTNK);
+  setupEditPreview('kir', row.FotoKIR);
+  setupEditPreview('barcode', row.FotoBarcodeSubsidiTepat);
 
-async function deleteRow(id, nopol) {
-  confirmAction(`Hapus armada "${nopol}"?`, async () => {
-    const res = await callAPI('deleteArmada', { id });
-    if (res.success) { showToast('Armada dihapus.','success'); loadData(); }
-    else showToast(res.error,'error');
-  });
+  openModal('modalAdd');
 }
 
 function resetForm() {
@@ -186,7 +228,9 @@ function resetForm() {
   document.getElementById('modalTitle').textContent = 'Tambah Armada';
   ['fNopol','fMerk','fTahun','fPemilik','fNoSTNK','fTglSTNK','fTglKIR','fBarcode'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('editStatusGroup').style.display = 'none';
-  removeFoto();
+  
+  // Bersihin ke-3 kolom preview foto
+  ['stnk', 'kir', 'barcode'].forEach(jenis => removeFoto(jenis));
 }
 
 function debounceSearch() { clearTimeout(searchTimeout); searchTimeout = setTimeout(loadData, 400); }
