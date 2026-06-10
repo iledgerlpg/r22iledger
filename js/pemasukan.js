@@ -62,18 +62,18 @@ function extractFileId(url) {
     return directId ? directId[1] : (fileId ? fileId[1] : null);
 }
 
-function renderThumb(url) {
+unction renderThumb(url) {
     const id = extractFileId(url);
     if (!id) return '-';
-    // Link thumbnail untuk preview, Link uc?export=view untuk full image
+    
+    // PERUBAHAN: Pakai sz=w1200 biar aman dari error 403 Google Drive saat buka tab baru
     const thumbUrl = `https://drive.google.com/thumbnail?id=${id}&sz=w300`;
-    const fullUrl = `https://drive.google.com/uc?export=view&id=${id}`;
+    const fullUrl = `https://drive.google.com/thumbnail?id=${id}&sz=w1200`;
     
     return `<a href="${fullUrl}" target="_blank" class="hover:opacity-80 transition">
                 <img src="${thumbUrl}" class="h-12 w-12 object-cover rounded shadow mx-auto border border-gray-200" loading="lazy" />
             </a>`;
 }
-
 
 function renderTable(data, page, limit) {
   const tbody = document.getElementById('tableBody');
@@ -91,13 +91,13 @@ function renderTable(data, page, limit) {
     if (r.buktiTransferURL) {
       const id = extractFileId(r.buktiTransferURL);
       if (id) {
-        // Gunakan thumbnail untuk performa tabel, fullUrl untuk Lightbox internal
+        // Gunakan thumbnail sz=w1200 untuk Lightbox biar lolos keamanan Drive
         const thumbUrl = `https://drive.google.com/thumbnail?id=${id}&sz=w300`;
-        const fullUrl = `https://drive.google.com/uc?export=view&id=${id}`;
-        buktiHtml = `<img class="nota-thumb cursor-pointer hover:opacity-80 transition" src="${thumbUrl}" onclick="openLightbox('${fullUrl}')" loading="lazy">`;
+        const fullUrl = `https://drive.google.com/thumbnail?id=${id}&sz=w1200`;
+        buktiHtml = `<img class="nota-thumb clickable-preview cursor-pointer hover:opacity-80 transition" src="${thumbUrl}" data-click-url="${fullUrl}" loading="lazy" title="Lihat Bukti">`;
       } else {
         // Fallback jika format URL bukan Google Drive
-        buktiHtml = `<img class="nota-thumb cursor-pointer hover:opacity-80 transition" src="${r.buktiTransferURL}" onclick="openLightbox('${r.buktiTransferURL}')" loading="lazy">`;
+        buktiHtml = `<img class="nota-thumb clickable-preview cursor-pointer hover:opacity-80 transition" src="${r.buktiTransferURL}" data-click-url="${r.buktiTransferURL}" loading="lazy" title="Lihat Bukti">`;
       }
     }
     // -------------------------------------------------------------
@@ -125,6 +125,17 @@ function renderTable(data, page, limit) {
       </td>
     </tr>`;
   }).join('');
+
+  // --- EVENT BINDING UNTUK LIGHTBOX ---
+  // Pastikan function openLightbox() benar-benar ada di script lo
+  tbody.querySelectorAll('.clickable-preview').forEach(img => {
+    img.addEventListener('click', function() {
+      const targetUrl = this.getAttribute('data-click-url');
+      if (targetUrl) {
+        openLightbox(targetUrl);
+      }
+    });
+  });
 }
 
 function changePage(p) { currentPage = p; loadData(); }
