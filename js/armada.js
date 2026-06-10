@@ -323,7 +323,6 @@ async function saveData() {
     pemilik: document.getElementById('fPemilik').value, noSTNK: document.getElementById('fNoSTNK').value,
     tanggalSTNK: document.getElementById('fTglSTNK').value,
     tanggalKIR: document.getElementById('fTglKIR').value,
-    barcodeSubsidiTepat: document.getElementById('fBarcode').value,
     status: id ? document.getElementById('fStatus').value : 'ACTIVE',
     
     fotoSTNKBase64: uploadState.stnk.base64, fotoSTNKMimeType: uploadState.stnk.mime,
