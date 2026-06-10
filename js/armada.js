@@ -127,12 +127,7 @@ function renderGrid(data) {
   
   container.innerHTML = data.map(a => {
     const stStatus = getStnkStatus(a.tanggalSTNK);
-    
-    // Fallback Property dari Apps Script (Menghindari kendala Case-Sensitive)
-    const urlSTNK = a.fotoSTNK || a.FotoSTNK || '';
-    const urlKIR = a.fotoKIR || a.FotoKIR || '';
-    const urlBarcode = a.fotoBarcodeSubsidiTepat || a.FotoBarcodeSubsidiTepat || a.barcodeSubsidiTepat || '';
-    const mainPhotoUrl = a.fotoURL || a.fotoUrl || urlSTNK || urlKIR || urlBarcode; 
+    const mainPhotoUrl = a.fotoURL || a.FotoSTNK || a.FotoKIR || a.FotoBarcodeSubsidiTepat; 
     
     const idFotoUtama = extractFileId(mainPhotoUrl);
     const srcFotoUtama = idFotoUtama ? `https://drive.google.com/thumbnail?id=${idFotoUtama}&sz=w300` : mainPhotoUrl;
@@ -141,10 +136,16 @@ function renderGrid(data) {
       ? `<img src="${srcFotoUtama}" alt="${a.noPolisi}" onerror="this.onerror=null; this.src='https://placehold.co/300x200?text=🔒+Akses+Privat';">`
       : `<div class="armada-photo-placeholder"><svg viewBox="0 0 24 24" width="64" height="64" stroke="currentColor" fill="none" stroke-width="0.8"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div>`;
     
-    const srcThumbStnk = urlSTNK ? (extractFileId(urlSTNK) ? `https://drive.google.com/thumbnail?id=${extractFileId(urlSTNK)}&sz=w90` : urlSTNK) : '';
-    const srcThumbKir = urlKIR ? (extractFileId(urlKIR) ? `https://drive.google.com/thumbnail?id=${extractFileId(urlKIR)}&sz=w90` : urlKIR) : '';
-    const srcThumbBarcode = urlBarcode ? (extractFileId(urlBarcode) ? `https://drive.google.com/thumbnail?id=${extractFileId(urlBarcode)}&sz=w90` : urlBarcode) : '';
+ // AMANIN CASE SENSITIVE: Mau huruf f kecil atau F gede tetep ketangkep
+const urlSTNK = a.fotoSTNK || a.FotoSTNK || '';
+const urlKIR = a.fotoKIR || a.FotoKIR || '';
+const urlBarcode = a.fotoBarcodeSubsidiTepat || a.FotoBarcodeSubsidiTepat || a.barcodeSubsidiTepat || '';
 
+// Gunakan variabel url di atas untuk generate thumbnail
+const srcThumbStnk = urlSTNK ? (extractFileId(urlSTNK) ? `https://drive.google.com/thumbnail?id=${extractFileId(urlSTNK)}&sz=w90` : urlSTNK) : '';
+const srcThumbKir = urlKIR ? (extractFileId(urlKIR) ? `https://drive.google.com/thumbnail?id=${extractFileId(urlKIR)}&sz=w90` : urlKIR) : '';
+const srcThumbBarcode = urlBarcode ? (extractFileId(urlBarcode) ? `https://drive.google.com/thumbnail?id=${extractFileId(urlBarcode)}&sz=w90` : urlBarcode) : '';
+    
     return `
     <div class="armada-card">
       <div class="armada-photo">
@@ -163,16 +164,16 @@ function renderGrid(data) {
         </div>
         
         <div class="card-doc-thumbs">
-          <div class="doc-thumb-item" onclick="event.stopPropagation(); if('${urlSTNK}') previewImageDirect('${getLargeDocUrl(urlSTNK)}', 'STNK - ${a.noPolisi}')">
-            ${urlSTNK ? `<img src="${srcThumbStnk}" onerror="this.onerror=null; this.src='https://placehold.co/90x90?text=🔒';" loading="lazy">` : `<svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>`}
+          <div class="doc-thumb-item" onclick="event.stopPropagation(); if('${a.FotoSTNK}') previewImageDirect('${getLargeDocUrl(a.FotoSTNK)}', 'STNK - ${a.noPolisi}')">
+            ${a.FotoSTNK ? `<img src="${srcThumbStnk}" onerror="this.onerror=null; this.src='https://placehold.co/90x90?text=🔒';" loading="lazy">` : `<svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>`}
             <span class="doc-thumb-label">STNK</span>
           </div>
-          <div class="doc-thumb-item" onclick="event.stopPropagation(); if('${urlKIR}') previewImageDirect('${getLargeDocUrl(urlKIR)}', 'KIR - ${a.noPolisi}')">
-            ${urlKIR ? `<img src="${srcThumbKir}" onerror="this.onerror=null; this.src='https://placehold.co/90x90?text=🔒';" loading="lazy">` : `<svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/></svg>`}
+          <div class="doc-thumb-item" onclick="event.stopPropagation(); if('${a.FotoKIR}') previewImageDirect('${getLargeDocUrl(a.FotoKIR)}', 'KIR - ${a.noPolisi}')">
+            ${a.FotoKIR ? `<img src="${srcThumbKir}" onerror="this.onerror=null; this.src='https://placehold.co/90x90?text=🔒';" loading="lazy">` : `<svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/></svg>`}
             <span class="doc-thumb-label">KIR</span>
           </div>
-          <div class="doc-thumb-item" onclick="event.stopPropagation(); if('${urlBarcode}') previewImageDirect('${getLargeDocUrl(urlBarcode)}', 'Barcode - ${a.noPolisi}')">
-            ${urlBarcode ? `<img src="${srcThumbBarcode}" onerror="this.onerror=null; this.src='https://placehold.co/90x90?text=🔒';" loading="lazy">` : `<svg viewBox="0 0 24 24"><line x1="3" y1="5" x2="3" y2="19"/><line x1="21" y1="5" x2="21" y2="19"/></svg>`}
+          <div class="doc-thumb-item" onclick="event.stopPropagation(); if('${a.FotoBarcodeSubsidiTepat}') previewImageDirect('${getLargeDocUrl(a.FotoBarcodeSubsidiTepat)}', 'Barcode - ${a.noPolisi}')">
+            ${a.FotoBarcodeSubsidiTepat ? `<img src="${srcThumbBarcode}" onerror="this.onerror=null; this.src='https://placehold.co/90x90?text=🔒';" loading="lazy">` : `<svg viewBox="0 0 24 24"><line x1="3" y1="5" x2="3" y2="19"/><line x1="21" y1="5" x2="21" y2="19"/></svg>`}
             <span class="doc-thumb-label">Barcode</span>
           </div>
         </div>
@@ -202,13 +203,9 @@ function renderList(data) {
   }
   
   tbody.innerHTML = data.map((a, i) => {
-    const urlSTNK = a.fotoSTNK || a.FotoSTNK || '';
-    const urlKIR = a.fotoKIR || a.FotoKIR || '';
-    const urlBarcode = a.fotoBarcodeSubsidiTepat || a.FotoBarcodeSubsidiTepat || a.barcodeSubsidiTepat || '';
-
-    const srcThumbStnk = urlSTNK ? (extractFileId(urlSTNK) ? `https://drive.google.com/thumbnail?id=${extractFileId(urlSTNK)}&sz=w90` : urlSTNK) : '';
-    const srcThumbKir = urlKIR ? (extractFileId(urlKIR) ? `https://drive.google.com/thumbnail?id=${extractFileId(urlKIR)}&sz=w90` : urlKIR) : '';
-    const srcThumbBarcode = urlBarcode ? (extractFileId(urlBarcode) ? `https://drive.google.com/thumbnail?id=${extractFileId(urlBarcode)}&sz=w90` : urlBarcode) : '';
+    const srcThumbStnk = a.FotoSTNK ? (extractFileId(a.FotoSTNK) ? `https://drive.google.com/thumbnail?id=${extractFileId(a.FotoSTNK)}&sz=w90` : a.FotoSTNK) : '';
+    const srcThumbKir = a.FotoKIR ? (extractFileId(a.FotoKIR) ? `https://drive.google.com/thumbnail?id=${extractFileId(a.FotoKIR)}&sz=w90` : a.FotoKIR) : '';
+    const srcThumbBarcode = a.FotoBarcodeSubsidiTepat ? (extractFileId(a.FotoBarcodeSubsidiTepat) ? `https://drive.google.com/thumbnail?id=${extractFileId(a.FotoBarcodeSubsidiTepat)}&sz=w90` : a.FotoBarcodeSubsidiTepat) : '';
 
     return `<tr>
       <td>${i+1}</td>
@@ -219,17 +216,17 @@ function renderList(data) {
       <td>${a.pemilik || '-'}</td>
       
       <td>
-        ${urlSTNK ? `<img src="${srcThumbStnk}" class="table-inline-thumb" onclick="previewImageDirect('${getLargeDocUrl(urlSTNK)}', 'STNK - ${a.noPolisi}')" onerror="this.onerror=null; this.src='https://placehold.co/90x90?text=🔒';" loading="lazy">` : '<span class="table-empty-thumb">-</span>'}
+        ${a.FotoSTNK ? `<img src="${srcThumbStnk}" class="table-inline-thumb" onclick="previewImageDirect('${getLargeDocUrl(a.FotoSTNK)}', 'STNK - ${a.noPolisi}')" onerror="this.onerror=null; this.src='https://placehold.co/90x90?text=🔒';" loading="lazy">` : '<span class="table-empty-thumb">-</span>'}
         <div style="font-size:11px; margin-top:2px; color:var(--text-secondary); white-space:nowrap;">${a.tanggalSTNK || '-'}</div>
       </td>
       
       <td>
-        ${urlKIR ? `<img src="${srcThumbKir}" class="table-inline-thumb" onclick="previewImageDirect('${getLargeDocUrl(urlKIR)}', 'KIR - ${a.noPolisi}')" onerror="this.onerror=null; this.src='https://placehold.co/90x90?text=🔒';" loading="lazy">` : '<span class="table-empty-thumb">-</span>'}
+        ${a.FotoKIR ? `<img src="${srcThumbKir}" class="table-inline-thumb" onclick="previewImageDirect('${getLargeDocUrl(a.FotoKIR)}', 'KIR - ${a.noPolisi}')" onerror="this.onerror=null; this.src='https://placehold.co/90x90?text=🔒';" loading="lazy">` : '<span class="table-empty-thumb">-</span>'}
         <div style="font-size:11px; margin-top:2px; color:var(--text-secondary); white-space:nowrap;">${a.tanggalKIR || '-'}</div>
       </td>
       
       <td>
-        ${urlBarcode ? `<img src="${srcThumbBarcode}" class="table-inline-thumb" onclick="previewImageDirect('${getLargeDocUrl(urlBarcode)}', 'Barcode - ${a.noPolisi}')" onerror="this.onerror=null; this.src='https://placehold.co/90x90?text=🔒';" loading="lazy">` : '<span class="table-empty-thumb">-</span>'}
+        ${a.FotoBarcodeSubsidiTepat ? `<img src="${srcThumbBarcode}" class="table-inline-thumb" onclick="previewImageDirect('${getLargeDocUrl(a.FotoBarcodeSubsidiTepat)}', 'Barcode - ${a.noPolisi}')" onerror="this.onerror=null; this.src='https://placehold.co/90x90?text=🔒';" loading="lazy">` : '<span class="table-empty-thumb">-</span>'}
         <div style="font-size:11px; margin-top:2px; font-family:monospace; color:var(--text-secondary)">${a.barcodeSubsidiTepat || '-'}</div>
       </td>
       
@@ -302,6 +299,7 @@ function removeFoto(jenis) {
   if(fileInput) fileInput.value = '';
 }
 
+// Memunculkan foto awal di modal edit + aktifkan klik lightbox global
 function setupEditPreview(jenis, url) {
     const previewBox = document.getElementById(`preview${jenis}`);
     const previewImg = document.getElementById(`preview${jenis}Img`);
@@ -316,6 +314,7 @@ function setupEditPreview(jenis, url) {
         previewImg.src = thumbUrl;
         previewImg.className = 'cursor-pointer hover:opacity-80 transition object-cover rounded border border-gray-300';
         
+        // Metode pengeluaran: klik preview modal langsung nembus lightbox
         previewImg.onclick = () => {
           if (typeof previewImageDirect === 'function') {
             const nopol = document.getElementById('fNopol').value || 'Kendaraan';
@@ -378,18 +377,14 @@ function editRow(row) {
   document.getElementById('fNoSTNK').value = row.noSTNK;
   document.getElementById('fTglSTNK').value = row.tanggalSTNK ? row.tanggalSTNK.split('/').reverse().join('-') : '';
   document.getElementById('fTglKIR').value = row.tanggalKIR ? row.tanggalKIR.split('/').reverse().join('-') : '';
-  document.getElementById('fBarcode').value = row.barcodeSubsidiTepat || row.BarcodeSubsidiTepat || '';
+  document.getElementById('fBarcode').value = row.barcodeSubsidiTepat || '';
   document.getElementById('fStatus').value = row.status;
   document.getElementById('editStatusGroup').style.display = 'block';
   
-  // Deteksi URL aman dari case-sensitivity data Apps Script
-  const urlSTNK = row.fotoSTNK || row.FotoSTNK || '';
-  const urlKIR = row.fotoKIR || row.FotoKIR || '';
-  const urlBarcode = row.fotoBarcodeSubsidiTepat || row.FotoBarcodeSubsidiTepat || row.barcodeSubsidiTepat || '';
-
-  setupEditPreview('stnk', urlSTNK);
-  setupEditPreview('kir', urlKIR);
-  setupEditPreview('barcode', urlBarcode);
+  // Set up preview gambar awal saat klik edit
+  setupEditPreview('stnk', row.FotoSTNK);
+  setupEditPreview('kir', row.FotoKIR);
+  setupEditPreview('barcode', row.FotoBarcodeSubsidiTepat);
 
   openModal('modalAdd');
 }
@@ -431,4 +426,4 @@ function exportPDF() {
     startY: 32, styles:{fontSize:9}, headStyles:{fillColor:[13,71,161],textColor:255,fontStyle:'bold'}, alternateRowStyles:{fillColor:[245,249,255]}
   });
   doc.save('Armada_' + new Date().toLocaleDateString('id-ID').replace(/\//g,'-') + '.pdf');
-}
+}  
