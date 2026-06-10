@@ -86,9 +86,14 @@ function cleanImageUrl(url) {
 }
 
 function extractFileId(url) {
-    if (!url) return null;
+    // TAMBAHAN: Cek apakah url ada dan pastikan tipenya adalah string
+    if (!url || typeof url !== 'string') {
+        return null;
+    }
+    
     const directId = url.match(/id=([A-Za-z0-9_-]+)/);
     const fileId = url.match(/\/d\/([A-Za-z0-9_-]+)/);
+    
     return directId ? directId[1] : (fileId ? fileId[1] : null);
 }
 
