@@ -159,11 +159,27 @@ function renderTable(data, page, limit) {
     </div></td></tr>`;
     return;
   }
-  tbody.innerHTML = data.map((r,i) => {
-    const no = (page-1)*limit+i+1;
-    const nota = r.fotoNotaURL
-      ? `<img class="nota-thumb" src="${r.fotoNotaURL}" onclick="openLB('${r.fotoNotaURL}')">`
-      : `<div class="no-nota"><svg viewBox="0 0 24 24" width="13" height="13" stroke="var(--gray-400)" fill="none" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/></svg></div>`;
+  
+  tbody.innerHTML = data.map((r, i) => {
+    const no = (page - 1) * limit + i + 1;
+    
+    // --- PERBAIKAN LOGIKA FOTO NOTA (DRIVE OPTIMIZATION) ---
+    let nota = `<div class="no-nota"><svg viewBox="0 0 24 24" width="13" height="13" stroke="var(--gray-400)" fill="none" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/></svg></div>`;
+    
+    if (r.fotoNotaURL) {
+      const id = extractFileId(r.fotoNotaURL);
+      if (id) {
+        // Jika link Google Drive, ubah ke thumbnail & direct view untuk Lightbox
+        const thumbUrl = `https://drive.google.com/thumbnail?id=${id}&sz=w300`;
+        const fullUrl = `https://drive.google.com/uc?export=view&id=${id}`;
+        nota = `<img class="nota-thumb cursor-pointer hover:opacity-80 transition" src="${thumbUrl}" onclick="openLB('${fullUrl}')" loading="lazy">`;
+      } else {
+        // Fallback jika format URL biasa/bukan Drive
+        nota = `<img class="nota-thumb cursor-pointer hover:opacity-80 transition" src="${r.fotoNotaURL}" onclick="openLB('${r.fotoNotaURL}')" loading="lazy">`;
+      }
+    }
+    // --------------------------------------------------------
+
     return `<tr>
       <td style="font-weight:600;color:var(--text-secondary)">${no}</td>
       <td style="font-size:12px;white-space:nowrap">${r.timestamp}</td>
