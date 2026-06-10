@@ -6,7 +6,7 @@
 const CONFIG = {
   // Ganti ini dengan URL deployment Apps Script kamu
   // Contoh: 'https://script.google.com/macros/s/AKfycbxXXXXXXX/exec'
-  APP_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbwI0wH-uYXC_r98VMVPDsmM-9ayIW9h2hi_t1yZNijxt-lK_yxJMgxK6iFiPbgZYyeh/exec',
+  APP_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbya0g1HwoBA8ti6UdaZaVlxIDl65OO3Hm_YnPZcwcXLlflDGUG7wkHlVbSTYOrhZ7AV/exec',
 
   APP_NAME: 'iLedgerV2',
   APP_VERSION: '2.0.0',
