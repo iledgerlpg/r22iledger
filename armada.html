@@ -14,9 +14,9 @@
 <div id="navbarMount"></div>
 <style>
 .armada-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
-.armada-card{background:var(--bg-card);border-radius:var(--radius-lg);border:1px solid var(--border-color);overflow:hidden;transition:transform .2s,box-shadow .2s}
+.armada-card{background:var(--bg-card);border-radius:var(--radius-lg);border:1px solid var(--border-color);overflow:hidden;transition:transform .2s,box-shadow .2s;display:flex;flex-direction:column;justify-content:between}
 .armada-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-md)}
-.armada-photo{height:160px;background:linear-gradient(135deg,var(--primary) 0%,var(--primary-light) 100%);position:relative;overflow:hidden}
+.armada-photo{height:150px;background:linear-gradient(135deg,var(--primary) 0%,var(--primary-light) 100%);position:relative;overflow:hidden}
 .armada-photo img{width:100%;height:100%;object-fit:cover}
 .armada-photo-placeholder{display:flex;align-items:center;justify-content:center;height:100%;color:rgba(255,255,255,.4)}
 .armada-photo-placeholder svg{width:64px;height:64px;stroke:currentColor;fill:none;stroke-width:1}
@@ -24,7 +24,7 @@
 .armada-status-dot{position:absolute;top:10px;right:10px;width:10px;height:10px;border-radius:50%;border:2px solid white}
 .armada-status-dot.active{background:var(--success)}
 .armada-status-dot.inactive{background:var(--error)}
-.armada-body{padding:16px}
+.armada-body{padding:16px;flex:1}
 .armada-name{font-size:15px;font-weight:700;color:var(--text-primary);margin-bottom:2px}
 .armada-type{font-size:12px;color:var(--text-secondary);margin-bottom:12px}
 .armada-detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
@@ -51,9 +51,20 @@
 .view-btn.active{background:var(--bg-card);color:var(--primary);box-shadow:0 1px 4px rgba(0,0,0,.1)}
 .view-btn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2}
 
-/* Tambahan helper grid buat layout dokumen modal */
+/* Layout upload kolom dokumen di dalam modal */
 .document-upload-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:4px}
 @media(max-width:540px){.document-upload-grid{grid-template-columns:1fr}}
+
+/* --- UTILITIES BARU: TAMPILAN MULTI-FOTO DOKUMEN --- */
+.card-doc-thumbs {display:flex;gap:6px;margin-top:12px;padding-top:12px;border-top:1px dashed var(--border-color)}
+.doc-thumb-item {flex:1;height:45px;border-radius:6px;border:1px solid var(--border-color);position:relative;overflow:hidden;cursor:pointer;background:var(--gray-50);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:all .2s}
+.doc-thumb-item:hover {border-color:var(--primary);box-shadow:0 2px 6px rgba(0,0,0,0.08)}
+.doc-thumb-item img {width:100%;height:100%;object-fit:cover}
+.doc-thumb-item svg {width:16px;height:16px;stroke:var(--gray-400);fill:none;stroke-width:1.5}
+.doc-thumb-label {position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.65);color:white;font-size:8px;font-weight:700;text-align:center;padding:2px 0;text-transform:uppercase;letter-spacing:0.3px}
+.table-inline-thumb {width:26px;height:26px;border-radius:4px;object-fit:cover;border:1px solid var(--border-color);cursor:pointer;display:inline-block;vertical-align:middle;margin-right:4px;transition:transform 0.15s}
+.table-inline-thumb:hover {transform:scale(1.15);border-color:var(--primary)}
+.table-empty-thumb {width:26px;height:26px;border-radius:4px;background:var(--gray-100);color:var(--gray-400);display:inline-flex;align-items:center;justify-content:center;font-size:10px;vertical-align:middle;margin-right:4px}
 </style>
 </head>
 <body>
@@ -124,7 +135,7 @@
   <div id="armadaList" style="display:none" class="card">
     <div class="table-wrapper">
       <table class="data-table">
-        <thead><tr><th>No</th><th>No Polisi</th><th>Jenis</th><th>Merk</th><th>Tahun</th><th>Pemilik</th><th>STNK</th><th>KIR</th><th>Status</th><th>Aksi</th></tr></thead>
+        <thead><tr><th>No</th><th>No Polisi</th><th>Jenis</th><th>Merk</th><th>Tahun</th><th>Pemilik</th><th>STNK</th><th>KIR</th><th>Barcode</th><th>Status</th><th>Aksi</th></tr></thead>
         <tbody id="armadaTableBody"></tbody>
       </table>
     </div>
@@ -260,6 +271,30 @@
     </div>
   </div>
 </div>
+
+<div class="modal-overlay" id="modalPreviewFoto" style="z-index:2000;">
+  <div class="modal" style="max-width:500px; background:transparent; box-shadow:none; border:none;">
+    <div style="display:flex; justify-content:flex-end; margin-bottom:10px;">
+      <button class="modal-close" onclick="closeModal('modalPreviewFoto')" style="background:rgba(0,0,0,0.6); color:white; border-radius:50%; width:36px; height:36px; display:flex; align-items:center; justify-content:center; border:none; cursor:pointer;">
+        <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div style="background:var(--bg-card); border-radius:var(--radius-lg); overflow:hidden; padding:10px; box-shadow:var(--shadow-lg);">
+      <img id="imgLightbox" src="" style="width:100%; height:auto; max-height:70vh; object-fit:contain; display:block; border-radius:var(--radius);">
+      <div id="captionLightbox" style="text-align:center; padding:12px 8px 4px; font-size:13px; font-weight:700; color:var(--text-primary); text-transform:uppercase; letter-spacing:0.5px;">Preview Berkas</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Fungsi global pembantu trigger modal lightbox gambar dari file js/armada.js
+function previewImageDirect(url, title) {
+  if (!url) return;
+  document.getElementById('imgLightbox').src = url;
+  document.getElementById('captionLightbox').innerText = title;
+  openModal('modalPreviewFoto');
+}
+</script>
 
 </body>
 </html>
