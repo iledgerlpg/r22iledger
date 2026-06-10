@@ -119,7 +119,5 @@ async function loadLog() {
 }
 
 function changeLogPage(p) { logPage = p; loadLog(); }
-</script>
 
-<script>
 document.addEventListener('DOMContentLoaded', () => initPage('settings'));
