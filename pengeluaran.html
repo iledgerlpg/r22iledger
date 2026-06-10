@@ -710,20 +710,25 @@ async function loadPos() {
   const r = await callAPI('getPos', { status: 'ACTIVE' });
   if (!r.success) return;
   allPos = r.data;
-  // Populate filter select
+  
+  // Populate filter select di halaman depan
   const fs = document.getElementById('filterPos');
-  // Populate modal selects (both hidden and visible)
-  const fPosV = document.getElementById('fPosVisible');
-  allPos.forEach(p => {
-    fs.innerHTML += `<option value="${p.id}">${p.namaPos}</option>`;
-    fPosV.innerHTML += `<option value="${p.id}" data-name="${p.namaPos}">${p.namaPos}</option>`;
-  });
+  if (fs) {
+    // Reset dulu biar opsi gak numpuk kalau dipanggil ulang
+    fs.innerHTML = '<option value="">Semua Pos</option>'; 
+    allPos.forEach(p => {
+      fs.innerHTML += `<option value="${p.id}">${p.namaPos}</option>`;
+    });
+  }
+  
+  // NOTE: Kode fPosVisible dihapus karena input Pos di Modal 
+  // sekarang pakai sistem hidden input (fPosId) & auto-detect.
 }
 
 async function loadMappings() {
   const r = await callAPI('getPosMapping', {});
   if (!r.success) return;
-  allMappings = r.data; // [{keyword, idPos, namaPos}]
+  allMappings = r.data; // Format: [{keyword, idPos, namaPos}]
 }
 
 async function loadKaryawan() {
@@ -735,9 +740,14 @@ async function loadArmada() {
   const r = await callAPI('getArmada', { status: 'ACTIVE' });
   if (!r.success) return;
   allArmada = r.data;
-  ['fArmada','fArmadaPrw','fArmadaPajak'].forEach(id => {
+  
+  ['fArmada', 'fArmadaPrw', 'fArmadaPajak'].forEach(id => {
     const sel = document.getElementById(id);
     if (!sel) return;
+    
+    // Reset default option dulu biar armada yang di-load gak duplikat
+    sel.innerHTML = '<option value="">-- Pilih Armada --</option>';
+    
     allArmada.forEach(a => {
       sel.innerHTML += `<option value="${a.id}" data-nopol="${a.noPolisi}">${a.noPolisi} – ${a.merk}</option>`;
     });
