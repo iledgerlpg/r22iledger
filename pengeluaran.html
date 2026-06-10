@@ -64,6 +64,38 @@
 
 /* ===== POS SELECT (hidden, auto-filled) ===== */
 
+/* ===== BBM INPUT STYLES ===== */
+.bbm-input-wrap{position:relative;display:flex;align-items:center}
+.bbm-input-prefix{position:absolute;left:13px;font-size:12px;font-weight:700;color:var(--text-secondary);pointer-events:none;z-index:1}
+.bbm-input-suffix{position:absolute;right:13px;font-size:12px;font-weight:700;color:var(--info);pointer-events:none}
+.bbm-input{width:100%;padding-left:36px !important}
+.bbm-input.bbm-auto{
+  padding-right:36px !important;
+  background:rgba(59,130,246,.04) !important;
+  border-color:rgba(59,130,246,.2) !important;
+  color:var(--info);font-weight:700;
+}
+.bbm-reset-btn{
+  position:absolute;right:10px;
+  background:rgba(13,71,161,.08);border:none;border-radius:5px;
+  width:24px;height:24px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--primary);transition:background .2s;
+}
+.bbm-reset-btn:hover{background:rgba(13,71,161,.16)}
+.bbm-note{font-size:11px;color:var(--text-secondary);margin-top:5px;line-height:1.5}
+/* Summary kalkulasi BBM */
+.bbm-summary{
+  width:100%;background:linear-gradient(135deg,rgba(13,71,161,.07),rgba(0,188,212,.05));
+  border:1.5px solid rgba(13,71,161,.15);border-radius:10px;padding:12px 14px;
+}
+.bbm-summary-row{display:flex;justify-content:space-between;font-size:12px;padding:3px 0}
+.bbm-summary-row span:first-child{color:var(--text-secondary);font-weight:500}
+.bbm-summary-val{font-weight:700;color:var(--text-primary)}
+.bbm-summary-divider{height:1px;background:rgba(13,71,161,.12);margin:6px 0}
+.bbm-summary-total span:first-child{color:var(--primary);font-weight:700}
+.bbm-summary-total .bbm-summary-val{font-size:16px;font-weight:800;color:var(--primary)}
+
 /* ===== MEDIA UPLOAD (Kamera + Gallery) — 2 kotak terpisah ===== */
 .media-upload-box{border-radius:var(--radius);overflow:hidden}
 /* Preview */
@@ -321,16 +353,18 @@
         </div>
       </div>
 
-      <!-- ===== BBM DETAIL (muncul otomatis saat pos BBM terpilih) ===== -->
+      <!-- ===== BBM DETAIL ===== -->
       <div class="extra-box bbm" id="bbmExtra">
         <div class="extra-header">
           <span class="extra-icon">⛽</span>
           <div>
             <div class="extra-title">Detail BBM</div>
-            <div class="extra-subtitle">Otomatis tercatat di modul BBM</div>
+            <div class="extra-subtitle">Data otomatis tersimpan di modul BBM</div>
           </div>
           <span class="extra-badge">Auto-Sync</span>
         </div>
+
+        <!-- Baris 1: Armada + Jenis BBM -->
         <div class="form-row-m">
           <div class="form-group-m">
             <label class="form-label-m">Armada *</label>
@@ -341,6 +375,7 @@
           <div class="form-group-m">
             <label class="form-label-m">Jenis BBM *</label>
             <select id="fJenisBBM" class="form-control-m" onchange="onJenisBBMChange()">
+              <option value="">-- Pilih Jenis --</option>
               <option value="Solar">⛽ Solar (Subsidi)</option>
               <option value="Pertalite">⛽ Pertalite RON 90</option>
               <option value="Pertamax">⛽ Pertamax RON 92</option>
@@ -351,53 +386,63 @@
           </div>
         </div>
 
-        <!-- Harga per Liter (dengan referensi otomatis) -->
+        <!-- Baris 2: Harga per Liter — referensi otomatis, bisa direvisi -->
         <div class="form-group-m">
-          <label class="form-label-m" style="display:flex;align-items:center;justify-content:space-between">
-            <span>Harga per Liter *</span>
-            <span style="font-size:10px;font-weight:500;color:var(--text-secondary);letter-spacing:0">bisa direvisi manual</span>
-          </label>
-          <div style="position:relative">
-            <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:11px;font-weight:700;color:var(--text-secondary);pointer-events:none">Rp</span>
-            <input type="number" id="fHargaL" class="form-control-m"
-              placeholder="Pilih jenis BBM dulu..."
-              style="padding-left:34px;font-size:15px;font-weight:700"
-              oninput="calcBBM()">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+            <label class="form-label-m" style="margin:0">Harga per Liter *</label>
+            <!-- Chip referensi harga -->
+            <span id="bbmRefChip" style="display:none;font-size:11px;font-weight:600;padding:2px 10px;border-radius:20px;background:rgba(16,185,129,.12);color:var(--success)"></span>
           </div>
-          <div id="bbmHargaNote" style="font-size:11px;margin-top:5px;color:var(--text-secondary);display:flex;align-items:center;gap:5px">
-            <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" fill="none" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-            Pilih jenis BBM untuk mengisi harga referensi otomatis
+          <div class="bbm-input-wrap">
+            <span class="bbm-input-prefix">Rp</span>
+            <input type="number" id="fHargaL" class="form-control-m bbm-input"
+              placeholder="Pilih jenis BBM untuk isi otomatis..."
+              min="0" oninput="onHargaInput()">
+            <button class="bbm-reset-btn" id="btnResetHarga" onclick="resetHargaToRef()" title="Reset ke harga referensi" style="display:none">
+              <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.98"/></svg>
+            </button>
+          </div>
+          <div id="bbmHargaNote" class="bbm-note">
+            ← Pilih jenis BBM, harga referensi Pertamina terisi otomatis
           </div>
         </div>
 
-        <!-- Jumlah Liter — auto dari nominal ÷ harga -->
-        <div class="form-row-m" style="align-items:flex-end">
+        <!-- Baris 3: Jumlah Liter (readonly, auto = Nominal ÷ Harga) + Ringkasan -->
+        <div class="form-row-m">
           <div class="form-group-m">
-            <label class="form-label-m" style="display:flex;align-items:center;justify-content:space-between">
-              <span>Jumlah Liter</span>
-              <span style="font-size:10px;font-weight:500;color:var(--info);letter-spacing:0">⚡ auto dari nominal ÷ harga</span>
-            </label>
-            <div style="position:relative">
-              <input type="number" id="fLiter" class="form-control-m"
-                placeholder="Otomatis dari nominal..."
-                step="0.01" min="0"
-                style="padding-right:30px;background:rgba(59,130,246,.04);border-color:rgba(59,130,246,.2)"
-                oninput="calcBBM()">
-              <span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:11px;font-weight:700;color:var(--info)">L</span>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+              <label class="form-label-m" style="margin:0">Jumlah Liter</label>
+              <span style="font-size:10px;color:var(--info);font-weight:600">⚡ Nominal ÷ Harga/L</span>
             </div>
-            <div style="font-size:11px;margin-top:4px;color:var(--info)">
-              Isi nominal di atas → liter terisi otomatis
+            <div class="bbm-input-wrap">
+              <input type="number" id="fLiter" class="form-control-m bbm-input bbm-auto"
+                placeholder="Otomatis terisi..." step="0.01" min="0" readonly
+                style="cursor:default">
+              <span class="bbm-input-suffix">L</span>
             </div>
+            <div class="bbm-note" style="color:var(--info)">Terisi otomatis — tidak perlu diubah</div>
           </div>
-          <!-- BBM Total -->
-          <div class="form-group-m">
-            <div id="bbmTotalPreview" style="display:none;background:linear-gradient(135deg,rgba(13,71,161,.1),rgba(0,188,212,.07));border:1.5px solid rgba(13,71,161,.2);border-radius:10px;padding:12px 14px">
-              <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--text-secondary);margin-bottom:4px">Total BBM</div>
-              <div id="bbmTotalVal" style="font-size:20px;font-weight:800;color:var(--primary);letter-spacing:-.5px">Rp 0</div>
+          <!-- Ringkasan kalkulasi -->
+          <div class="form-group-m" style="display:flex;align-items:flex-end">
+            <div id="bbmSummary" class="bbm-summary" style="display:none">
+              <div class="bbm-summary-row">
+                <span>Nominal</span>
+                <span id="bbmSumNominal" class="bbm-summary-val">-</span>
+              </div>
+              <div class="bbm-summary-row">
+                <span>Harga/L</span>
+                <span id="bbmSumHarga" class="bbm-summary-val">-</span>
+              </div>
+              <div class="bbm-summary-divider"></div>
+              <div class="bbm-summary-row bbm-summary-total">
+                <span>Total Liter</span>
+                <span id="bbmSumLiter" class="bbm-summary-val">-</span>
+              </div>
             </div>
           </div>
         </div>
-        <div class="extra-info-row" style="margin-top:10px">
+
+        <div class="extra-info-row">
           <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
           Data ini otomatis tercatat di halaman <strong>BBM</strong> — tidak perlu input ulang.
         </div>
@@ -923,7 +968,7 @@ function clearPos() {
   ['fTglSTNK','fTglKIR','fTglPajak','fPrwKet','fNextService'].forEach(id => { const el = document.getElementById(id); if(el) el.value=''; });
   document.getElementById('pajakCurrentStatus').style.display = 'none';
   document.getElementById('fArmadaPajak').value = '';
-  document.getElementById('bbmTotalPreview').style.display = 'none';
+  
 }
 
 function onPosVisibleChange() {
@@ -1171,16 +1216,24 @@ function resetForm() {
   ['fTglSTNK','fTglKIR','fTglPajak','fPrwKet','fNextService'].forEach(id => { const el = document.getElementById(id); if(el) el.value=''; });
   document.getElementById('pajakCurrentStatus').style.display = 'none';
   document.getElementById('fArmadaPajak').value = '';
-  document.getElementById('bbmTotalPreview').style.display = 'none';
+  
   document.getElementById('nominalPreview').style.display = 'none';
   namaMode = 'dropdown';
   document.getElementById('namaIsCustom').style.display = 'none';
   document.getElementById('fNama').placeholder = 'Pilih karyawan atau ketik nama supplier...';
   clearPos();
   // Reset harga BBM note
-  const bbmNote = document.getElementById('bbmHargaNote');
-  if (bbmNote) bbmNote.textContent = 'Pilih jenis BBM untuk mengisi harga referensi otomatis';
-  document.getElementById('bbmTotalPreview').style.display = 'none';
+  currentRefHarga = 0;
+  const jenisBBM = document.getElementById('fJenisBBM');
+  if (jenisBBM) jenisBBM.value = '';
+  const hargaNote = document.getElementById('bbmHargaNote');
+  if (hargaNote) { hargaNote.textContent = '← Pilih jenis BBM, harga referensi Pertamina terisi otomatis'; hargaNote.style.color='var(--text-secondary)'; }
+  const refChip = document.getElementById('bbmRefChip');
+  if (refChip) refChip.style.display = 'none';
+  const resetBtn = document.getElementById('btnResetHarga');
+  if (resetBtn) resetBtn.style.display = 'none';
+  const summary = document.getElementById('bbmSummary');
+  if (summary) summary.style.display = 'none';
   removeFile('nota'); removeFile('bukti');
   setDefaultDT();
 }
@@ -1411,85 +1464,108 @@ async function saveDataFull() {
 
 
 // ============================================================
-// HARGA BBM REFERENSI (Update: Juni 2026 - Pertamina)
-// Bisa direvisi langsung di input harga
+// HARGA BBM REFERENSI PERTAMINA (Juni 2026)
 // ============================================================
 const BBM_PRICES = {
-  'Solar':         6800,    // Biosolar subsidi
-  'Pertalite':     10000,   // RON 90 subsidi
-  'Pertamax':      12300,   // RON 92
-  'Dexlite':       23000,   // CN 51 (turun per Juni 2026)
-  'Pertamina Dex': 24800,   // CN 53 (turun per Juni 2026)
+  'Solar':         6800,
+  'Pertalite':     10000,
+  'Pertamax':      12300,
+  'Dexlite':       23000,
+  'Pertamina Dex': 24800,
   'Custom':        0
 };
+let currentRefHarga = 0;
 
-const BBM_LABELS = {
-  'Solar':         'Biosolar (Subsidi)',
-  'Pertalite':     'Pertalite RON 90 (Subsidi)',
-  'Pertamax':      'Pertamax RON 92',
-  'Dexlite':       'Dexlite CN 51',
-  'Pertamina Dex': 'Pertamina Dex CN 53',
-  'Custom':        'Jenis Lain'
-};
-
-// Isi harga otomatis saat jenis BBM berubah
+// Dipanggil saat jenis BBM berubah → isi harga referensi
 function onJenisBBMChange() {
   const jenis  = document.getElementById('fJenisBBM').value;
   const price  = BBM_PRICES[jenis] || 0;
-  const hargaEl = document.getElementById('fHargaL');
-  
+  currentRefHarga = price;
+
+  const hargaEl  = document.getElementById('fHargaL');
+  const noteEl   = document.getElementById('bbmHargaNote');
+  const refChip  = document.getElementById('bbmRefChip');
+  const resetBtn = document.getElementById('btnResetHarga');
+
   if (price > 0) {
     hargaEl.value = price;
-    // Update placeholder label
-    document.getElementById('bbmHargaNote').textContent =
-      'Referensi Juni 2026: Rp ' + price.toLocaleString('id-ID') + '/L — bisa direvisi';
-    document.getElementById('bbmHargaNote').style.color = 'var(--success)';
+    hargaEl.placeholder = '';
+    refChip.textContent  = 'Ref: Rp ' + price.toLocaleString('id-ID') + '/L';
+    refChip.style.display = 'inline';
+    resetBtn.style.display = 'none'; // sama dengan ref, belum diubah
+    noteEl.textContent = '✅ Harga referensi Pertamina Juni 2026 — bisa direvisi manual';
+    noteEl.style.color = 'var(--success)';
   } else {
     hargaEl.value = '';
-    document.getElementById('bbmHargaNote').textContent = 'Masukkan harga per liter secara manual';
-    document.getElementById('bbmHargaNote').style.color = 'var(--text-secondary)';
+    hargaEl.placeholder = 'Masukkan harga per liter...';
+    refChip.style.display = 'none';
+    resetBtn.style.display = 'none';
+    noteEl.textContent = 'Masukkan harga per liter secara manual';
+    noteEl.style.color = 'var(--text-secondary)';
   }
-  calcBBM();
+  updateBBMCalc();
 }
 
-// Override calcBBM — nominal / harga = liter
-function calcBBM() {
-  const liter   = parseFloat(document.getElementById('fLiter').value)   || 0;
-  const harga   = parseFloat(document.getElementById('fHargaL').value)  || 0;
+// Dipanggil saat user edit harga manual
+function onHargaInput() {
+  const price    = parseFloat(document.getElementById('fHargaL').value) || 0;
+  const resetBtn = document.getElementById('btnResetHarga');
+  // Tampilkan tombol reset jika harga berbeda dari referensi
+  if (currentRefHarga > 0 && price !== currentRefHarga) {
+    resetBtn.style.display = 'flex';
+  } else {
+    resetBtn.style.display = 'none';
+  }
+  updateBBMCalc();
+}
+
+// Reset ke harga referensi
+function resetHargaToRef() {
+  if (currentRefHarga > 0) {
+    document.getElementById('fHargaL').value = currentRefHarga;
+    document.getElementById('btnResetHarga').style.display = 'none';
+    updateBBMCalc();
+  }
+}
+
+// Core: Nominal (manual) ÷ Harga = Liter (readonly auto)
+function updateBBMCalc() {
   const nominal = parseFloat(document.getElementById('fNominal').value) || 0;
+  const harga   = parseFloat(document.getElementById('fHargaL').value)  || 0;
+  const liter   = (nominal > 0 && harga > 0) ? nominal / harga : 0;
 
-  let total = 0;
-
-  if (liter > 0 && harga > 0) {
-    // Liter diisi manual → hitung total
-    total = liter * harga;
-    document.getElementById('fNominal').value = total;
-  } else if (nominal > 0 && harga > 0) {
-    // Nominal diisi → hitung liter otomatis
-    const autoLiter = nominal / harga;
-    document.getElementById('fLiter').value = autoLiter.toFixed(2);
-    total = nominal;
-  } else if (nominal > 0 && liter > 0) {
-    // Keduanya diisi → hitung harga
-    total = nominal;
+  // Update liter field (readonly)
+  const literEl = document.getElementById('fLiter');
+  if (liter > 0) {
+    literEl.value = liter.toFixed(2);
+    literEl.style.color = 'var(--info)';
+  } else {
+    literEl.value = '';
+    literEl.placeholder = harga > 0 ? 'Isi nominal dulu...' : 'Pilih jenis BBM dulu...';
   }
 
-  const preview = document.getElementById('bbmTotalPreview');
-  if (total > 0) {
-    preview.style.display = 'flex';
-    document.getElementById('bbmTotalVal').textContent = formatRupiah(total);
+  // Update summary card
+  const summary = document.getElementById('bbmSummary');
+  if (nominal > 0 && harga > 0) {
+    summary.style.display = 'block';
+    document.getElementById('bbmSumNominal').textContent = formatRupiah(nominal);
+    document.getElementById('bbmSumHarga').textContent   = 'Rp ' + harga.toLocaleString('id-ID') + '/L';
+    document.getElementById('bbmSumLiter').textContent   = liter.toFixed(2) + ' L';
   } else {
-    preview.style.display = 'none';
+    summary.style.display = 'none';
   }
   showNominalPreview();
 }
 
-// Nominal berubah → auto-hitung liter
+// Dipanggil saat nominal diubah
 function onNominalChangeBBM() {
   showNominalPreview();
   const bbmShown = document.getElementById('bbmExtra').classList.contains('show');
-  if (bbmShown) calcBBM();
+  if (bbmShown) updateBBMCalc();
 }
+
+// Alias untuk backward compat
+function calcBBM() { updateBBMCalc(); }
 
 </script>
 </body>
