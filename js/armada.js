@@ -92,7 +92,7 @@ function extractFileId(url) {
     return directId ? directId[1] : (fileId ? fileId[1] : null);
 }
 
-// Helper untuk ambil url resolusi tinggi (w1200) untuk Lightbox Preview
+// Helper ambil url resolusi tinggi (w1200) untuk Lightbox Preview
 function getLargeDocUrl(url) {
   if (!url) return '';
   const id = extractFileId(url);
@@ -117,7 +117,6 @@ function renderGrid(data) {
       ? `<img src="${srcFotoUtama}" alt="${a.noPolisi}" onerror="this.parentElement.innerHTML='<div class=armada-photo-placeholder><svg viewBox=\'0 0 24 24\'><rect x=\'1\' y=\'3\' width=\'15\' height=\'13\' rx=\'1\'/></svg></div>'">`
       : `<div class="armada-photo-placeholder"><svg viewBox="0 0 24 24" width="64" height="64" stroke="currentColor" fill="none" stroke-width="0.8"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div>`;
     
-    // Ambil thumbnail kecil (w90) untuk galeri mini berkas dokumen di card
     const srcThumbStnk = a.FotoSTNK ? (extractFileId(a.FotoSTNK) ? `https://drive.google.com/thumbnail?id=${extractFileId(a.FotoSTNK)}&sz=w90` : a.FotoSTNK) : '';
     const srcThumbKir = a.FotoKIR ? (extractFileId(a.FotoKIR) ? `https://drive.google.com/thumbnail?id=${extractFileId(a.FotoKIR)}&sz=w90` : a.FotoKIR) : '';
     const srcThumbBarcode = a.FotoBarcodeSubsidiTepat ? (extractFileId(a.FotoBarcodeSubsidiTepat) ? `https://drive.google.com/thumbnail?id=${extractFileId(a.FotoBarcodeSubsidiTepat)}&sz=w90` : a.FotoBarcodeSubsidiTepat) : '';
@@ -237,13 +236,26 @@ function setView(v) {
   if (v === 'list') renderList(allData);
 }
 
+// Handler pas user milih file baru di form input/modal edit
 function handleFotoSelect(e, jenis) {
   const file = e.target.files[0]; if (!file) return;
   const reader = new FileReader();
   reader.onload = ev => {
     uploadState[jenis].base64 = ev.target.result.split(',')[1]; 
     uploadState[jenis].mime = file.type;
-    document.getElementById(`preview${jenis}Img`).src = ev.target.result;
+    
+    const previewImg = document.getElementById(`preview${jenis}Img`);
+    previewImg.src = ev.target.result;
+    
+    // Kasih class pointer biar user tahu ini bisa diklik lightbox
+    previewImg.className = 'cursor-pointer hover:opacity-80 transition object-cover rounded border border-gray-300';
+    previewImg.onclick = () => {
+      if (typeof previewImageDirect === 'function') {
+        const nopol = document.getElementById('fNopol').value || 'Kendaraan';
+        previewImageDirect(ev.target.result, `${jenis.toUpperCase()} (Baru) - ${nopol}`);
+      }
+    };
+    
     document.getElementById(`preview${jenis}`).style.display = 'block';
   };
   reader.readAsDataURL(file);
@@ -251,11 +263,17 @@ function handleFotoSelect(e, jenis) {
 
 function removeFoto(jenis) { 
   uploadState[jenis] = { base64: null, mime: null }; 
+  const previewImg = document.getElementById(`preview${jenis}Img`);
+  if (previewImg) {
+    previewImg.src = '';
+    previewImg.onclick = null;
+  }
   document.getElementById(`preview${jenis}`).style.display = 'none'; 
   const fileInput = document.getElementById(`fFoto${jenis}`);
   if(fileInput) fileInput.value = '';
 }
 
+// MEMUNCULKAN FOTO AWAL DI MODAL EDIT + AKTIFKAN KLIK LIGHTBOX
 function setupEditPreview(jenis, url) {
     const previewBox = document.getElementById(`preview${jenis}`);
     const previewImg = document.getElementById(`preview${jenis}Img`);
@@ -264,10 +282,24 @@ function setupEditPreview(jenis, url) {
     
     if (url) {
         const id = extractFileId(url);
-        previewImg.src = id ? `https://drive.google.com/thumbnail?id=${id}&sz=w300` : url;
+        const thumbUrl = id ? `https://drive.google.com/thumbnail?id=${id}&sz=w300` : url;
+        const largeUrl = getLargeDocUrl(url);
+        
+        previewImg.src = thumbUrl;
+        previewImg.className = 'cursor-pointer hover:opacity-80 transition object-cover rounded border border-gray-300';
+        
+        // Metode pengeluaran: klik preview modal langsung tembus lightbox global
+        previewImg.onclick = () => {
+          if (typeof previewImageDirect === 'function') {
+            const nopol = document.getElementById('fNopol').value || 'Kendaraan';
+            previewImageDirect(largeUrl, `${jenis.toUpperCase()} - ${nopol}`);
+          }
+        };
+        
         previewBox.style.display = 'block';
     } else {
         previewImg.src = '';
+        previewImg.onclick = null;
         previewBox.style.display = 'none';
     }
 }
@@ -316,6 +348,7 @@ function editRow(row) {
   document.getElementById('fStatus').value = row.status;
   document.getElementById('editStatusGroup').style.display = 'block';
   
+  // Triger pemuatan foto awal pas baris di-klik edit
   setupEditPreview('stnk', row.FotoSTNK);
   setupEditPreview('kir', row.FotoKIR);
   setupEditPreview('barcode', row.FotoBarcodeSubsidiTepat);
