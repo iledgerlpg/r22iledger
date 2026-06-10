@@ -208,9 +208,7 @@ function renderTable(data, page, limit) {
     </tr>`;
   }).join('');
 
-
-  // --- OBLIGATORY EVENT BINDING AFTER RENDERING ---
-  // Cari semua elemen gambar yang memiliki class .clickable-preview di dalam tabel
+  // --- EVENT BINDING UNTUK LIGHTBOX ---
   tbody.querySelectorAll('.clickable-preview').forEach(img => {
     img.addEventListener('click', function() {
       const targetUrl = this.getAttribute('data-click-url');
