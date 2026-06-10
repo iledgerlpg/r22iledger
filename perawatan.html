@@ -382,10 +382,6 @@ function exportPDF() {
   doc.autoTable({ head:[['No','Tanggal','No Polisi','Jenis','Biaya','Keterangan','Next Service']], body:rows, startY:32, styles:{fontSize:9}, headStyles:{fillColor:[13,71,161],textColor:255,fontStyle:'bold'} });
   doc.save('Perawatan_' + new Date().toLocaleDateString('id-ID').replace(/\//g,'-') + '.pdf');
 }
-</script>
 
-<script>
-document.addEventListener('DOMContentLoaded', () => initPage('perawatan'));
-</script>
 </body>
 </html>
