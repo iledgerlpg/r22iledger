@@ -17,11 +17,20 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 function setDefaultDT() {
   const now = new Date();
-  const pad = n => String(n).padStart(2,'0');
-  document.getElementById('fTimestamp').value = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
-  document.getElementById('filterMonth').value = `${now.getFullYear()}-${pad(now.getMonth()+1)}`;
+  const pad = n => String(n).padStart(2, '0');
+  
+  // Cek dulu apakah input fTimestamp ada di HTML
+  const elTimestamp = document.getElementById('fTimestamp');
+  if (elTimestamp) {
+    elTimestamp.value = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  }
+  
+  // Cek dulu apakah filterMonth ada di HTML
+  const elFilterMonth = document.getElementById('filterMonth');
+  if (elFilterMonth) {
+    elFilterMonth.value = `${now.getFullYear()}-${pad(now.getMonth()+1)}`;
+  }
 }
-
 async function loadData() {
   showSkeleton('tableBody', 5);
   const res = await callAPI('getArmada', {
