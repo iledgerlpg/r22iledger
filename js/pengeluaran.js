@@ -153,7 +153,6 @@ function updateSummary(data) {
 function renderTable(data, page, limit) {
   const tbody = document.getElementById('tableBody');
   if (!data || !data.length) {
-    // Colspan dinaikkan jadi 10 karena ada penambahan kolom baru
     tbody.innerHTML = `<tr><td colspan="10"><div class="empty-state">
       <svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
       <h3>Belum ada pengeluaran</h3><p>Klik "Tambah Pengeluaran" untuk mencatat</p>
@@ -168,28 +167,23 @@ function renderTable(data, page, limit) {
     let nota = `<div class="no-nota"><svg viewBox="0 0 24 24" width="13" height="13" stroke="var(--gray-400)" fill="none" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/></svg></div>`;
     if (r.fotoNotaURL) {
       const idNota = extractFileId(r.fotoNotaURL);
-      if (idNota) {
-        const thumbNota = `https://drive.google.com/thumbnail?id=${idNota}&sz=w300`;
-        const fullNota = `https://drive.google.com/uc?export=view&id=${idNota}`;
-        nota = `<img class="nota-thumb cursor-pointer hover:opacity-80 transition" src="${thumbNota}" onclick="openLB('${fullNota}')" loading="lazy" title="Lihat Nota">`;
-      } else {
-        nota = `<img class="nota-thumb cursor-pointer hover:opacity-80 transition" src="${r.fotoNotaURL}" onclick="openLB('${r.fotoNotaURL}')" loading="lazy" title="Lihat Nota">`;
-      }
+      const fullNota = idNota ? `https://drive.google.com/uc?export=view&id=${idNota}` : r.fotoNotaURL;
+      const thumbNota = idNota ? `https://drive.google.com/thumbnail?id=${idNota}&sz=w300` : r.fotoNotaURL;
+      
+      // Kita simpan URL asli di attribute 'data-click-url' bukan di onclick biasa
+      nota = `<img class="nota-thumb clickable-preview cursor-pointer hover:opacity-80 transition" src="${thumbNota}" data-click-url="${fullNota}" loading="lazy" title="Lihat Nota">`;
     }
 
     // --- 2. HANDLING BUKTI TRANSFER ---
     let buktiTf = `<div class="no-nota"><svg viewBox="0 0 24 24" width="13" height="13" stroke="var(--gray-400)" fill="none" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/></svg></div>`;
     if (r.buktiTransferURL) {
       const idBukti = extractFileId(r.buktiTransferURL);
-      if (idBukti) {
-        const thumbBukti = `https://drive.google.com/thumbnail?id=${idBukti}&sz=w300`;
-        const fullBukti = `https://drive.google.com/uc?export=view&id=${idBukti}`;
-        buktiTf = `<img class="nota-thumb cursor-pointer hover:opacity-80 transition" src="${thumbBukti}" onclick="openLB('${fullBukti}')" loading="lazy" title="Lihat Bukti Transfer">`;
-      } else {
-        buktiTf = `<img class="nota-thumb cursor-pointer hover:opacity-80 transition" src="${r.buktiTransferURL}" onclick="openLB('${r.buktiTransferURL}')" loading="lazy" title="Lihat Bukti Transfer">`;
-      }
+      const fullBukti = idBukti ? `https://drive.google.com/uc?export=view&id=${idBukti}` : r.buktiTransferURL;
+      const thumbBukti = idBukti ? `https://drive.google.com/thumbnail?id=${idBukti}&sz=w300` : r.buktiTransferURL;
+      
+      // Kita simpan URL asli di attribute 'data-click-url' juga
+      buktiTf = `<img class="nota-thumb clickable-preview cursor-pointer hover:opacity-80 transition" src="${thumbBukti}" data-click-url="${fullBukti}" loading="lazy" title="Lihat Bukti Transfer">`;
     }
-    // ----------------------------------
 
     return `<tr>
       <td style="font-weight:600;color:var(--text-secondary)">${no}</td>
@@ -211,8 +205,18 @@ function renderTable(data, page, limit) {
       </div></td>
     </tr>`;
   }).join('');
-}
 
+  // --- OBLIGATORY EVENT BINDING AFTER RENDERING ---
+  // Cari semua elemen gambar yang memiliki class .clickable-preview di dalam tabel
+  tbody.querySelectorAll('.clickable-preview').forEach(img => {
+    img.addEventListener('click', function() {
+      const targetUrl = this.getAttribute('data-click-url');
+      if (targetUrl) {
+        openLB(targetUrl);
+      }
+    });
+  });
+}
 function changePage(p) { pg = p; loadData(); window.scrollTo({top:0,behavior:'smooth'}); }
 function debounceSearch() { clearTimeout(searchTimeout); searchTimeout = setTimeout(() => { pg=1; loadData(); }, 400); }
 
