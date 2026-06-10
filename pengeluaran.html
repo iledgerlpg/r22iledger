@@ -64,22 +64,26 @@
 
 /* ===== POS SELECT (hidden, auto-filled) ===== */
 
-/* ===== MEDIA UPLOAD (Kamera + Gallery) ===== */
-.media-upload-box{border-radius:var(--radius);border:1.5px solid var(--border-color);overflow:hidden;background:var(--bg-card)}
-.media-upload-preview{display:none;position:relative}
-.media-upload-preview img{width:100%;height:160px;object-fit:cover;display:block}
-.media-preview-actions{position:absolute;top:8px;right:8px;display:flex;gap:6px}
-.media-action-btn{width:30px;height:30px;border-radius:8px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
-.media-action-btn.delete{background:rgba(239,68,68,.8);color:white}
-.media-action-btn.retake{background:rgba(255,255,255,.85);color:var(--primary)}
-.media-action-btn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2}
-.media-upload-btns{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border-color)}
-.media-upload-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:18px 10px;background:var(--bg-card);cursor:pointer;transition:background .2s;border:none;font-family:var(--font)}
-.media-upload-btn:hover{background:rgba(13,71,161,.04)}
-.media-upload-btn svg{width:24px;height:24px;stroke:var(--gray-400);fill:none;stroke-width:1.5}
-.media-upload-btn span{font-size:11px;font-weight:600;color:var(--text-secondary);text-align:center}
-.media-upload-btn.active-cam svg{stroke:var(--primary)}
-.media-upload-btn.active-cam span{color:var(--primary)}
+/* ===== MEDIA UPLOAD (Kamera + Gallery) — 2 kotak terpisah ===== */
+.media-upload-box{border-radius:var(--radius);overflow:hidden}
+/* Preview */
+.media-upload-preview{display:none;position:relative;border-radius:var(--radius);overflow:hidden;border:1.5px solid var(--border-color)}
+.media-upload-preview img{width:100%;height:130px;object-fit:cover;display:block}
+.media-preview-actions{position:absolute;top:6px;right:6px;display:flex;gap:5px}
+.media-action-btn{width:27px;height:27px;border-radius:7px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.media-action-btn.delete{background:rgba(239,68,68,.85);color:white}
+.media-action-btn.retake{background:rgba(255,255,255,.9);color:var(--primary)}
+.media-action-btn svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2}
+/* 2 kotak terpisah: galeri atas, kamera bawah */
+.media-two-btns{display:flex;flex-direction:column;gap:6px;margin-top:0}
+.media-btn-gallery{display:flex;align-items:center;gap:9px;padding:8px 12px;background:var(--bg-card);border:1.5px solid var(--border-color);border-radius:8px;cursor:pointer;transition:all .2s;font-family:var(--font);width:100%}
+.media-btn-gallery:hover{border-color:var(--primary);background:rgba(13,71,161,.04)}
+.media-btn-gallery svg{width:17px;height:17px;stroke:var(--gray-400);fill:none;stroke-width:1.8;flex-shrink:0}
+.media-btn-gallery span{font-size:12px;font-weight:600;color:var(--text-secondary)}
+.media-btn-camera{display:flex;align-items:center;gap:9px;padding:8px 12px;background:linear-gradient(135deg,rgba(13,71,161,.06),rgba(0,188,212,.04));border:1.5px solid rgba(13,71,161,.2);border-radius:8px;cursor:pointer;transition:all .2s;font-family:var(--font);width:100%;border-style:dashed}
+.media-btn-camera:hover{border-color:var(--primary);background:rgba(13,71,161,.08);border-style:solid}
+.media-btn-camera svg{width:17px;height:17px;stroke:var(--primary);fill:none;stroke-width:1.8;flex-shrink:0}
+.media-btn-camera span{font-size:12px;font-weight:600;color:var(--primary)}
 /* Hidden file inputs */
 .media-file-input{display:none}
 
@@ -290,22 +294,30 @@
         </div>
       </div>
 
-      <!-- POS (hidden, auto-filled) + NOMINAL -->
+      <!-- POS — auto dari keyword, pilih manual via klik "Ganti" -->
       <div class="form-row-m">
         <div class="form-group-m">
           <label class="form-label-m">Pos Pengeluaran *</label>
-          <select id="fPos" class="form-control-m" onchange="onPosSelectChange()" style="display:none">
-            <option value="">-- Pilih Pos --</option>
-          </select>
-          <!-- Visible Pos selector (fallback manual) -->
-          <select id="fPosVisible" class="form-control-m" onchange="onPosVisibleChange()">
-            <option value="">-- Pilih Pos --</option>
-          </select>
+          <!-- Chip ketika sudah terpilih -->
+          <div id="posSelectedBox" style="display:none">
+            <div style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:rgba(13,71,161,.07);border:1.5px solid rgba(13,71,161,.25);border-radius:var(--radius)">
+              <svg viewBox="0 0 24 24" width="15" height="15" stroke="var(--success)" fill="none" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              <span id="posChipName" style="font-size:14px;font-weight:700;color:var(--primary);flex:1"></span>
+              <button onclick="clearPos()" style="background:none;border:none;cursor:pointer;font-size:11px;font-weight:600;color:var(--error);padding:2px 8px;border-radius:6px;background:rgba(239,68,68,.08)">Ganti</button>
+            </div>
+          </div>
+          <!-- Pilih manual (fallback saat belum ada dari keyword) -->
+          <div id="posManualBox">
+            <select id="fPosVisible" class="form-control-m" onchange="onPosVisibleChange()">
+              <option value="">-- Ketik uraian atau pilih pos --</option>
+            </select>
+          </div>
           <input type="hidden" id="fPosId">
-        </div>
+          <!-- lama tetap ada utk backward compat -->
+          <select id="fPos" style="display:none"><option value="">-</option></select>
         <div class="form-group-m">
           <label class="form-label-m">Nominal (Rp) *</label>
-          <input type="number" id="fNominal" class="form-control-m" placeholder="0" min="0" oninput="showNominalPreview()">
+          <input type="number" id="fNominal" class="form-control-m" placeholder="0" min="0" oninput="onNominalChangeBBM()">
         </div>
       </div>
 
@@ -328,36 +340,62 @@
           </div>
           <div class="form-group-m">
             <label class="form-label-m">Jenis BBM *</label>
-            <select id="fJenisBBM" class="form-control-m">
-              <option value="Solar">⛽ Solar</option>
-              <option value="Pertalite">⛽ Pertalite</option>
-              <option value="Dexlite">⛽ Dexlite</option>
-              <option value="Pertamax">⛽ Pertamax</option>
-              <option value="Pertamina Dex">⛽ Pertamina Dex</option>
+            <select id="fJenisBBM" class="form-control-m" onchange="onJenisBBMChange()">
+              <option value="Solar">⛽ Solar (Subsidi)</option>
+              <option value="Pertalite">⛽ Pertalite RON 90</option>
+              <option value="Pertamax">⛽ Pertamax RON 92</option>
+              <option value="Dexlite">⛽ Dexlite CN 51</option>
+              <option value="Pertamina Dex">⛽ Pertamina Dex CN 53</option>
               <option value="Custom">✏️ Jenis Lain</option>
             </select>
           </div>
         </div>
-        <div class="form-row-m">
-          <div class="form-group-m">
-            <label class="form-label-m">Jumlah Liter *</label>
-            <div style="position:relative">
-              <input type="number" id="fLiter" class="form-control-m" placeholder="0.00" step="0.01" min="0" oninput="calcBBM()" style="padding-right:36px">
-              <span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:11px;font-weight:700;color:var(--text-secondary)">L</span>
-            </div>
+
+        <!-- Harga per Liter (dengan referensi otomatis) -->
+        <div class="form-group-m">
+          <label class="form-label-m" style="display:flex;align-items:center;justify-content:space-between">
+            <span>Harga per Liter *</span>
+            <span style="font-size:10px;font-weight:500;color:var(--text-secondary);letter-spacing:0">bisa direvisi manual</span>
+          </label>
+          <div style="position:relative">
+            <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:11px;font-weight:700;color:var(--text-secondary);pointer-events:none">Rp</span>
+            <input type="number" id="fHargaL" class="form-control-m"
+              placeholder="Pilih jenis BBM dulu..."
+              style="padding-left:34px;font-size:15px;font-weight:700"
+              oninput="calcBBM()">
           </div>
-          <div class="form-group-m">
-            <label class="form-label-m">Harga per Liter *</label>
-            <div style="position:relative">
-              <input type="number" id="fHargaL" class="form-control-m" placeholder="0" oninput="calcBBM()" style="padding-left:36px">
-              <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:11px;font-weight:700;color:var(--text-secondary)">Rp</span>
-            </div>
+          <div id="bbmHargaNote" style="font-size:11px;margin-top:5px;color:var(--text-secondary);display:flex;align-items:center;gap:5px">
+            <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" fill="none" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            Pilih jenis BBM untuk mengisi harga referensi otomatis
           </div>
         </div>
-        <!-- BBM Total Preview -->
-        <div id="bbmTotalPreview" style="display:none;background:rgba(13,71,161,.08);border-radius:8px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between">
-          <span style="font-size:12px;color:var(--text-secondary)">Total BBM</span>
-          <span id="bbmTotalVal" style="font-size:16px;font-weight:800;color:var(--primary)">Rp 0</span>
+
+        <!-- Jumlah Liter — auto dari nominal ÷ harga -->
+        <div class="form-row-m" style="align-items:flex-end">
+          <div class="form-group-m">
+            <label class="form-label-m" style="display:flex;align-items:center;justify-content:space-between">
+              <span>Jumlah Liter</span>
+              <span style="font-size:10px;font-weight:500;color:var(--info);letter-spacing:0">⚡ auto dari nominal ÷ harga</span>
+            </label>
+            <div style="position:relative">
+              <input type="number" id="fLiter" class="form-control-m"
+                placeholder="Otomatis dari nominal..."
+                step="0.01" min="0"
+                style="padding-right:30px;background:rgba(59,130,246,.04);border-color:rgba(59,130,246,.2)"
+                oninput="calcBBM()">
+              <span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:11px;font-weight:700;color:var(--info)">L</span>
+            </div>
+            <div style="font-size:11px;margin-top:4px;color:var(--info)">
+              Isi nominal di atas → liter terisi otomatis
+            </div>
+          </div>
+          <!-- BBM Total -->
+          <div class="form-group-m">
+            <div id="bbmTotalPreview" style="display:none;background:linear-gradient(135deg,rgba(13,71,161,.1),rgba(0,188,212,.07));border:1.5px solid rgba(13,71,161,.2);border-radius:10px;padding:12px 14px">
+              <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--text-secondary);margin-bottom:4px">Total BBM</div>
+              <div id="bbmTotalVal" style="font-size:20px;font-weight:800;color:var(--primary);letter-spacing:-.5px">Rp 0</div>
+            </div>
+          </div>
         </div>
         <div class="extra-info-row" style="margin-top:10px">
           <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
@@ -481,13 +519,13 @@
 
         <!-- FOTO NOTA -->
         <div class="form-group-m">
-          <label class="form-label-m">Foto Nota / Kwitansi</label>
+          <label class="form-label-m">📷 Foto Nota / Kwitansi</label>
           <div class="media-upload-box" id="notaBox">
             <!-- Preview -->
             <div class="media-upload-preview" id="previewNota">
               <img id="previewNotaImg" src="" alt="Nota">
               <div class="media-preview-actions">
-                <button class="media-action-btn retake" onclick="retakePhoto('nota')" title="Ambil ulang">
+                <button class="media-action-btn retake" onclick="retakePhoto('nota')" title="Ganti">
                   <svg viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.98"/></svg>
                 </button>
                 <button class="media-action-btn delete" onclick="removeFile('nota')" title="Hapus">
@@ -495,29 +533,29 @@
                 </button>
               </div>
             </div>
-            <!-- Upload buttons (shown when no preview) -->
-            <div class="media-upload-btns" id="notaBtns">
-              <button class="media-upload-btn" onclick="openCamera('nota')" type="button">
+            <!-- 2 tombol terpisah (Galeri atas, Kamera bawah) -->
+            <div class="media-two-btns" id="notaBtns">
+              <label class="media-btn-gallery">
+                <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                <span>Pilih dari Galeri</span>
+                <input class="media-file-input" id="notaFileInput" type="file" accept="image/*" onchange="handleFile(event,'nota')">
+              </label>
+              <button class="media-btn-camera" onclick="openCamera('nota')" type="button">
                 <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
                 <span>📸 Buka Kamera</span>
               </button>
-              <label class="media-upload-btn" style="cursor:pointer">
-                <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                <span>🖼️ Pilih Galeri</span>
-                <input class="media-file-input" id="notaFileInput" type="file" accept="image/*" onchange="handleFile(event,'nota')">
-              </label>
             </div>
           </div>
         </div>
 
         <!-- BUKTI TRANSFER -->
         <div class="form-group-m">
-          <label class="form-label-m">Bukti Transfer</label>
+          <label class="form-label-m">💳 Bukti Transfer</label>
           <div class="media-upload-box" id="buktiBox">
             <div class="media-upload-preview" id="previewBukti">
               <img id="previewBuktiImg" src="" alt="Bukti">
               <div class="media-preview-actions">
-                <button class="media-action-btn retake" onclick="retakePhoto('bukti')" title="Ambil ulang">
+                <button class="media-action-btn retake" onclick="retakePhoto('bukti')" title="Ganti">
                   <svg viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.98"/></svg>
                 </button>
                 <button class="media-action-btn delete" onclick="removeFile('bukti')" title="Hapus">
@@ -525,16 +563,16 @@
                 </button>
               </div>
             </div>
-            <div class="media-upload-btns" id="buktiBtns">
-              <button class="media-upload-btn" onclick="openCamera('bukti')" type="button">
+            <div class="media-two-btns" id="buktiBtns">
+              <label class="media-btn-gallery">
+                <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                <span>Pilih dari Galeri</span>
+                <input class="media-file-input" id="buktiFileInput" type="file" accept="image/*" onchange="handleFile(event,'bukti')">
+              </label>
+              <button class="media-btn-camera" onclick="openCamera('bukti')" type="button">
                 <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
                 <span>📸 Buka Kamera</span>
               </button>
-              <label class="media-upload-btn" style="cursor:pointer">
-                <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                <span>🖼️ Pilih Galeri</span>
-                <input class="media-file-input" id="buktiFileInput" type="file" accept="image/*" onchange="handleFile(event,'bukti')">
-              </label>
             </div>
           </div>
         </div>
@@ -857,18 +895,18 @@ async function autoDetectPos(uraian) {
 function selectPos(idPos, namaPos) {
   selectedPosId = idPos;
   selectedPosName = namaPos;
-  // Update visible select
-  const fPosV = document.getElementById('fPosVisible');
-  for (let i=0; i<fPosV.options.length; i++) {
-    if (fPosV.options[i].value === idPos) { fPosV.selectedIndex = i; break; }
-  }
   document.getElementById('fPosId').value = idPos;
-  // Show chip
-  document.getElementById('posSelectedName').textContent = namaPos;
-  document.getElementById('posSelectedChip').classList.add('show');
+
+  // Show chip UI, hide manual select
+  document.getElementById('posChipName').textContent = namaPos;
+  document.getElementById('posSelectedBox').style.display = 'block';
+  document.getElementById('posManualBox').style.display = 'none';
+  // Also keep old chip (if exists)
+  const oldChip = document.getElementById('posSelectedChip');
+  if (oldChip) { document.getElementById('posSelectedName').textContent = namaPos; oldChip.classList.add('show'); }
+
   hidePosDropdown();
   handlePosExtras(namaPos);
-  showToast('Pos "' + namaPos + '" dipilih.', 'info', 2000);
 }
 
 function clearPos() {
@@ -963,12 +1001,12 @@ function removeFile(type) {
   if (type === 'nota') {
     notaB64 = null; notaMime = null;
     document.getElementById('previewNota').style.display = 'none';
-    document.getElementById('notaBtns').style.display = 'grid';
+    document.getElementById('notaBtns').style.display = 'flex';
     document.getElementById('notaFileInput').value = '';
   } else {
     buktiB64 = null; buktiMime = null;
     document.getElementById('previewBukti').style.display = 'none';
-    document.getElementById('buktiBtns').style.display = 'grid';
+    document.getElementById('buktiBtns').style.display = 'flex';
     document.getElementById('buktiFileInput').value = '';
   }
 }
@@ -1139,6 +1177,10 @@ function resetForm() {
   document.getElementById('namaIsCustom').style.display = 'none';
   document.getElementById('fNama').placeholder = 'Pilih karyawan atau ketik nama supplier...';
   clearPos();
+  // Reset harga BBM note
+  const bbmNote = document.getElementById('bbmHargaNote');
+  if (bbmNote) bbmNote.textContent = 'Pilih jenis BBM untuk mengisi harga referensi otomatis';
+  document.getElementById('bbmTotalPreview').style.display = 'none';
   removeFile('nota'); removeFile('bukti');
   setDefaultDT();
 }
@@ -1365,6 +1407,88 @@ async function saveDataFull() {
     btn.disabled = false;
     btn.innerHTML = '<svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" fill="none" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Simpan';
   }
+}
+
+
+// ============================================================
+// HARGA BBM REFERENSI (Update: Juni 2026 - Pertamina)
+// Bisa direvisi langsung di input harga
+// ============================================================
+const BBM_PRICES = {
+  'Solar':         6800,    // Biosolar subsidi
+  'Pertalite':     10000,   // RON 90 subsidi
+  'Pertamax':      12300,   // RON 92
+  'Dexlite':       23000,   // CN 51 (turun per Juni 2026)
+  'Pertamina Dex': 24800,   // CN 53 (turun per Juni 2026)
+  'Custom':        0
+};
+
+const BBM_LABELS = {
+  'Solar':         'Biosolar (Subsidi)',
+  'Pertalite':     'Pertalite RON 90 (Subsidi)',
+  'Pertamax':      'Pertamax RON 92',
+  'Dexlite':       'Dexlite CN 51',
+  'Pertamina Dex': 'Pertamina Dex CN 53',
+  'Custom':        'Jenis Lain'
+};
+
+// Isi harga otomatis saat jenis BBM berubah
+function onJenisBBMChange() {
+  const jenis  = document.getElementById('fJenisBBM').value;
+  const price  = BBM_PRICES[jenis] || 0;
+  const hargaEl = document.getElementById('fHargaL');
+  
+  if (price > 0) {
+    hargaEl.value = price;
+    // Update placeholder label
+    document.getElementById('bbmHargaNote').textContent =
+      'Referensi Juni 2026: Rp ' + price.toLocaleString('id-ID') + '/L — bisa direvisi';
+    document.getElementById('bbmHargaNote').style.color = 'var(--success)';
+  } else {
+    hargaEl.value = '';
+    document.getElementById('bbmHargaNote').textContent = 'Masukkan harga per liter secara manual';
+    document.getElementById('bbmHargaNote').style.color = 'var(--text-secondary)';
+  }
+  calcBBM();
+}
+
+// Override calcBBM — nominal / harga = liter
+function calcBBM() {
+  const liter   = parseFloat(document.getElementById('fLiter').value)   || 0;
+  const harga   = parseFloat(document.getElementById('fHargaL').value)  || 0;
+  const nominal = parseFloat(document.getElementById('fNominal').value) || 0;
+
+  let total = 0;
+
+  if (liter > 0 && harga > 0) {
+    // Liter diisi manual → hitung total
+    total = liter * harga;
+    document.getElementById('fNominal').value = total;
+  } else if (nominal > 0 && harga > 0) {
+    // Nominal diisi → hitung liter otomatis
+    const autoLiter = nominal / harga;
+    document.getElementById('fLiter').value = autoLiter.toFixed(2);
+    total = nominal;
+  } else if (nominal > 0 && liter > 0) {
+    // Keduanya diisi → hitung harga
+    total = nominal;
+  }
+
+  const preview = document.getElementById('bbmTotalPreview');
+  if (total > 0) {
+    preview.style.display = 'flex';
+    document.getElementById('bbmTotalVal').textContent = formatRupiah(total);
+  } else {
+    preview.style.display = 'none';
+  }
+  showNominalPreview();
+}
+
+// Nominal berubah → auto-hitung liter
+function onNominalChangeBBM() {
+  showNominalPreview();
+  const bbmShown = document.getElementById('bbmExtra').classList.contains('show');
+  if (bbmShown) calcBBM();
 }
 
 </script>
