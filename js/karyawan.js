@@ -166,7 +166,5 @@ function exportPDF() {
   });
   doc.save('Karyawan_' + new Date().toLocaleDateString('id-ID').replace(/\//g,'-') + '.pdf');
 }
-</script>
 
-<script>
 document.addEventListener('DOMContentLoaded', () => initPage('karyawan'));
