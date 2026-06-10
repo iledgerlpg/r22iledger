@@ -170,7 +170,8 @@ function exportPDF() {
   doc.autoTable({ head:[['No','Tanggal','Nama','Uraian','Nominal']], body: rows, startY:32, styles:{fontSize:9}, headStyles:{fillColor:[16,185,129],textColor:255,fontStyle:'bold'}, alternateRowStyles:{fillColor:[240,253,244]} });
   doc.save('Pendapatan_' + new Date().toLocaleDateString('id-ID').replace(/\//g,'-') + '.pdf');
 }
-</script>
+
 
 <script>
 document.addEventListener('DOMContentLoaded', () => initPage('pemasukan'));
+<script>
