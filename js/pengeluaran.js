@@ -167,10 +167,11 @@ function renderTable(data, page, limit) {
     let nota = `<div class="no-nota"><svg viewBox="0 0 24 24" width="13" height="13" stroke="var(--gray-400)" fill="none" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/></svg></div>`;
     if (r.fotoNotaURL) {
       const idNota = extractFileId(r.fotoNotaURL);
-      const fullNota = idNota ? `https://drive.google.com/uc?export=view&id=${idNota}` : r.fotoNotaURL;
+      
+      // PERUBAHAN DI SINI: Pakai thumbnail sz=w1200 untuk Lightbox, sz=w300 untuk tabel
+      const fullNota = idNota ? `https://drive.google.com/thumbnail?id=${idNota}&sz=w1200` : r.fotoNotaURL;
       const thumbNota = idNota ? `https://drive.google.com/thumbnail?id=${idNota}&sz=w300` : r.fotoNotaURL;
       
-      // Kita simpan URL asli di attribute 'data-click-url' bukan di onclick biasa
       nota = `<img class="nota-thumb clickable-preview cursor-pointer hover:opacity-80 transition" src="${thumbNota}" data-click-url="${fullNota}" loading="lazy" title="Lihat Nota">`;
     }
 
@@ -178,10 +179,11 @@ function renderTable(data, page, limit) {
     let buktiTf = `<div class="no-nota"><svg viewBox="0 0 24 24" width="13" height="13" stroke="var(--gray-400)" fill="none" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/></svg></div>`;
     if (r.buktiTransferURL) {
       const idBukti = extractFileId(r.buktiTransferURL);
-      const fullBukti = idBukti ? `https://drive.google.com/uc?export=view&id=${idBukti}` : r.buktiTransferURL;
+      
+      // PERUBAHAN DI SINI: Pakai thumbnail sz=w1200 untuk Lightbox, sz=w300 untuk tabel
+      const fullBukti = idBukti ? `https://drive.google.com/thumbnail?id=${idBukti}&sz=w1200` : r.buktiTransferURL;
       const thumbBukti = idBukti ? `https://drive.google.com/thumbnail?id=${idBukti}&sz=w300` : r.buktiTransferURL;
       
-      // Kita simpan URL asli di attribute 'data-click-url' juga
       buktiTf = `<img class="nota-thumb clickable-preview cursor-pointer hover:opacity-80 transition" src="${thumbBukti}" data-click-url="${fullBukti}" loading="lazy" title="Lihat Bukti Transfer">`;
     }
 
@@ -205,6 +207,17 @@ function renderTable(data, page, limit) {
       </div></td>
     </tr>`;
   }).join('');
+
+  // --- EVENT BINDING UNTUK LIGHTBOX ---
+  tbody.querySelectorAll('.clickable-preview').forEach(img => {
+    img.addEventListener('click', function() {
+      const targetUrl = this.getAttribute('data-click-url');
+      if (targetUrl) {
+        openLB(targetUrl);
+      }
+    });
+  });
+}
 
   // --- OBLIGATORY EVENT BINDING AFTER RENDERING ---
   // Cari semua elemen gambar yang memiliki class .clickable-preview di dalam tabel
