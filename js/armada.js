@@ -1,7 +1,6 @@
-
 let allData = [], currentView = 'grid';
 let selectedFotoBase64 = null, selectedFotoMime = null;
-let searchTimeout = null;
+let searchTimeout = null; // FIX: Duplikat deklarasi sudah dihapus
 
 let uploadState = {
   stnk: { base64: null, mime: null },
@@ -9,11 +8,22 @@ let uploadState = {
   barcode: { base64: null, mime: null }
 };
 
-let searchTimeout = null;
+// Gabungkan inisialisasi agar berjalan berurutan dengan aman
+document.addEventListener('DOMContentLoaded', async () => {
+  if (typeof initPage === 'function') initPage('armada');
+  setDefaultDT();
+  await loadData();
+});
 
-document.addEventListener('DOMContentLoaded', loadData);
+function setDefaultDT() {
+  const now = new Date();
+  const pad = n => String(n).padStart(2,'0');
+  document.getElementById('fTimestamp').value = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  document.getElementById('filterMonth').value = `${now.getFullYear()}-${pad(now.getMonth()+1)}`;
+}
 
 async function loadData() {
+  showSkeleton('tableBody', 5);
   const res = await callAPI('getArmada', {
     search: document.getElementById('searchInput').value,
     status: document.getElementById('filterStatus').value
@@ -44,6 +54,35 @@ function updateStats(data) {
   document.getElementById('statLate').textContent = late + ' unit';
 }
 
+function cleanImageUrl(url) {
+    if (!url) return '';
+    if (url.includes('uc?export=view')) return url;
+    if (url.includes('drive.google.com')) {
+        return url.replace('/view?usp=sharing', '/uc?export=view')
+                  .replace('/file/d/', '/uc?id=')
+                  .replace('/view', '');
+    }
+    return url;
+}
+
+function extractFileId(url) {
+    if (!url) return null;
+    const directId = url.match(/id=([A-Za-z0-9_-]+)/);
+    const fileId = url.match(/\/d\/([A-Za-z0-9_-]+)/);
+    return directId ? directId[1] : (fileId ? fileId[1] : null);
+}
+
+function renderThumb(url) {
+    const id = extractFileId(url);
+    if (!id) return '-';
+    const thumbUrl = `https://drive.google.com/thumbnail?id=${id}&sz=w300`;
+    const fullUrl = `https://drive.google.com/thumbnail?id=${id}&sz=w1200`;
+    
+    return `<a href="${fullUrl}" target="_blank" class="hover:opacity-80 transition">
+                <img src="${thumbUrl}" class="h-12 w-12 object-cover rounded shadow mx-auto border border-gray-200" loading="lazy" />
+            </a>`;
+}
+
 function renderGrid(data) {
   const container = document.getElementById('armadaGrid');
   if (!data.length) {
@@ -52,13 +91,26 @@ function renderGrid(data) {
   }
   container.innerHTML = data.map(a => {
     const stStatus = getStnkStatus(a.tanggalSTNK);
-    
-    // Asumsi: Kalau nggak ada foto kendaraan utama, kita pakai FotoSTNK atau FotoKIR sebagai thumbnail di grid
     const mainPhotoUrl = a.fotoURL || a.FotoSTNK || a.FotoKIR; 
     
+    // OPTIMASI: Bungkus thumbnail utama dengan deteksi ID Google Drive
+    const idFotoUtama = extractFileId(mainPhotoUrl);
+    const srcFotoUtama = idFotoUtama ? `https://drive.google.com/thumbnail?id=${idFotoUtama}&sz=w300` : mainPhotoUrl;
+    
     const photoHtml = mainPhotoUrl
-      ? `<img src="${mainPhotoUrl}" alt="${a.noPolisi}" onerror="this.parentElement.innerHTML='<div class=armada-photo-placeholder><svg viewBox=\'0 0 24 24\'><rect x=\'1\' y=\'3\' width=\'15\' height=\'13\' rx=\'1\'/></svg></div>'">`
+      ? `<img src="${srcFotoUtama}" alt="${a.noPolisi}" onerror="this.parentElement.innerHTML='<div class=armada-photo-placeholder><svg viewBox=\'0 0 24 24\'><rect x=\'1\' y=\'3\' width=\'15\' height=\'13\' rx=\'1\'/></svg></div>'">`
       : `<div class="armada-photo-placeholder"><svg viewBox="0 0 24 24" width="64" height="64" stroke="currentColor" fill="none" stroke-width="0.8"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div>`;
+    
+    // Generate shortcut preview dokumen di dalam kartu grid
+    let docBadges = '';
+    [['FotoSTNK', 'STNK', 'badge-info'], ['FotoKIR', 'KIR', 'badge-success'], ['FotoBarcodeSubsidiTepat', 'Barcode', 'badge-gray']].forEach(([prop, label, cls]) => {
+      if (a[prop]) {
+        const idDoc = extractFileId(a[prop]);
+        const fullDocUrl = idDoc ? `https://drive.google.com/thumbnail?id=${idDoc}&sz=w1200` : a[prop];
+        docBadges += `<span class="badge ${cls} clickable-preview cursor-pointer" data-click-url="${fullDocUrl}" style="font-size:10px; padding:2px 6px; margin-right:4px;" title="Lihat ${label}">${label}</span>`;
+      }
+    });
+
     return `
     <div class="armada-card">
       <div class="armada-photo">
@@ -75,7 +127,10 @@ function renderGrid(data) {
           <div class="armada-detail-item"><div class="d-label">Tgl STNK</div><div class="d-value">${a.tanggalSTNK || '-'}</div></div>
           <div class="armada-detail-item"><div class="d-label">Tgl KIR</div><div class="d-value">${a.tanggalKIR || '-'}</div></div>
         </div>
-        ${a.tanggalSTNK ? `<div style="margin-top:10px"><span class="stnk-status ${stStatus.cls}">${stStatus.text}</span></div>` : ''}
+        <div style="margin-top:8px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:5px;">
+          ${a.tanggalSTNK ? `<div><span class="stnk-status ${stStatus.cls}">${stStatus.text}</span></div>` : ''}
+          <div style="display:flex;">${docBadges}</div>
+        </div>
       </div>
       <div class="armada-footer">
         <button class="btn btn-outline btn-sm" style="flex:1" onclick='editRow(${JSON.stringify(a).replace(/'/g,"&#39;")})'>
@@ -88,18 +143,36 @@ function renderGrid(data) {
       </div>
     </div>`;
   }).join('');
+
+  attachLightboxEvents(container);
 }
 
 function renderList(data) {
   const tbody = document.getElementById('armadaTableBody');
   if (!data.length) { tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--text-secondary)">Belum ada armada</td></tr>'; return; }
   tbody.innerHTML = data.map((a, i) => {
-    const st = getStnkStatus(a.tanggalSTNK);
+    
+    // Generate link preview dokumen untuk tampilan tabel list
+    let docLinks = [];
+    [['FotoSTNK', 'STNK'], ['FotoKIR', 'KIR'], ['FotoBarcodeSubsidiTepat', 'Barcode']].forEach(([prop, label]) => {
+      if (a[prop]) {
+        const idDoc = extractFileId(a[prop]);
+        const fullDocUrl = idDoc ? `https://drive.google.com/thumbnail?id=${idDoc}&sz=w1200` : a[prop];
+        docLinks.push(`<span class="clickable-preview text-primary cursor-pointer underline" data-click-url="${fullDocUrl}" style="margin-right:5px; font-size:11px;">[${label}]</span>`);
+      }
+    });
+    const docHtml = docLinks.length ? docLinks.join('') : '-';
+
     return `<tr>
-      <td>${i+1}</td><td style="font-weight:700">${a.noPolisi}</td><td>${a.jenisKendaraan}</td>
-      <td>${a.merk}</td><td>${a.tahun}</td><td>${a.pemilik}</td>
-      <td>${a.tanggalSTNK || '-'}</td><td>${a.tanggalKIR || '-'}</td>
-      <td><span class="badge ${a.status === 'ACTIVE' ? 'badge-success' : 'badge-gray'}">${a.status}</span></td>
+      <td>${i+1}</td>
+      <td style="font-weight:700">${a.noPolisi}</td>
+      <td>${a.jenisKendaraan}</td>
+      <td>${a.merk}</td>
+      <td>${a.tahun}</td>
+      <td>${a.pemilik}</td>
+      <td>${a.tanggalSTNK || '-'}</td>
+      <td>${a.tanggalKIR || '-'}</td>
+      <td><div style="margin-bottom:4px;"><span class="badge ${a.status === 'ACTIVE' ? 'badge-success' : 'badge-gray'}">${a.status}</span></div><div>${docHtml}</div></td>
       <td><div style="display:flex;gap:6px">
         <button class="btn btn-outline btn-sm btn-icon" onclick='editRow(${JSON.stringify(a).replace(/'/g,"&#39;")})'>
           <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/></svg>
@@ -110,6 +183,23 @@ function renderList(data) {
       </div></td>
     </tr>`;
   }).join('');
+
+  attachLightboxEvents(tbody);
+}
+
+// Fungsi pembantu reusable untuk mengaktifkan klik Lightbox dokumen
+function attachLightboxEvents(parentElement) {
+  parentElement.querySelectorAll('.clickable-preview').forEach(el => {
+    el.addEventListener('click', function(e) {
+      e.stopPropagation(); // Biar kartu grid gak ikut pemicu klik lain
+      const targetUrl = this.getAttribute('data-click-url');
+      if (targetUrl) {
+        // Otomatis deteksi fungsi lightbox mana yang terpasang di sistem global lo
+        if (typeof openLightbox === 'function') openLightbox(targetUrl);
+        else if (typeof openLB === 'function') openLB(targetUrl);
+      }
+    });
+  });
 }
 
 function getStnkStatus(tglStr) {
@@ -130,8 +220,6 @@ function setView(v) {
   if (v === 'list') renderList(allData);
 }
 
-// --- 2. UPDATE HANDLER FOTO MULTIPLE ---
-// Parameter `jenis` akan bernilai 'stnk', 'kir', atau 'barcode'
 function handleFotoSelect(e, jenis) {
   const file = e.target.files[0]; if (!file) return;
   const reader = new FileReader();
@@ -151,16 +239,16 @@ function removeFoto(jenis) {
   if(fileInput) fileInput.value = '';
 }
 
-// Helper untuk menampilkan foto yang sudah ada saat tombol Edit diklik
 function setupEditPreview(jenis, url) {
     const previewBox = document.getElementById(`preview${jenis}`);
     const previewImg = document.getElementById(`preview${jenis}Img`);
     
-    // Reset state upload
     uploadState[jenis] = { base64: null, mime: null };
     
     if (url) {
-        previewImg.src = url;
+        // Optimasi link preview pada modal edit agar tembus pembatasan Drive
+        const id = extractFileId(url);
+        previewImg.src = id ? `https://drive.google.com/thumbnail?id=${id}&sz=w300` : url;
         previewBox.style.display = 'block';
     } else {
         previewImg.src = '';
@@ -168,7 +256,6 @@ function setupEditPreview(jenis, url) {
     }
 }
 
-// --- 3. UBAH PAYLOAD DATA SAAT SAVE ---
 async function saveData() {
   const id = document.getElementById('editId').value;
   const noPolisi = document.getElementById('fNopol').value.trim().toUpperCase();
@@ -177,7 +264,6 @@ async function saveData() {
   const btn = document.getElementById('btnSave');
   btn.disabled = true; btn.textContent = 'Menyimpan...';
   
-  // Kirim payload dengan masing-masing Base64 & MimeType untuk STNK, KIR, Barcode
   const res = await callAPI(id ? 'updateArmada' : 'addArmada', {
     id, noPolisi, jenisKendaraan: document.getElementById('fJenis').value,
     merk: document.getElementById('fMerk').value, tahun: document.getElementById('fTahun').value,
@@ -187,7 +273,6 @@ async function saveData() {
     barcodeSubsidiTepat: document.getElementById('fBarcode').value,
     status: id ? document.getElementById('fStatus').value : 'ACTIVE',
     
-    // Parsing data foto ke properti API
     fotoSTNKBase64: uploadState.stnk.base64, fotoSTNKMimeType: uploadState.stnk.mime,
     fotoKIRBase64: uploadState.kir.base64, fotoKIRMimeType: uploadState.kir.mime,
     fotoBarcodeBase64: uploadState.barcode.base64, fotoBarcodeMimeType: uploadState.barcode.mime
@@ -215,7 +300,6 @@ function editRow(row) {
   document.getElementById('fStatus').value = row.status;
   document.getElementById('editStatusGroup').style.display = 'block';
   
-  // Tampilkan preview foto yang udah ada di database pas form Edit kebuka
   setupEditPreview('stnk', row.FotoSTNK);
   setupEditPreview('kir', row.FotoKIR);
   setupEditPreview('barcode', row.FotoBarcodeSubsidiTepat);
@@ -228,8 +312,6 @@ function resetForm() {
   document.getElementById('modalTitle').textContent = 'Tambah Armada';
   ['fNopol','fMerk','fTahun','fPemilik','fNoSTNK','fTglSTNK','fTglKIR','fBarcode'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('editStatusGroup').style.display = 'none';
-  
-  // Bersihin ke-3 kolom preview foto
   ['stnk', 'kir', 'barcode'].forEach(jenis => removeFoto(jenis));
 }
 
@@ -249,5 +331,3 @@ function exportPDF() {
   });
   doc.save('Armada_' + new Date().toLocaleDateString('id-ID').replace(/\//g,'-') + '.pdf');
 }
-
-document.addEventListener('DOMContentLoaded', () => initPage('armada'));
