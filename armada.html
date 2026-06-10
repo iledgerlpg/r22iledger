@@ -37,19 +37,23 @@
 .stnk-danger{background:#fee2e2;color:#991b1b}
 .search-toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:20px}
 .filter-select{padding:9px 14px;border:1.5px solid var(--border-color);border-radius:var(--radius);font-family:var(--font);font-size:13px;color:var(--text-primary);background:var(--bg-card);cursor:pointer;outline:none;min-width:130px}
-.upload-zone{border:2px dashed var(--border-color);border-radius:var(--radius);padding:18px;text-align:center;cursor:pointer;background:var(--gray-50);position:relative;transition:all .2s}
+.upload-zone{border:2px dashed var(--border-color);border-radius:var(--radius);padding:14px;text-align:center;cursor:pointer;background:var(--gray-50);position:relative;transition:all .2s;height:110px;display:flex;flex-direction:column;align-items:center;justify-content:center}
 .upload-zone:hover{border-color:var(--primary)}
 .upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer}
-.upload-zone svg{width:26px;height:26px;stroke:var(--gray-400);fill:none;stroke-width:1.5;margin-bottom:4px}
-.upload-zone p{font-size:12px;color:var(--text-secondary)}
+.upload-zone svg{width:22px;height:22px;stroke:var(--gray-400);fill:none;stroke-width:1.5;margin-bottom:4px}
+.upload-zone p{font-size:11px;color:var(--text-secondary);line-height:1.3}
 .upload-preview{position:relative;margin-top:8px;border-radius:var(--radius);overflow:hidden;border:1.5px solid var(--border-color)}
-.upload-preview img{width:100%;height:140px;object-fit:cover;display:block}
-.upload-preview-remove{position:absolute;top:6px;right:6px;width:26px;height:26px;border-radius:6px;background:rgba(0,0,0,.6);color:white;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center}
-.upload-preview-remove svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2}
+.upload-preview img{width:100%;height:110px;object-fit:cover;display:block}
+.upload-preview-remove{position:absolute;top:6px;right:6px;width:24px;height:24px;border-radius:6px;background:rgba(0,0,0,.6);color:white;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.upload-preview-remove svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2}
 .view-toggle{display:flex;gap:4px;background:var(--gray-100);padding:3px;border-radius:8px}
 .view-btn{width:32px;height:32px;border:none;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text-secondary);background:transparent;transition:all .2s}
 .view-btn.active{background:var(--bg-card);color:var(--primary);box-shadow:0 1px 4px rgba(0,0,0,.1)}
 .view-btn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2}
+
+/* Tambahan helper grid buat layout dokumen modal */
+.document-upload-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:4px}
+@media(max-width:540px){.document-upload-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -88,7 +92,6 @@
     </div>
   </div>
 
-  <!-- Stats Row -->
   <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:20px" id="statsRow">
     <div class="kpi-card"><div class="kpi-icon" style="background:#DBEAFE;color:#1D4ED8"><svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" fill="none" stroke-width="1.8"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div><div><div class="kpi-label">Total Armada</div><div class="kpi-value sm" id="statTotal">-</div></div></div>
     <div class="kpi-card"><div class="kpi-icon" style="background:#DCFCE7;color:#16A34A"><svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" fill="none" stroke-width="1.8"><polyline points="20 6 9 17 4 12"/></svg></div><div><div class="kpi-label">Aktif</div><div class="kpi-value sm" id="statActive">-</div></div></div>
@@ -128,7 +131,6 @@
   </div>
 </main>
 
-<!-- MODAL -->
 <div class="modal-overlay" id="modalAdd">
   <div class="modal" style="max-width:680px">
     <div class="modal-header">
@@ -186,20 +188,59 @@
         <label class="form-label-m">Barcode Subsidi Tepat</label>
         <input type="text" id="fBarcode" class="form-control-m" placeholder="Kode barcode subsidi">
       </div>
+      
       <div class="form-group-m">
-        <label class="form-label-m">Foto Kendaraan</label>
-        <div class="upload-zone" id="uploadFoto">
-          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-          <p><strong>Klik</strong> untuk upload foto kendaraan</p>
-          <input type="file" accept="image/*" onchange="handleFotoSelect(event)">
-        </div>
-        <div id="previewFoto" style="display:none" class="upload-preview">
-          <img id="previewFotoImg" src="" alt="Foto Kendaraan">
-          <button class="upload-preview-remove" onclick="removeFoto()">
-            <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-          </button>
+        <label class="form-label-m" style="font-weight:700; margin-bottom:8px; display:block; color:var(--primary)">Upload Dokumen Berkas Pendukung</label>
+        <div class="document-upload-grid">
+          
+          <div>
+            <label class="form-label-m" style="font-size:11px; margin-bottom:4px;">Foto STNK</label>
+            <div class="upload-zone">
+              <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              <p><strong>Pilih Berkas</strong> STNK</p>
+              <input type="file" id="fFotostnk" accept="image/*" onchange="handleFotoSelect(event, 'stnk')">
+            </div>
+            <div id="previewstnk" style="display:none" class="upload-preview">
+              <img id="previewstnkImg" src="" alt="Preview STNK">
+              <button class="upload-preview-remove" onclick="removeFoto('stnk')">
+                <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label class="form-label-m" style="font-size:11px; margin-bottom:4px;">Foto KIR</label>
+            <div class="upload-zone">
+              <svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              <p><strong>Pilih Berkas</strong> KIR</p>
+              <input type="file" id="fFotokir" accept="image/*" onchange="handleFotoSelect(event, 'kir')">
+            </div>
+            <div id="previewkir" style="display:none" class="upload-preview">
+              <img id="previewkirImg" src="" alt="Preview KIR">
+              <button class="upload-preview-remove" onclick="removeFoto('kir')">
+                <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label class="form-label-m" style="font-size:11px; margin-bottom:4px;">Foto Barcode Pertamina</label>
+            <div class="upload-zone">
+              <svg viewBox="0 0 24 24"><line x1="3" y1="5" x2="3" y2="19"/><line x1="21" y1="5" x2="21" y2="19"/><path d="M7 5v14M11 5v14M17 5v14"/></svg>
+              <p><strong>Pilih Berkas</strong> Barcode</p>
+              <input type="file" id="fFotobarcode" accept="image/*" onchange="handleFotoSelect(event, 'barcode')">
+            </div>
+            <div id="previewbarcode" style="display:none" class="upload-preview">
+              <img id="previewbarcodeImg" src="" alt="Preview Barcode">
+              <button class="upload-preview-remove" onclick="removeFoto('barcode')">
+                <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+          </div>
+
         </div>
       </div>
+      
       <div id="editStatusGroup" style="display:none">
         <div class="form-group-m">
           <label class="form-label-m">Status</label>
@@ -219,7 +260,6 @@
     </div>
   </div>
 </div>
-
 
 </body>
 </html>
