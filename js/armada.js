@@ -138,7 +138,7 @@ function renderGrid(data) {
         <div class="armada-type">${a.jenisKendaraan} · ${a.tahun || '-'}</div>
         <div class="armada-detail-grid">
           <div class="armada-detail-item"><div class="d-label">Pemilik</div><div class="d-value">${a.pemilik || '-'}</div></div>
-          <div class="armada-detail-item"><div class="d-label">No. STNK</div><div class="d-value">${a.noSTNK || '-'}</div></div>
+          <div class="armada-detail-item"><div class="d-label">Merk/Model</div><div class="d-value">${a.noSTNK || '-'}</div></div>
           <div class="armada-detail-item"><div class="d-label">Tgl STNK</div><div class="d-value">${a.tanggalSTNK || '-'}</div></div>
           <div class="armada-detail-item"><div class="d-label">Tgl KIR</div><div class="d-value">${a.tanggalKIR || '-'}</div></div>
         </div>
