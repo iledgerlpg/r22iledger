@@ -6,6 +6,8 @@
 <title>iLedgerV2 – Daftar Perusahaan</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<!-- config.js untuk callAPI & APP_URL -->
+<script src="js/config.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
@@ -40,6 +42,7 @@ body::before{
   overflow:hidden;
 }
 
+/* ===== HEADER ===== */
 .register-header{
   background:linear-gradient(135deg,var(--primary),var(--primary-light));
   padding:32px 40px;position:relative;overflow:hidden;
@@ -51,8 +54,7 @@ body::before{
 .header-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
 .back-btn{
   color:rgba(255,255,255,.8);text-decoration:none;
-  display:flex;align-items:center;gap:6px;font-size:14px;font-weight:500;
-  transition:color .2s;
+  display:flex;align-items:center;gap:6px;font-size:14px;font-weight:500;transition:color .2s;
 }
 .back-btn:hover{color:white}
 .back-btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2}
@@ -64,9 +66,10 @@ body::before{
 .register-header h1{color:white;font-size:26px;font-weight:800;letter-spacing:-.5px}
 .register-header p{color:rgba(255,255,255,.7);font-size:14px;margin-top:6px}
 
+/* ===== BODY ===== */
 .register-body{padding:36px 40px 40px}
 
-/* Step Indicator */
+/* ===== STEP INDICATOR ===== */
 .steps{display:flex;gap:0;margin-bottom:32px;position:relative}
 .steps::before{
   content:'';position:absolute;top:18px;left:18px;right:18px;height:2px;
@@ -79,45 +82,35 @@ body::before{
   font-size:13px;font-weight:700;transition:all .3s;
   border:2px solid var(--gray-200);background:white;color:var(--gray-400);
 }
-.step-item.active .step-circle{border-color:var(--primary);background:var(--primary);color:white}
+.step-item.active .step-circle{border-color:var(--primary);background:var(--primary);color:white;box-shadow:0 0 0 4px rgba(13,71,161,.15)}
 .step-item.done .step-circle{border-color:var(--success);background:var(--success);color:white}
 .step-label{font-size:11px;font-weight:600;color:var(--gray-400);text-align:center}
 .step-item.active .step-label{color:var(--primary)}
 .step-item.done .step-label{color:var(--success)}
-.progress-bar{
-  height:4px;background:var(--gray-100);border-radius:2px;
-  margin-bottom:32px;overflow:hidden;
-}
-.progress-fill{
-  height:100%;background:linear-gradient(90deg,var(--primary),var(--accent));
-  border-radius:2px;transition:width .4s cubic-bezier(0.4,0,0.2,1);
-}
 
-/* Form sections */
+.progress-bar{height:4px;background:var(--gray-100);border-radius:2px;margin-bottom:32px;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--accent));border-radius:2px;transition:width .4s cubic-bezier(0.4,0,0.2,1)}
+
+/* ===== FORM SECTIONS ===== */
 .form-section{display:none}
 .form-section.active{display:block;animation:fadeSection .3s ease}
-@keyframes fadeSection{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+@keyframes fadeSection{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:translateX(0)}}
 
 .section-title{
-  font-size:16px;font-weight:700;color:var(--gray-800);
+  font-size:15px;font-weight:700;color:var(--gray-800);
   margin-bottom:20px;padding-bottom:12px;
   border-bottom:2px solid var(--gray-100);
   display:flex;align-items:center;gap:10px;
 }
-.section-title svg{width:20px;height:20px;stroke:var(--primary);fill:none;stroke-width:2}
+.section-title svg{width:18px;height:18px;stroke:var(--primary);fill:none;stroke-width:2}
 
+/* ===== FORM CONTROLS ===== */
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 .form-group{margin-bottom:18px}
-.form-label{
-  display:block;font-size:13px;font-weight:600;
-  color:var(--gray-600);margin-bottom:8px;
-}
+.form-label{display:block;font-size:13px;font-weight:600;color:var(--gray-600);margin-bottom:7px}
 .required{color:var(--error)}
 .input-wrapper{position:relative}
-.input-icon{
-  position:absolute;left:14px;top:50%;transform:translateY(-50%);
-  color:var(--gray-400);pointer-events:none;
-}
+.input-icon{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--gray-400);pointer-events:none}
 .input-icon svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2}
 .form-control{
   width:100%;padding:11px 16px 11px 42px;
@@ -127,51 +120,46 @@ body::before{
 }
 .form-control.no-icon{padding-left:16px}
 .form-control:focus{border-color:var(--primary);background:white;box-shadow:0 0 0 3px rgba(13,71,161,.1)}
-.form-control.error{border-color:var(--error)}
+.form-control.is-error{border-color:var(--error);background:#fff5f5}
 .form-hint{font-size:11px;color:var(--gray-400);margin-top:5px}
+
 .password-toggle{
-  position:absolute;right:14px;top:50%;transform:translateY(-50%);
-  background:none;border:none;cursor:pointer;color:var(--gray-400);
-  padding:4px;transition:color .2s;
+  position:absolute;right:12px;top:50%;transform:translateY(-50%);
+  background:none;border:none;cursor:pointer;color:var(--gray-400);padding:4px;transition:color .2s;
 }
 .password-toggle:hover{color:var(--primary)}
 .password-toggle svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2}
 
-/* Password strength */
+/* ===== PASSWORD STRENGTH ===== */
 .password-strength{margin-top:8px}
 .strength-bar{display:flex;gap:4px;margin-bottom:4px}
-.strength-segment{
-  height:4px;flex:1;border-radius:2px;
-  background:var(--gray-200);transition:background .3s;
-}
+.strength-segment{height:4px;flex:1;border-radius:2px;background:var(--gray-200);transition:background .3s}
 .strength-text{font-size:11px;color:var(--gray-400)}
 
-/* Package selector */
+/* ===== PAKET GRID ===== */
 .paket-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
 .paket-card{
   border:2px solid var(--gray-200);border-radius:var(--radius);
-  padding:16px;cursor:pointer;transition:all .2s;text-align:center;
-  position:relative;overflow:hidden;
+  padding:16px;cursor:pointer;transition:all .2s;text-align:center;position:relative;overflow:hidden;
 }
-.paket-card:hover{border-color:var(--primary-light);background:rgba(13,71,161,.03)}
-.paket-card.selected{border-color:var(--primary);background:rgba(13,71,161,.05)}
+.paket-card:hover{border-color:var(--primary-light);background:rgba(13,71,161,.03);transform:translateY(-2px)}
+.paket-card.selected{border-color:var(--primary);background:rgba(13,71,161,.05);box-shadow:0 0 0 1px var(--primary)}
 .paket-card input{display:none}
-.paket-icon{font-size:24px;margin-bottom:6px}
+.paket-icon{font-size:26px;margin-bottom:6px}
 .paket-name{font-size:13px;font-weight:700;color:var(--gray-800)}
-.paket-price{font-size:11px;color:var(--gray-400);margin-top:2px}
+.paket-price{font-size:11px;color:var(--gray-400);margin-top:3px}
 .paket-badge{
   position:absolute;top:6px;right:6px;
   background:var(--accent);color:white;
-  font-size:9px;font-weight:700;padding:2px 6px;border-radius:10px;
+  font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;letter-spacing:.3px;
 }
 
-/* Navigation buttons */
+/* ===== BUTTONS ===== */
 .btn-nav{display:flex;gap:12px;margin-top:24px}
 .btn-back-nav{
-  flex:1;padding:13px;background:transparent;
-  color:var(--gray-600);border:1.5px solid var(--gray-200);
-  border-radius:var(--radius);font-family:var(--font);
-  font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;
+  flex:1;padding:13px;background:transparent;color:var(--gray-600);
+  border:1.5px solid var(--gray-200);border-radius:var(--radius);
+  font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;
 }
 .btn-back-nav:hover{border-color:var(--gray-400);background:var(--gray-50)}
 .btn-next{
@@ -182,28 +170,31 @@ body::before{
   cursor:pointer;transition:all .2s;
 }
 .btn-next:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(13,71,161,.35)}
+.btn-next:active{transform:translateY(0)}
 .btn-next:disabled{opacity:.6;cursor:not-allowed;transform:none}
 
+/* ===== ALERT ===== */
 .alert{
-  padding:12px 16px;border-radius:10px;
-  font-size:13px;font-weight:500;margin-bottom:20px;
-  display:flex;align-items:flex-start;gap:10px;
+  padding:12px 16px;border-radius:10px;font-size:13px;font-weight:500;
+  margin-bottom:20px;display:flex;align-items:flex-start;gap:10px;
+  animation:alertIn .2s ease;
 }
+@keyframes alertIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
 .alert-error{background:#fef2f2;color:#b91c1c;border:1px solid #fee2e2}
 .alert-success{background:#f0fdf4;color:#166534;border:1px solid #bbf7d0}
 .alert svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;flex-shrink:0;margin-top:1px}
 
-/* Summary card */
+/* ===== SUMMARY ===== */
 .summary-card{
   background:var(--gray-50);border-radius:var(--radius);
-  padding:20px;margin-bottom:20px;
-  border:1px solid var(--gray-200);
+  padding:20px;margin-bottom:20px;border:1px solid var(--gray-200);
 }
-.summary-row{display:flex;justify-content:space-between;padding:6px 0;font-size:14px}
+.summary-row{display:flex;justify-content:space-between;padding:8px 0;font-size:14px}
 .summary-row:not(:last-child){border-bottom:1px solid var(--gray-200)}
 .summary-label{color:var(--gray-400);font-weight:500}
-.summary-value{color:var(--gray-800);font-weight:600}
+.summary-value{color:var(--gray-800);font-weight:600;text-align:right;max-width:60%}
 
+/* ===== CHECKLIST ===== */
 .check-list{list-style:none;margin-bottom:20px}
 .check-list li{
   display:flex;align-items:center;gap:10px;
@@ -213,9 +204,15 @@ body::before{
 .check-list li:last-child{border:none}
 .check-list svg{width:16px;height:16px;stroke:var(--success);fill:none;stroke-width:2.5;flex-shrink:0}
 
-.spinner{width:18px;height:18px;border:2px solid rgba(255,255,255,.3);border-top-color:white;border-radius:50%;animation:spin .7s linear infinite;display:inline-block;vertical-align:middle}
+/* ===== SPINNER ===== */
+.spinner{
+  width:16px;height:16px;border:2px solid rgba(255,255,255,.3);
+  border-top-color:white;border-radius:50%;
+  animation:spin .7s linear infinite;display:inline-block;vertical-align:middle;margin-right:6px;
+}
 @keyframes spin{to{transform:rotate(360deg)}}
 
+/* ===== RESPONSIVE ===== */
 @media(max-width:600px){
   .form-row{grid-template-columns:1fr}
   .paket-grid{grid-template-columns:1fr}
@@ -229,9 +226,10 @@ body::before{
 <div class="register-wrapper">
   <div class="register-card">
 
+    <!-- HEADER -->
     <div class="register-header">
       <div class="header-top">
-        <a href="?page=login" class="back-btn">
+        <a href="login.html" class="back-btn">
           <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
           Kembali ke Login
         </a>
@@ -258,11 +256,14 @@ body::before{
           <span class="step-label">Konfirmasi</span>
         </div>
       </div>
-      <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:33%"></div></div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill" style="width:33%"></div>
+      </div>
 
+      <!-- Alert Area -->
       <div id="alertArea"></div>
 
-      <!-- STEP 1: Data Perusahaan -->
+      <!-- ==================== STEP 1: Data Perusahaan ==================== -->
       <div class="form-section active" id="formStep1">
         <div class="section-title">
           <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
@@ -273,7 +274,7 @@ body::before{
           <label class="form-label">Nama PT / Perusahaan <span class="required">*</span></label>
           <div class="input-wrapper">
             <span class="input-icon"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg></span>
-            <input type="text" id="namaPT" class="form-control" placeholder="PT Maju Bersama Indonesia">
+            <input type="text" id="namaPT" class="form-control" placeholder="PT Maju Bersama Indonesia" autocomplete="organization">
           </div>
         </div>
 
@@ -298,30 +299,30 @@ body::before{
           <label class="form-label">Alamat Perusahaan</label>
           <div class="input-wrapper">
             <span class="input-icon" style="top:14px;transform:none"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></span>
-            <textarea id="alamatPT" class="form-control" style="padding-left:42px;resize:none;min-height:80px" placeholder="Jl. Raya No. 123, Jakarta Selatan, DKI Jakarta"></textarea>
+            <textarea id="alamatPT" class="form-control" style="padding-left:42px;resize:none;min-height:80px" placeholder="Jl. Raya No. 123, Jakarta Selatan"></textarea>
           </div>
         </div>
 
+        <!-- Pilih Paket -->
         <div class="section-title" style="margin-top:8px">
           <svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
           Pilih Paket
         </div>
-
         <div class="paket-grid">
-          <label class="paket-card" onclick="selectPaket('BASIC', this)">
+          <label class="paket-card" onclick="selectPaket('BASIC',this)">
             <input type="radio" name="paket" value="BASIC">
             <div class="paket-icon">🚀</div>
             <div class="paket-name">Basic</div>
             <div class="paket-price">Gratis / Bulan</div>
           </label>
-          <label class="paket-card selected" onclick="selectPaket('PROFESSIONAL', this)">
+          <label class="paket-card selected" onclick="selectPaket('PROFESSIONAL',this)">
             <input type="radio" name="paket" value="PROFESSIONAL" checked>
             <div class="paket-badge">POPULER</div>
             <div class="paket-icon">⭐</div>
             <div class="paket-name">Professional</div>
             <div class="paket-price">Rp 299rb / Bulan</div>
           </label>
-          <label class="paket-card" onclick="selectPaket('ENTERPRISE', this)">
+          <label class="paket-card" onclick="selectPaket('ENTERPRISE',this)">
             <input type="radio" name="paket" value="ENTERPRISE">
             <div class="paket-icon">🏢</div>
             <div class="paket-name">Enterprise</div>
@@ -334,7 +335,7 @@ body::before{
         </div>
       </div>
 
-      <!-- STEP 2: Akun Owner -->
+      <!-- ==================== STEP 2: Akun Owner ==================== -->
       <div class="form-section" id="formStep2">
         <div class="section-title">
           <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -345,7 +346,7 @@ body::before{
           <label class="form-label">Nama Lengkap <span class="required">*</span></label>
           <div class="input-wrapper">
             <span class="input-icon"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
-            <input type="text" id="namaOwner" class="form-control" placeholder="Budi Santoso">
+            <input type="text" id="namaOwner" class="form-control" placeholder="Budi Santoso" autocomplete="name">
           </div>
         </div>
 
@@ -354,14 +355,14 @@ body::before{
             <label class="form-label">Email Login <span class="required">*</span></label>
             <div class="input-wrapper">
               <span class="input-icon"><svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 7 10-7"/></svg></span>
-              <input type="email" id="emailOwner" class="form-control" placeholder="owner@perusahaan.com">
+              <input type="email" id="emailOwner" class="form-control" placeholder="owner@perusahaan.com" autocomplete="email">
             </div>
           </div>
           <div class="form-group">
             <label class="form-label">No. HP Owner</label>
             <div class="input-wrapper">
-              <span class="input-icon"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13 19.79 19.79 0 0 1 1.61 4.35 2 2 0 0 1 3.6 2h3a2 2 0 0 1 2 1.72"/></svg></span>
-              <input type="tel" id="noTelpOwner" class="form-control" placeholder="08123456789">
+              <span class="input-icon"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07"/></svg></span>
+              <input type="tel" id="noTelpOwner" class="form-control" placeholder="08123456789" autocomplete="tel">
             </div>
           </div>
         </div>
@@ -370,12 +371,12 @@ body::before{
           <label class="form-label">Password <span class="required">*</span></label>
           <div class="input-wrapper">
             <span class="input-icon"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
-            <input type="password" id="passwordOwner" class="form-control" placeholder="Min. 8 karakter" oninput="checkStrength(this.value)">
-            <button class="password-toggle" type="button" onclick="togglePwd('passwordOwner', this)">
+            <input type="password" id="passwordOwner" class="form-control" placeholder="Min. 8 karakter" oninput="checkStrength(this.value)" autocomplete="new-password">
+            <button class="password-toggle" type="button" onclick="togglePwd('passwordOwner',this)">
               <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
             </button>
           </div>
-          <div class="password-strength" id="strengthIndicator">
+          <div class="password-strength">
             <div class="strength-bar">
               <div class="strength-segment" id="seg1"></div>
               <div class="strength-segment" id="seg2"></div>
@@ -390,12 +391,12 @@ body::before{
           <label class="form-label">Konfirmasi Password <span class="required">*</span></label>
           <div class="input-wrapper">
             <span class="input-icon"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
-            <input type="password" id="confirmPassword" class="form-control" placeholder="Ulangi password">
-            <button class="password-toggle" type="button" onclick="togglePwd('confirmPassword', this)">
+            <input type="password" id="confirmPassword" class="form-control" placeholder="Ulangi password baru" autocomplete="new-password">
+            <button class="password-toggle" type="button" onclick="togglePwd('confirmPassword',this)">
               <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
             </button>
           </div>
-          <p class="form-hint">Password minimal 8 karakter, kombinasikan huruf besar, kecil, dan angka.</p>
+          <p class="form-hint">Minimal 8 karakter — kombinasi huruf besar, kecil, dan angka.</p>
         </div>
 
         <div class="btn-nav">
@@ -404,7 +405,7 @@ body::before{
         </div>
       </div>
 
-      <!-- STEP 3: Konfirmasi -->
+      <!-- ==================== STEP 3: Konfirmasi ==================== -->
       <div class="form-section" id="formStep3">
         <div class="section-title">
           <svg viewBox="0 0 24 24"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
@@ -422,8 +423,8 @@ body::before{
         </ul>
 
         <label style="display:flex;align-items:flex-start;gap:10px;margin-bottom:20px;cursor:pointer;font-size:13px;color:var(--gray-600)">
-          <input type="checkbox" id="agreeTerms" style="margin-top:2px;accent-color:var(--primary);width:16px;height:16px">
-          Saya menyetujui <a href="#" style="color:var(--primary);font-weight:600">Syarat & Ketentuan</a> penggunaan iLedgerV2
+          <input type="checkbox" id="agreeTerms" style="margin-top:2px;accent-color:var(--primary);width:16px;height:16px;cursor:pointer">
+          Saya menyetujui <a href="#" style="color:var(--primary);font-weight:600;margin-left:4px">Syarat &amp; Ketentuan</a> penggunaan iLedgerV2
         </label>
 
         <div class="btn-nav">
@@ -434,169 +435,228 @@ body::before{
         </div>
       </div>
 
-    </div>
-  </div>
-</div>
+    </div><!-- /register-body -->
+  </div><!-- /register-card -->
+</div><!-- /register-wrapper -->
 
 <script>
-const APP_URL = 'https://script.google.com/macros/s/AKfycbya0g1HwoBA8ti6UdaZaVlxIDl65OO3Hm_YnPZcwcXLlflDGUG7wkHlVbSTYOrhZ7AV/exec';
-let selectedPaket = 'PROFESSIONAL';
-let currentStep = 1;
+// config.js sudah di-load di <head> — callAPI, formatRupiah, dll sudah tersedia
 
+let selectedPaket = 'PROFESSIONAL';
+let currentStep   = 1;
+
+// ============================================================
+// STEP NAVIGATION
+// ============================================================
+function goToStep(step) {
+  if (step > currentStep && !validateStep(currentStep)) return;
+
+  currentStep = step;
+
+  // Show/hide sections
+  document.querySelectorAll('.form-section').forEach((s, i) => {
+    s.classList.toggle('active', i + 1 === step);
+  });
+
+  // Update step indicators
+  for (let i = 1; i <= 3; i++) {
+    const el = document.getElementById('step' + i + '-indicator');
+    el.classList.remove('active', 'done');
+    if (i < step)  el.classList.add('done');
+    if (i === step) el.classList.add('active');
+
+    const circle = el.querySelector('.step-circle');
+    if (i < step) {
+      circle.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" stroke="white" fill="none" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>';
+    } else {
+      circle.textContent = i;
+    }
+  }
+
+  // Progress bar
+  document.getElementById('progressFill').style.width = [33, 66, 100][step - 1] + '%';
+
+  if (step === 3) fillSummary();
+  clearAlert();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ============================================================
+// VALIDATION
+// ============================================================
+function validateStep(step) {
+  clearAlert();
+
+  if (step === 1) {
+    if (!document.getElementById('namaPT').value.trim()) {
+      showAlert('Nama PT wajib diisi.', 'error');
+      document.getElementById('namaPT').classList.add('is-error');
+      return false;
+    }
+    return true;
+  }
+
+  if (step === 2) {
+    const nama    = document.getElementById('namaOwner').value.trim();
+    const email   = document.getElementById('emailOwner').value.trim();
+    const pwd     = document.getElementById('passwordOwner').value;
+    const confirm = document.getElementById('confirmPassword').value;
+
+    if (!nama)  { showAlert('Nama lengkap wajib diisi.', 'error'); return false; }
+    if (!email || !email.includes('@')) { showAlert('Email owner tidak valid.', 'error'); return false; }
+    if (pwd.length < 8) { showAlert('Password minimal 8 karakter.', 'error'); return false; }
+    if (pwd !== confirm) { showAlert('Konfirmasi password tidak cocok.', 'error'); return false; }
+    return true;
+  }
+
+  return true;
+}
+
+// ============================================================
+// PASSWORD STRENGTH
+// ============================================================
+function checkStrength(pwd) {
+  let score = 0;
+  if (pwd.length >= 8)          score++;
+  if (/[A-Z]/.test(pwd))        score++;
+  if (/[0-9]/.test(pwd))        score++;
+  if (/[^A-Za-z0-9]/.test(pwd)) score++;
+
+  const colors = ['', '#ef4444', '#f59e0b', '#3b82f6', '#10b981'];
+  const labels = ['', 'Lemah', 'Cukup', 'Kuat', 'Sangat Kuat'];
+
+  ['seg1','seg2','seg3','seg4'].forEach((id, i) => {
+    document.getElementById(id).style.background = i < score ? colors[score] : 'var(--gray-200)';
+  });
+  const st = document.getElementById('strengthText');
+  st.textContent = pwd ? labels[score] : 'Masukkan password';
+  st.style.color  = colors[score] || 'var(--gray-400)';
+}
+
+function togglePwd(id, btn) {
+  const inp  = document.getElementById(id);
+  const isT  = inp.type === 'text';
+  inp.type   = isT ? 'password' : 'text';
+  btn.querySelector('svg').innerHTML = isT
+    ? '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>'
+    : '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
+}
+
+// ============================================================
+// PAKET
+// ============================================================
 function selectPaket(value, el) {
   selectedPaket = value;
   document.querySelectorAll('.paket-card').forEach(c => c.classList.remove('selected'));
   el.classList.add('selected');
 }
 
-function togglePwd(id, btn) {
-  const input = document.getElementById(id);
-  input.type = input.type === 'text' ? 'password' : 'text';
-}
-
-function checkStrength(pwd) {
-  let score = 0;
-  if (pwd.length >= 8) score++;
-  if (/[A-Z]/.test(pwd)) score++;
-  if (/[0-9]/.test(pwd)) score++;
-  if (/[^A-Za-z0-9]/.test(pwd)) score++;
-
-  const colors = ['', '#ef4444','#f59e0b','#3b82f6','#10b981'];
-  const labels = ['','Lemah','Cukup','Kuat','Sangat Kuat'];
-  const segs = ['seg1','seg2','seg3','seg4'];
-
-  segs.forEach((id, i) => {
-    document.getElementById(id).style.background = i < score ? colors[score] : 'var(--gray-200)';
-  });
-  document.getElementById('strengthText').textContent = pwd ? labels[score] : 'Masukkan password';
-  document.getElementById('strengthText').style.color = colors[score] || 'var(--gray-400)';
-}
-
-function goToStep(step) {
-  if (step > currentStep && !validateStep(currentStep)) return;
-
-  currentStep = step;
-
-  // Update sections
-  document.querySelectorAll('.form-section').forEach((s, i) => {
-    s.classList.toggle('active', i + 1 === step);
-  });
-
-  // Update indicators
-  for (let i = 1; i <= 3; i++) {
-    const el = document.getElementById('step' + i + '-indicator');
-    el.classList.remove('active','done');
-    if (i < step) el.classList.add('done');
-    if (i === step) el.classList.add('active');
-    if (el.classList.contains('done')) {
-      el.querySelector('.step-circle').innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" stroke="white" fill="none" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>';
-    } else {
-      el.querySelector('.step-circle').textContent = i;
-    }
-  }
-
-  // Update progress
-  const pcts = [33, 66, 100];
-  document.getElementById('progressFill').style.width = pcts[step - 1] + '%';
-
-  // Fill summary
-  if (step === 3) fillSummary();
-
-  clearAlert();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-function validateStep(step) {
-  clearAlert();
-  if (step === 1) {
-    const namaPT = document.getElementById('namaPT').value.trim();
-    if (!namaPT) { showAlert('Nama PT wajib diisi.', 'error'); return false; }
-    return true;
-  }
-  if (step === 2) {
-    const nama = document.getElementById('namaOwner').value.trim();
-    const email = document.getElementById('emailOwner').value.trim();
-    const pwd = document.getElementById('passwordOwner').value;
-    const confirm = document.getElementById('confirmPassword').value;
-    if (!nama) { showAlert('Nama owner wajib diisi.', 'error'); return false; }
-    if (!email || !email.includes('@')) { showAlert('Email owner tidak valid.', 'error'); return false; }
-    if (pwd.length < 8) { showAlert('Password minimal 8 karakter.', 'error'); return false; }
-    if (pwd !== confirm) { showAlert('Konfirmasi password tidak cocok.', 'error'); return false; }
-    return true;
-  }
-  return true;
-}
-
+// ============================================================
+// SUMMARY (Step 3)
+// ============================================================
 function fillSummary() {
-  const card = document.getElementById('summaryCard');
-  const paketLabel = { BASIC:'Basic (Gratis)', PROFESSIONAL:'Professional (Rp 299rb/bln)', ENTERPRISE:'Enterprise (Rp 799rb/bln)' };
-  card.innerHTML = `
-    <div class="summary-row"><span class="summary-label">Nama PT</span><span class="summary-value">${document.getElementById('namaPT').value}</span></div>
-    <div class="summary-row"><span class="summary-label">Email PT</span><span class="summary-value">${document.getElementById('emailPT').value || '-'}</span></div>
-    <div class="summary-row"><span class="summary-label">Owner</span><span class="summary-value">${document.getElementById('namaOwner').value}</span></div>
-    <div class="summary-row"><span class="summary-label">Email Owner</span><span class="summary-value">${document.getElementById('emailOwner').value}</span></div>
-    <div class="summary-row"><span class="summary-label">Paket</span><span class="summary-value" style="color:var(--primary)">${paketLabel[selectedPaket]}</span></div>
-  `;
+  const labels = {
+    BASIC:        'Basic (Gratis)',
+    PROFESSIONAL: 'Professional (Rp 299rb/bln)',
+    ENTERPRISE:   'Enterprise (Rp 799rb/bln)',
+  };
+  document.getElementById('summaryCard').innerHTML = `
+    <div class="summary-row">
+      <span class="summary-label">Nama PT</span>
+      <span class="summary-value">${esc(document.getElementById('namaPT').value)}</span>
+    </div>
+    <div class="summary-row">
+      <span class="summary-label">Email PT</span>
+      <span class="summary-value">${esc(document.getElementById('emailPT').value) || '—'}</span>
+    </div>
+    <div class="summary-row">
+      <span class="summary-label">Owner</span>
+      <span class="summary-value">${esc(document.getElementById('namaOwner').value)}</span>
+    </div>
+    <div class="summary-row">
+      <span class="summary-label">Email Owner</span>
+      <span class="summary-value">${esc(document.getElementById('emailOwner').value)}</span>
+    </div>
+    <div class="summary-row">
+      <span class="summary-label">Paket</span>
+      <span class="summary-value" style="color:var(--primary);font-weight:700">${labels[selectedPaket]}</span>
+    </div>`;
 }
 
+function esc(str) {
+  return (str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ============================================================
+// SUBMIT
+// ============================================================
 async function submitRegister() {
   if (!document.getElementById('agreeTerms').checked) {
-    showAlert('Anda harus menyetujui syarat & ketentuan.', 'error'); return;
+    showAlert('Anda harus menyetujui Syarat &amp; Ketentuan.', 'error');
+    return;
   }
 
-  const btn = document.getElementById('btnSubmit');
+  const btn  = document.getElementById('btnSubmit');
   const text = document.getElementById('btnSubmitText');
   btn.disabled = true;
   text.innerHTML = '<span class="spinner"></span> Memproses pendaftaran...';
 
   try {
+    // callAPI dari config.js — tidak perlu token untuk registerPT
     const res = await callAPI('registerPT', {
-      namaPT: document.getElementById('namaPT').value.trim(),
-      alamat: document.getElementById('alamatPT').value.trim(),
-      noTelp: document.getElementById('noTelpPT').value.trim(),
-      email: document.getElementById('emailPT').value.trim(),
-      namaOwner: document.getElementById('namaOwner').value.trim(),
-      emailOwner: document.getElementById('emailOwner').value.trim(),
+      namaPT:        document.getElementById('namaPT').value.trim(),
+      alamat:        document.getElementById('alamatPT').value.trim(),
+      noTelp:        document.getElementById('noTelpPT').value.trim(),
+      email:         document.getElementById('emailPT').value.trim(),
+      namaOwner:     document.getElementById('namaOwner').value.trim(),
+      emailOwner:    document.getElementById('emailOwner').value.trim(),
       passwordOwner: document.getElementById('passwordOwner').value,
-      noTelpOwner: document.getElementById('noTelpOwner').value.trim(),
-      paket: selectedPaket
+      noTelpOwner:   document.getElementById('noTelpOwner').value.trim(),
+      paket:         selectedPaket,
     });
 
     if (res.success) {
-      showAlert(`<strong>Pendaftaran Berhasil! 🎉</strong><br>Silakan login dengan email owner Anda.`, 'success');
-      btn.textContent = '✓ Berhasil Didaftarkan';
-      setTimeout(() => window.location.href = '?page=login', 3000);
+      showAlert('<strong>Pendaftaran Berhasil! 🎉</strong><br>Silakan login dengan email owner Anda.', 'success');
+      btn.innerHTML = '✓ Berhasil Didaftarkan';
+      btn.style.background = '#10b981';
+      setTimeout(() => window.location.href = 'login.html', 2800);
     } else {
-      showAlert(res.error || 'Pendaftaran gagal.', 'error');
+      showAlert(res.error || 'Pendaftaran gagal. Coba lagi.', 'error');
       btn.disabled = false;
       text.textContent = 'Daftarkan Perusahaan';
     }
   } catch (err) {
-    showAlert('Gagal terhubung ke server.', 'error');
+    showAlert('Gagal terhubung ke server. Periksa koneksi internet.', 'error');
     btn.disabled = false;
     text.textContent = 'Daftarkan Perusahaan';
   }
 }
 
+// ============================================================
+// HELPERS
+// ============================================================
 function showAlert(msg, type) {
+  const icons = {
+    error:   '<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/>',
+    success: '<polyline points="20 6 9 17 4 12"/>',
+  };
   document.getElementById('alertArea').innerHTML = `
     <div class="alert alert-${type}">
-      <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/></svg>
+      <svg viewBox="0 0 24 24">${icons[type] || icons.error}</svg>
       <span>${msg}</span>
     </div>`;
 }
 
 function clearAlert() {
   document.getElementById('alertArea').innerHTML = '';
+  // Remove error styling
+  document.querySelectorAll('.is-error').forEach(el => el.classList.remove('is-error'));
 }
 
-function callAPI(action, payload) {
-  return fetch(APP_URL, {
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ action, ...payload })
-  }).then(r => r.json());
-}
+// Remove error class on input
+document.addEventListener('input', e => {
+  if (e.target.classList.contains('is-error')) e.target.classList.remove('is-error');
+});
 </script>
 </body>
 </html>
