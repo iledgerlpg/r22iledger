@@ -256,7 +256,5 @@ function exportPDF() {
   });
   doc.save('Pos_' + new Date().toLocaleDateString('id-ID').replace(/\//g,'-') + '.pdf');
 }
-</script>
 
-<script>
 document.addEventListener('DOMContentLoaded', () => initPage('pos'));
