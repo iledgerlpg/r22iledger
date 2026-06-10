@@ -1,6 +1,6 @@
 let allData = [], currentView = 'grid';
 let selectedFotoBase64 = null, selectedFotoMime = null;
-let searchTimeout = null; // FIX: Duplikat deklarasi sudah dihapus
+let searchTimeout = null;
 
 let uploadState = {
   stnk: { base64: null, mime: null },
@@ -8,7 +8,7 @@ let uploadState = {
   barcode: { base64: null, mime: null }
 };
 
-// Gabungkan inisialisasi agar berjalan berurutan dengan aman
+// Inisialisasi halaman operasional
 document.addEventListener('DOMContentLoaded', async () => {
   if (typeof initPage === 'function') initPage('armada');
   setDefaultDT();
@@ -19,18 +19,17 @@ function setDefaultDT() {
   const now = new Date();
   const pad = n => String(n).padStart(2, '0');
   
-  // Cek dulu apakah input fTimestamp ada di HTML
   const elTimestamp = document.getElementById('fTimestamp');
   if (elTimestamp) {
     elTimestamp.value = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
   }
   
-  // Cek dulu apakah filterMonth ada di HTML
   const elFilterMonth = document.getElementById('filterMonth');
   if (elFilterMonth) {
     elFilterMonth.value = `${now.getFullYear()}-${pad(now.getMonth()+1)}`;
   }
 }
+
 async function loadData() {
   showSkeleton('tableBody', 5);
   
@@ -39,16 +38,13 @@ async function loadData() {
     status: document.getElementById('filterStatus').value
   });
 
-  // 1. TARUH DI SINI! Biar kebaca sebelum fungsinya mati kena 'return'
   console.log("👉 ISI RESPON DARI APPS SCRIPT:", res);
   
-  // 2. Jika res.success nilainya false, dia bakal berhenti di sini
   if (!res.success) { 
     showToast('Gagal memuat data. Pesan: ' + (res.error || 'Tidak diketahui'), 'error'); 
     return; 
   }
   
-  // 3. Jalur aman jika sukses memuat data armada
   allData = res.data || [];
   document.getElementById('resultInfo').textContent = allData.length + ' armada';
   updateStats(allData);
@@ -96,15 +92,11 @@ function extractFileId(url) {
     return directId ? directId[1] : (fileId ? fileId[1] : null);
 }
 
-function renderThumb(url) {
-    const id = extractFileId(url);
-    if (!id) return '-';
-    const thumbUrl = `https://drive.google.com/thumbnail?id=${id}&sz=w300`;
-    const fullUrl = `https://drive.google.com/thumbnail?id=${id}&sz=w1200`;
-    
-    return `<a href="${fullUrl}" target="_blank" class="hover:opacity-80 transition">
-                <img src="${thumbUrl}" class="h-12 w-12 object-cover rounded shadow mx-auto border border-gray-200" loading="lazy" />
-            </a>`;
+// Helper untuk ambil url resolusi tinggi (w1200) untuk Lightbox Preview
+function getLargeDocUrl(url) {
+  if (!url) return '';
+  const id = extractFileId(url);
+  return id ? `https://drive.google.com/thumbnail?id=${id}&sz=w1200` : url;
 }
 
 function renderGrid(data) {
@@ -113,11 +105,11 @@ function renderGrid(data) {
     container.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--text-secondary)"><svg viewBox="0 0 24 24" width="64" height="64" stroke="var(--gray-200)" fill="none" stroke-width="1"><rect x="1" y="3" width="15" height="13" rx="1"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg><h3 style="font-size:16px;font-weight:700;color:var(--text-primary);margin:12px 0 6px">Belum ada armada</h3><p style="font-size:13px">Klik "Tambah Armada" untuk mendaftarkan kendaraan</p></div>';
     return;
   }
+  
   container.innerHTML = data.map(a => {
     const stStatus = getStnkStatus(a.tanggalSTNK);
-    const mainPhotoUrl = a.fotoURL || a.FotoSTNK || a.FotoKIR; 
+    const mainPhotoUrl = a.fotoURL || a.FotoSTNK || a.FotoKIR || a.FotoBarcodeSubsidiTepat; 
     
-    // OPTIMASI: Bungkus thumbnail utama dengan deteksi ID Google Drive
     const idFotoUtama = extractFileId(mainPhotoUrl);
     const srcFotoUtama = idFotoUtama ? `https://drive.google.com/thumbnail?id=${idFotoUtama}&sz=w300` : mainPhotoUrl;
     
@@ -125,15 +117,10 @@ function renderGrid(data) {
       ? `<img src="${srcFotoUtama}" alt="${a.noPolisi}" onerror="this.parentElement.innerHTML='<div class=armada-photo-placeholder><svg viewBox=\'0 0 24 24\'><rect x=\'1\' y=\'3\' width=\'15\' height=\'13\' rx=\'1\'/></svg></div>'">`
       : `<div class="armada-photo-placeholder"><svg viewBox="0 0 24 24" width="64" height="64" stroke="currentColor" fill="none" stroke-width="0.8"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div>`;
     
-    // Generate shortcut preview dokumen di dalam kartu grid
-    let docBadges = '';
-    [['FotoSTNK', 'STNK', 'badge-info'], ['FotoKIR', 'KIR', 'badge-success'], ['FotoBarcodeSubsidiTepat', 'Barcode', 'badge-gray']].forEach(([prop, label, cls]) => {
-      if (a[prop]) {
-        const idDoc = extractFileId(a[prop]);
-        const fullDocUrl = idDoc ? `https://drive.google.com/thumbnail?id=${idDoc}&sz=w1200` : a[prop];
-        docBadges += `<span class="badge ${cls} clickable-preview cursor-pointer" data-click-url="${fullDocUrl}" style="font-size:10px; padding:2px 6px; margin-right:4px;" title="Lihat ${label}">${label}</span>`;
-      }
-    });
+    // Ambil thumbnail kecil (w90) untuk galeri mini berkas dokumen di card
+    const srcThumbStnk = a.FotoSTNK ? (extractFileId(a.FotoSTNK) ? `https://drive.google.com/thumbnail?id=${extractFileId(a.FotoSTNK)}&sz=w90` : a.FotoSTNK) : '';
+    const srcThumbKir = a.FotoKIR ? (extractFileId(a.FotoKIR) ? `https://drive.google.com/thumbnail?id=${extractFileId(a.FotoKIR)}&sz=w90` : a.FotoKIR) : '';
+    const srcThumbBarcode = a.FotoBarcodeSubsidiTepat ? (extractFileId(a.FotoBarcodeSubsidiTepat) ? `https://drive.google.com/thumbnail?id=${extractFileId(a.FotoBarcodeSubsidiTepat)}&sz=w90` : a.FotoBarcodeSubsidiTepat) : '';
 
     return `
     <div class="armada-card">
@@ -151,9 +138,24 @@ function renderGrid(data) {
           <div class="armada-detail-item"><div class="d-label">Tgl STNK</div><div class="d-value">${a.tanggalSTNK || '-'}</div></div>
           <div class="armada-detail-item"><div class="d-label">Tgl KIR</div><div class="d-value">${a.tanggalKIR || '-'}</div></div>
         </div>
-        <div style="margin-top:8px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:5px;">
-          ${a.tanggalSTNK ? `<div><span class="stnk-status ${stStatus.cls}">${stStatus.text}</span></div>` : ''}
-          <div style="display:flex;">${docBadges}</div>
+        
+        <div class="card-doc-thumbs">
+          <div class="doc-thumb-item" onclick="event.stopPropagation(); if('${a.FotoSTNK}') previewImageDirect('${getLargeDocUrl(a.FotoSTNK)}', 'STNK - ${a.noPolisi}')">
+            ${a.FotoSTNK ? `<img src="${srcThumbStnk}" loading="lazy">` : `<svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>`}
+            <span class="doc-thumb-label">STNK</span>
+          </div>
+          <div class="doc-thumb-item" onclick="event.stopPropagation(); if('${a.FotoKIR}') previewImageDirect('${getLargeDocUrl(a.FotoKIR)}', 'KIR - ${a.noPolisi}')">
+            ${a.FotoKIR ? `<img src="${srcThumbKir}" loading="lazy">` : `<svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/></svg>`}
+            <span class="doc-thumb-label">KIR</span>
+          </div>
+          <div class="doc-thumb-item" onclick="event.stopPropagation(); if('${a.FotoBarcodeSubsidiTepat}') previewImageDirect('${getLargeDocUrl(a.FotoBarcodeSubsidiTepat)}', 'Barcode - ${a.noPolisi}')">
+            ${a.FotoBarcodeSubsidiTepat ? `<img src="${srcThumbBarcode}" loading="lazy">` : `<svg viewBox="0 0 24 24"><line x1="3" y1="5" x2="3" y2="19"/><line x1="21" y1="5" x2="21" y2="19"/></svg>`}
+            <span class="doc-thumb-label">Barcode</span>
+          </div>
+        </div>
+
+        <div style="margin-top:10px;">
+          ${a.tanggalSTNK ? `<span class="stnk-status ${stStatus.cls}">${stStatus.text}</span>` : ''}
         </div>
       </div>
       <div class="armada-footer">
@@ -167,36 +169,44 @@ function renderGrid(data) {
       </div>
     </div>`;
   }).join('');
-
-  attachLightboxEvents(container);
 }
 
 function renderList(data) {
   const tbody = document.getElementById('armadaTableBody');
-  if (!data.length) { tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--text-secondary)">Belum ada armada</td></tr>'; return; }
+  if (!data.length) { 
+    tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:40px;color:var(--text-secondary)">Belum ada armada</td></tr>'; 
+    return; 
+  }
+  
   tbody.innerHTML = data.map((a, i) => {
-    
-    // Generate link preview dokumen untuk tampilan tabel list
-    let docLinks = [];
-    [['FotoSTNK', 'STNK'], ['FotoKIR', 'KIR'], ['FotoBarcodeSubsidiTepat', 'Barcode']].forEach(([prop, label]) => {
-      if (a[prop]) {
-        const idDoc = extractFileId(a[prop]);
-        const fullDocUrl = idDoc ? `https://drive.google.com/thumbnail?id=${idDoc}&sz=w1200` : a[prop];
-        docLinks.push(`<span class="clickable-preview text-primary cursor-pointer underline" data-click-url="${fullDocUrl}" style="margin-right:5px; font-size:11px;">[${label}]</span>`);
-      }
-    });
-    const docHtml = docLinks.length ? docLinks.join('') : '-';
+    const srcThumbStnk = a.FotoSTNK ? (extractFileId(a.FotoSTNK) ? `https://drive.google.com/thumbnail?id=${extractFileId(a.FotoSTNK)}&sz=w90` : a.FotoSTNK) : '';
+    const srcThumbKir = a.FotoKIR ? (extractFileId(a.FotoKIR) ? `https://drive.google.com/thumbnail?id=${extractFileId(a.FotoKIR)}&sz=w90` : a.FotoKIR) : '';
+    const srcThumbBarcode = a.FotoBarcodeSubsidiTepat ? (extractFileId(a.FotoBarcodeSubsidiTepat) ? `https://drive.google.com/thumbnail?id=${extractFileId(a.FotoBarcodeSubsidiTepat)}&sz=w90` : a.FotoBarcodeSubsidiTepat) : '';
 
     return `<tr>
       <td>${i+1}</td>
-      <td style="font-weight:700">${a.noPolisi}</td>
+      <td style="font-weight:700; white-space:nowrap;">${a.noPolisi}</td>
       <td>${a.jenisKendaraan}</td>
-      <td>${a.merk}</td>
-      <td>${a.tahun}</td>
-      <td>${a.pemilik}</td>
-      <td>${a.tanggalSTNK || '-'}</td>
-      <td>${a.tanggalKIR || '-'}</td>
-      <td><div style="margin-bottom:4px;"><span class="badge ${a.status === 'ACTIVE' ? 'badge-success' : 'badge-gray'}">${a.status}</span></div><div>${docHtml}</div></td>
+      <td>${a.merk || '-'}</td>
+      <td>${a.tahun || '-'}</td>
+      <td>${a.pemilik || '-'}</td>
+      
+      <td>
+        ${a.FotoSTNK ? `<img src="${srcThumbStnk}" class="table-inline-thumb" onclick="previewImageDirect('${getLargeDocUrl(a.FotoSTNK)}', 'STNK - ${a.noPolisi}')" loading="lazy">` : '<span class="table-empty-thumb">-</span>'}
+        <div style="font-size:11px; margin-top:2px; color:var(--text-secondary); white-space:nowrap;">${a.tanggalSTNK || '-'}</div>
+      </td>
+      
+      <td>
+        ${a.FotoKIR ? `<img src="${srcThumbKir}" class="table-inline-thumb" onclick="previewImageDirect('${getLargeDocUrl(a.FotoKIR)}', 'KIR - ${a.noPolisi}')" loading="lazy">` : '<span class="table-empty-thumb">-</span>'}
+        <div style="font-size:11px; margin-top:2px; color:var(--text-secondary); white-space:nowrap;">${a.tanggalKIR || '-'}</div>
+      </td>
+      
+      <td>
+        ${a.FotoBarcodeSubsidiTepat ? `<img src="${srcThumbBarcode}" class="table-inline-thumb" onclick="previewImageDirect('${getLargeDocUrl(a.FotoBarcodeSubsidiTepat)}', 'Barcode - ${a.noPolisi}')" loading="lazy">` : '<span class="table-empty-thumb">-</span>'}
+        <div style="font-size:11px; margin-top:2px; font-family:monospace; color:var(--text-secondary)">${a.barcodeSubsidiTepat || '-'}</div>
+      </td>
+      
+      <td><span class="badge ${a.status === 'ACTIVE' ? 'badge-success' : 'badge-gray'}">${a.status}</span></td>
       <td><div style="display:flex;gap:6px">
         <button class="btn btn-outline btn-sm btn-icon" onclick='editRow(${JSON.stringify(a).replace(/'/g,"&#39;")})'>
           <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/></svg>
@@ -207,23 +217,6 @@ function renderList(data) {
       </div></td>
     </tr>`;
   }).join('');
-
-  attachLightboxEvents(tbody);
-}
-
-// Fungsi pembantu reusable untuk mengaktifkan klik Lightbox dokumen
-function attachLightboxEvents(parentElement) {
-  parentElement.querySelectorAll('.clickable-preview').forEach(el => {
-    el.addEventListener('click', function(e) {
-      e.stopPropagation(); // Biar kartu grid gak ikut pemicu klik lain
-      const targetUrl = this.getAttribute('data-click-url');
-      if (targetUrl) {
-        // Otomatis deteksi fungsi lightbox mana yang terpasang di sistem global lo
-        if (typeof openLightbox === 'function') openLightbox(targetUrl);
-        else if (typeof openLB === 'function') openLB(targetUrl);
-      }
-    });
-  });
 }
 
 function getStnkStatus(tglStr) {
@@ -270,7 +263,6 @@ function setupEditPreview(jenis, url) {
     uploadState[jenis] = { base64: null, mime: null };
     
     if (url) {
-        // Optimasi link preview pada modal edit agar tembus pembatasan Drive
         const id = extractFileId(url);
         previewImg.src = id ? `https://drive.google.com/thumbnail?id=${id}&sz=w300` : url;
         previewBox.style.display = 'block';
