@@ -127,7 +127,7 @@ function renderGrid(data) {
   
   container.innerHTML = data.map(a => {
     const stStatus = getStnkStatus(a.tanggalSTNK);
-    const mainPhotoUrl = a.fotoURL || a.FotoSTNK || a.FotoKIR || a.FotoBarcodeSubsidiTepat; 
+    const mainPhotoUrl = a.fotoURL || a.fotoSTNK || a.fotoKIR || a.fotoBarcodeSubsidiTepat; 
     
     const idFotoUtama = extractFileId(mainPhotoUrl);
     const srcFotoUtama = idFotoUtama ? `https://drive.google.com/thumbnail?id=${idFotoUtama}&sz=w300` : mainPhotoUrl;
@@ -136,9 +136,9 @@ function renderGrid(data) {
       ? `<img src="${srcFotoUtama}" alt="${a.noPolisi}" onerror="this.onerror=null; this.src='https://placehold.co/300x200?text=🔒+Akses+Privat';">`
       : `<div class="armada-photo-placeholder"><svg viewBox="0 0 24 24" width="64" height="64" stroke="currentColor" fill="none" stroke-width="0.8"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div>`;
     
-    const srcThumbStnk = a.FotoSTNK ? (extractFileId(a.FotoSTNK) ? `https://drive.google.com/thumbnail?id=${extractFileId(a.FotoSTNK)}&sz=w90` : a.FotoSTNK) : '';
-    const srcThumbKir = a.FotoKIR ? (extractFileId(a.FotoKIR) ? `https://drive.google.com/thumbnail?id=${extractFileId(a.FotoKIR)}&sz=w90` : a.FotoKIR) : '';
-    const srcThumbBarcode = a.FotoBarcodeSubsidiTepat ? (extractFileId(a.FotoBarcodeSubsidiTepat) ? `https://drive.google.com/thumbnail?id=${extractFileId(a.FotoBarcodeSubsidiTepat)}&sz=w90` : a.FotoBarcodeSubsidiTepat) : '';
+    const srcThumbStnk = a.fotoSTNK ? (extractFileId(a.fotoSTNK) ? `https://drive.google.com/thumbnail?id=${extractFileId(a.fotoSTNK)}&sz=w90` : a.fotoSTNK) : '';
+    const srcThumbKir = a.fotoKIR ? (extractFileId(a.fotoKIR) ? `https://drive.google.com/thumbnail?id=${extractFileId(a.fotoKIR)}&sz=w90` : a.fotoKIR) : '';
+    const srcThumbBarcode = a.fotoBarcodeSubsidiTepat ? (extractFileId(a.fotoBarcodeSubsidiTepat) ? `https://drive.google.com/thumbnail?id=${extractFileId(a.fotoBarcodeSubsidiTepat)}&sz=w90` : a.fotoBarcodeSubsidiTepat) : '';
 
     return `
     <div class="armada-card">
@@ -158,16 +158,16 @@ function renderGrid(data) {
         </div>
         
         <div class="card-doc-thumbs">
-          <div class="doc-thumb-item" onclick="event.stopPropagation(); if('${a.FotoSTNK}') previewImageDirect('${getLargeDocUrl(a.FotoSTNK)}', 'STNK - ${a.noPolisi}')">
-            ${a.FotoSTNK ? `<img src="${srcThumbStnk}" onerror="this.onerror=null; this.src='https://placehold.co/90x90?text=🔒';" loading="lazy">` : `<svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>`}
+          <div class="doc-thumb-item" onclick="event.stopPropagation(); if('${a.fotoSTNK}') previewImageDirect('${getLargeDocUrl(a.fotoSTNK)}', 'STNK - ${a.noPolisi}')">
+            ${a.fotoSTNK ? `<img src="${srcThumbStnk}" onerror="this.onerror=null; this.src='https://placehold.co/90x90?text=🔒';" loading="lazy">` : `<svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>`}
             <span class="doc-thumb-label">STNK</span>
           </div>
-          <div class="doc-thumb-item" onclick="event.stopPropagation(); if('${a.FotoKIR}') previewImageDirect('${getLargeDocUrl(a.FotoKIR)}', 'KIR - ${a.noPolisi}')">
-            ${a.FotoKIR ? `<img src="${srcThumbKir}" onerror="this.onerror=null; this.src='https://placehold.co/90x90?text=🔒';" loading="lazy">` : `<svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/></svg>`}
+          <div class="doc-thumb-item" onclick="event.stopPropagation(); if('${a.fotoKIR}') previewImageDirect('${getLargeDocUrl(a.fotoKIR)}', 'KIR - ${a.noPolisi}')">
+            ${a.fotoKIR ? `<img src="${srcThumbKir}" onerror="this.onerror=null; this.src='https://placehold.co/90x90?text=🔒';" loading="lazy">` : `<svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/></svg>`}
             <span class="doc-thumb-label">KIR</span>
           </div>
-          <div class="doc-thumb-item" onclick="event.stopPropagation(); if('${a.FotoBarcodeSubsidiTepat}') previewImageDirect('${getLargeDocUrl(a.FotoBarcodeSubsidiTepat)}', 'Barcode - ${a.noPolisi}')">
-            ${a.FotoBarcodeSubsidiTepat ? `<img src="${srcThumbBarcode}" onerror="this.onerror=null; this.src='https://placehold.co/90x90?text=🔒';" loading="lazy">` : `<svg viewBox="0 0 24 24"><line x1="3" y1="5" x2="3" y2="19"/><line x1="21" y1="5" x2="21" y2="19"/></svg>`}
+          <div class="doc-thumb-item" onclick="event.stopPropagation(); if('${a.fotoBarcodeSubsidiTepat}') previewImageDirect('${getLargeDocUrl(a.fotoBarcodeSubsidiTepat)}', 'Barcode - ${a.noPolisi}')">
+            ${a.fotoBarcodeSubsidiTepat ? `<img src="${srcThumbBarcode}" onerror="this.onerror=null; this.src='https://placehold.co/90x90?text=🔒';" loading="lazy">` : `<svg viewBox="0 0 24 24"><line x1="3" y1="5" x2="3" y2="19"/><line x1="21" y1="5" x2="21" y2="19"/></svg>`}
             <span class="doc-thumb-label">Barcode</span>
           </div>
         </div>
@@ -197,9 +197,9 @@ function renderList(data) {
   }
   
   tbody.innerHTML = data.map((a, i) => {
-    const srcThumbStnk = a.FotoSTNK ? (extractFileId(a.FotoSTNK) ? `https://drive.google.com/thumbnail?id=${extractFileId(a.FotoSTNK)}&sz=w90` : a.FotoSTNK) : '';
-    const srcThumbKir = a.FotoKIR ? (extractFileId(a.FotoKIR) ? `https://drive.google.com/thumbnail?id=${extractFileId(a.FotoKIR)}&sz=w90` : a.FotoKIR) : '';
-    const srcThumbBarcode = a.FotoBarcodeSubsidiTepat ? (extractFileId(a.FotoBarcodeSubsidiTepat) ? `https://drive.google.com/thumbnail?id=${extractFileId(a.FotoBarcodeSubsidiTepat)}&sz=w90` : a.FotoBarcodeSubsidiTepat) : '';
+    const srcThumbStnk = a.fotoSTNK ? (extractFileId(a.fotoSTNK) ? `https://drive.google.com/thumbnail?id=${extractFileId(a.fotoSTNK)}&sz=w90` : a.fotoSTNK) : '';
+    const srcThumbKir = a.fotoKIR ? (extractFileId(a.fotoKIR) ? `https://drive.google.com/thumbnail?id=${extractFileId(a.fotoKIR)}&sz=w90` : a.fotoKIR) : '';
+    const srcThumbBarcode = a.fotoBarcodeSubsidiTepat ? (extractFileId(a.fotoBarcodeSubsidiTepat) ? `https://drive.google.com/thumbnail?id=${extractFileId(a.fotoBarcodeSubsidiTepat)}&sz=w90` : a.fotoBarcodeSubsidiTepat) : '';
 
     return `<tr>
       <td>${i+1}</td>
@@ -210,17 +210,17 @@ function renderList(data) {
       <td>${a.pemilik || '-'}</td>
       
       <td>
-        ${a.FotoSTNK ? `<img src="${srcThumbStnk}" class="table-inline-thumb" onclick="previewImageDirect('${getLargeDocUrl(a.FotoSTNK)}', 'STNK - ${a.noPolisi}')" onerror="this.onerror=null; this.src='https://placehold.co/90x90?text=🔒';" loading="lazy">` : '<span class="table-empty-thumb">-</span>'}
+        ${a.fotoSTNK ? `<img src="${srcThumbStnk}" class="table-inline-thumb" onclick="previewImageDirect('${getLargeDocUrl(a.fotoSTNK)}', 'STNK - ${a.noPolisi}')" onerror="this.onerror=null; this.src='https://placehold.co/90x90?text=🔒';" loading="lazy">` : '<span class="table-empty-thumb">-</span>'}
         <div style="font-size:11px; margin-top:2px; color:var(--text-secondary); white-space:nowrap;">${a.tanggalSTNK || '-'}</div>
       </td>
       
       <td>
-        ${a.FotoKIR ? `<img src="${srcThumbKir}" class="table-inline-thumb" onclick="previewImageDirect('${getLargeDocUrl(a.FotoKIR)}', 'KIR - ${a.noPolisi}')" onerror="this.onerror=null; this.src='https://placehold.co/90x90?text=🔒';" loading="lazy">` : '<span class="table-empty-thumb">-</span>'}
+        ${a.fotoKIR ? `<img src="${srcThumbKir}" class="table-inline-thumb" onclick="previewImageDirect('${getLargeDocUrl(a.fotoKIR)}', 'KIR - ${a.noPolisi}')" onerror="this.onerror=null; this.src='https://placehold.co/90x90?text=🔒';" loading="lazy">` : '<span class="table-empty-thumb">-</span>'}
         <div style="font-size:11px; margin-top:2px; color:var(--text-secondary); white-space:nowrap;">${a.tanggalKIR || '-'}</div>
       </td>
       
       <td>
-        ${a.FotoBarcodeSubsidiTepat ? `<img src="${srcThumbBarcode}" class="table-inline-thumb" onclick="previewImageDirect('${getLargeDocUrl(a.FotoBarcodeSubsidiTepat)}', 'Barcode - ${a.noPolisi}')" onerror="this.onerror=null; this.src='https://placehold.co/90x90?text=🔒';" loading="lazy">` : '<span class="table-empty-thumb">-</span>'}
+        ${a.fotoBarcodeSubsidiTepat ? `<img src="${srcThumbBarcode}" class="table-inline-thumb" onclick="previewImageDirect('${getLargeDocUrl(a.fotoBarcodeSubsidiTepat)}', 'Barcode - ${a.noPolisi}')" onerror="this.onerror=null; this.src='https://placehold.co/90x90?text=🔒';" loading="lazy">` : '<span class="table-empty-thumb">-</span>'}
         <div style="font-size:11px; margin-top:2px; font-family:monospace; color:var(--text-secondary)">${a.barcodeSubsidiTepat || '-'}</div>
       </td>
       
@@ -376,9 +376,9 @@ function editRow(row) {
   document.getElementById('editStatusGroup').style.display = 'block';
   
   // Set up preview gambar awal saat klik edit
-  setupEditPreview('stnk', row.FotoSTNK);
-  setupEditPreview('kir', row.FotoKIR);
-  setupEditPreview('barcode', row.FotoBarcodeSubsidiTepat);
+  setupEditPreview('stnk', row.fotoSTNK);
+  setupEditPreview('kir', row.fotoKIR);
+  setupEditPreview('barcode', row.fotoBarcodeSubsidiTepat);
 
   openModal('modalAdd');
 }
