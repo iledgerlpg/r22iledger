@@ -153,7 +153,8 @@ function updateSummary(data) {
 function renderTable(data, page, limit) {
   const tbody = document.getElementById('tableBody');
   if (!data || !data.length) {
-    tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state">
+    // Colspan dinaikkan jadi 10 karena ada penambahan kolom baru
+    tbody.innerHTML = `<tr><td colspan="10"><div class="empty-state">
       <svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
       <h3>Belum ada pengeluaran</h3><p>Klik "Tambah Pengeluaran" untuk mencatat</p>
     </div></td></tr>`;
@@ -163,22 +164,32 @@ function renderTable(data, page, limit) {
   tbody.innerHTML = data.map((r, i) => {
     const no = (page - 1) * limit + i + 1;
     
-    // --- PERBAIKAN LOGIKA FOTO NOTA (DRIVE OPTIMIZATION) ---
+    // --- 1. HANDLING FOTO NOTA ---
     let nota = `<div class="no-nota"><svg viewBox="0 0 24 24" width="13" height="13" stroke="var(--gray-400)" fill="none" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/></svg></div>`;
-    
     if (r.fotoNotaURL) {
-      const id = extractFileId(r.fotoNotaURL);
-      if (id) {
-        // Jika link Google Drive, ubah ke thumbnail & direct view untuk Lightbox
-        const thumbUrl = `https://drive.google.com/thumbnail?id=${id}&sz=w300`;
-        const fullUrl = `https://drive.google.com/uc?export=view&id=${id}`;
-        nota = `<img class="nota-thumb cursor-pointer hover:opacity-80 transition" src="${thumbUrl}" onclick="openLB('${fullUrl}')" loading="lazy">`;
+      const idNota = extractFileId(r.fotoNotaURL);
+      if (idNota) {
+        const thumbNota = `https://drive.google.com/thumbnail?id=${idNota}&sz=w300`;
+        const fullNota = `https://drive.google.com/uc?export=view&id=${idNota}`;
+        nota = `<img class="nota-thumb cursor-pointer hover:opacity-80 transition" src="${thumbNota}" onclick="openLB('${fullNota}')" loading="lazy" title="Lihat Nota">`;
       } else {
-        // Fallback jika format URL biasa/bukan Drive
-        nota = `<img class="nota-thumb cursor-pointer hover:opacity-80 transition" src="${r.fotoNotaURL}" onclick="openLB('${r.fotoNotaURL}')" loading="lazy">`;
+        nota = `<img class="nota-thumb cursor-pointer hover:opacity-80 transition" src="${r.fotoNotaURL}" onclick="openLB('${r.fotoNotaURL}')" loading="lazy" title="Lihat Nota">`;
       }
     }
-    // --------------------------------------------------------
+
+    // --- 2. HANDLING BUKTI TRANSFER ---
+    let buktiTf = `<div class="no-nota"><svg viewBox="0 0 24 24" width="13" height="13" stroke="var(--gray-400)" fill="none" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/></svg></div>`;
+    if (r.buktiTransferURL) {
+      const idBukti = extractFileId(r.buktiTransferURL);
+      if (idBukti) {
+        const thumbBukti = `https://drive.google.com/thumbnail?id=${idBukti}&sz=w300`;
+        const fullBukti = `https://drive.google.com/uc?export=view&id=${idBukti}`;
+        buktiTf = `<img class="nota-thumb cursor-pointer hover:opacity-80 transition" src="${thumbBukti}" onclick="openLB('${fullBukti}')" loading="lazy" title="Lihat Bukti Transfer">`;
+      } else {
+        buktiTf = `<img class="nota-thumb cursor-pointer hover:opacity-80 transition" src="${r.buktiTransferURL}" onclick="openLB('${r.buktiTransferURL}')" loading="lazy" title="Lihat Bukti Transfer">`;
+      }
+    }
+    // ----------------------------------
 
     return `<tr>
       <td style="font-weight:600;color:var(--text-secondary)">${no}</td>
@@ -189,6 +200,7 @@ function renderTable(data, page, limit) {
       <td style="font-weight:700;white-space:nowrap">${formatRupiah(r.nominal)}</td>
       <td><span class="badge ${r.metodePembayaran==='Tunai'?'badge-success':'badge-gray'}">${r.metodePembayaran}</span></td>
       <td>${nota}</td>
+      <td>${buktiTf}</td>
       <td><div style="display:flex;gap:5px">
         <button class="btn btn-outline btn-sm btn-icon" onclick='editRow(${JSON.stringify(r).replace(/'/g,"&#39;")})'>
           <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
