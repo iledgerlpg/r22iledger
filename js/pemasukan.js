@@ -172,6 +172,6 @@ function exportPDF() {
 }
 
 
-<script>
+
 document.addEventListener('DOMContentLoaded', () => initPage('pemasukan'));
-<script>
+
