@@ -205,7 +205,5 @@ function exportPDF() {
   });
   doc.save('Armada_' + new Date().toLocaleDateString('id-ID').replace(/\//g,'-') + '.pdf');
 }
-</script>
 
-<script>
 document.addEventListener('DOMContentLoaded', () => initPage('armada'));
