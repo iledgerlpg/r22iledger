@@ -348,7 +348,6 @@ function editRow(row) {
   document.getElementById('fNoSTNK').value = row.noSTNK;
   document.getElementById('fTglSTNK').value = row.tanggalSTNK ? row.tanggalSTNK.split('/').reverse().join('-') : '';
   document.getElementById('fTglKIR').value = row.tanggalKIR ? row.tanggalKIR.split('/').reverse().join('-') : '';
-  document.getElementById('fBarcode').value = row.barcodeSubsidiTepat || '';
   document.getElementById('fStatus').value = row.status;
   document.getElementById('editStatusGroup').style.display = 'block';
   
@@ -363,7 +362,7 @@ function editRow(row) {
 function resetForm() {
   document.getElementById('editId').value = '';
   document.getElementById('modalTitle').textContent = 'Tambah Armada';
-  ['fNopol','fMerk','fTahun','fPemilik','fNoSTNK','fTglSTNK','fTglKIR','fBarcode'].forEach(id => document.getElementById(id).value = '');
+  ['fNopol','fMerk','fTahun','fPemilik','fNoSTNK','fTglSTNK','fTglKIR'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('editStatusGroup').style.display = 'none';
   ['stnk', 'kir', 'barcode'].forEach(jenis => removeFoto(jenis));
 }
