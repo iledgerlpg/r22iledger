@@ -40,28 +40,82 @@ function updateSummary(data) {
   document.getElementById('sumMax').textContent = formatRupiah(max);
 }
 
+
+function cleanImageUrl(url) {
+    if (!url) return '';
+    
+    // Jika sudah format direct link, biarkan saja
+    if (url.includes('uc?export=view')) return url;
+    
+    // Jika format lama, baru kita konversi
+    if (url.includes('drive.google.com')) {
+        return url.replace('/view?usp=sharing', '/uc?export=view')
+                  .replace('/file/d/', '/uc?id=')
+                  .replace('/view', '');
+    }
+    return url;
+}
+function extractFileId(url) {
+    if (!url) return null;
+    const directId = url.match(/id=([A-Za-z0-9_-]+)/);
+    const fileId = url.match(/\/d\/([A-Za-z0-9_-]+)/);
+    return directId ? directId[1] : (fileId ? fileId[1] : null);
+}
+
+function renderThumb(url) {
+    const id = extractFileId(url);
+    if (!id) return '-';
+    // Link thumbnail untuk preview, Link uc?export=view untuk full image
+    const thumbUrl = `https://drive.google.com/thumbnail?id=${id}&sz=w300`;
+    const fullUrl = `https://drive.google.com/uc?export=view&id=${id}`;
+    
+    return `<a href="${fullUrl}" target="_blank" class="hover:opacity-80 transition">
+                <img src="${thumbUrl}" class="h-12 w-12 object-cover rounded shadow mx-auto border border-gray-200" loading="lazy" />
+            </a>`;
+}
+
+
 function renderTable(data, page, limit) {
   const tbody = document.getElementById('tableBody');
   if (!data || !data.length) {
     tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><svg viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg><h3>Belum ada pendapatan</h3><p>Klik "Tambah Pendapatan" untuk mencatat</p></div></td></tr>`;
     return;
   }
+  
   tbody.innerHTML = data.map((r, i) => {
     const no = (page - 1) * limit + i + 1;
-    const buktiHtml = r.buktiTransferURL
-      ? `<img class="nota-thumb" src="${r.buktiTransferURL}" onclick="openLightbox('${r.buktiTransferURL}')">`
-      : '<span style="font-size:11px;color:var(--text-secondary)">-</span>';
+    
+    // --- PERBAIKAN LOGIKA BUKTI TRANSFER (DRIVE OPTIMIZATION) ---
+    let buktiHtml = '<span style="font-size:11px;color:var(--text-secondary)">-</span>';
+    
+    if (r.buktiTransferURL) {
+      const id = extractFileId(r.buktiTransferURL);
+      if (id) {
+        // Gunakan thumbnail untuk performa tabel, fullUrl untuk Lightbox internal
+        const thumbUrl = `https://drive.google.com/thumbnail?id=${id}&sz=w300`;
+        const fullUrl = `https://drive.google.com/uc?export=view&id=${id}`;
+        buktiHtml = `<img class="nota-thumb cursor-pointer hover:opacity-80 transition" src="${thumbUrl}" onclick="openLightbox('${fullUrl}')" loading="lazy">`;
+      } else {
+        // Fallback jika format URL bukan Google Drive
+        buktiHtml = `<img class="nota-thumb cursor-pointer hover:opacity-80 transition" src="${r.buktiTransferURL}" onclick="openLightbox('${r.buktiTransferURL}')" loading="lazy">`;
+      }
+    }
+    // -------------------------------------------------------------
+
+    // Pengaman karakter single quote agar objek JSON tidak merusak atribut onclick HTML
+    const cleanJsonRow = JSON.stringify(r).replace(/'/g, "&#39;");
+
     return `<tr>
       <td style="font-weight:600;color:var(--text-secondary)">${no}</td>
       <td style="white-space:nowrap;font-size:12px">${r.timestamp}</td>
-      <td style="font-weight:500;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.nama}</td>
-      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px">${r.uraian}</td>
+      <td style="font-weight:500;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r.nama}">${r.nama}</td>
+      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px" title="${r.uraian}">${r.uraian}</td>
       <td style="font-weight:700;color:var(--success);white-space:nowrap">${formatRupiah(r.nominal)}</td>
       <td>${buktiHtml}</td>
       <td style="font-size:11px;color:var(--text-secondary)">${(r.createdBy||'').split('@')[0]}</td>
       <td>
         <div style="display:flex;gap:6px">
-          <button class="btn btn-outline btn-sm btn-icon" onclick='editRow(${JSON.stringify(r)})' title="Edit">
+          <button class="btn btn-outline btn-sm btn-icon" onclick='editRow(${cleanJsonRow})' title="Edit">
             <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
           </button>
           <button class="btn btn-danger btn-sm btn-icon" onclick="deleteRow('${r.id}','${r.nama}')" title="Hapus">
