@@ -136,16 +136,10 @@ function renderGrid(data) {
       ? `<img src="${srcFotoUtama}" alt="${a.noPolisi}" onerror="this.onerror=null; this.src='https://placehold.co/300x200?text=🔒+Akses+Privat';">`
       : `<div class="armada-photo-placeholder"><svg viewBox="0 0 24 24" width="64" height="64" stroke="currentColor" fill="none" stroke-width="0.8"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div>`;
     
- // AMANIN CASE SENSITIVE: Mau huruf f kecil atau F gede tetep ketangkep
-const urlSTNK = a.fotoSTNK || a.FotoSTNK || '';
-const urlKIR = a.fotoKIR || a.FotoKIR || '';
-const urlBarcode = a.fotoBarcodeSubsidiTepat || a.FotoBarcodeSubsidiTepat || a.barcodeSubsidiTepat || '';
+    const srcThumbStnk = a.FotoSTNK ? (extractFileId(a.FotoSTNK) ? `https://drive.google.com/thumbnail?id=${extractFileId(a.FotoSTNK)}&sz=w90` : a.FotoSTNK) : '';
+    const srcThumbKir = a.FotoKIR ? (extractFileId(a.FotoKIR) ? `https://drive.google.com/thumbnail?id=${extractFileId(a.FotoKIR)}&sz=w90` : a.FotoKIR) : '';
+    const srcThumbBarcode = a.FotoBarcodeSubsidiTepat ? (extractFileId(a.FotoBarcodeSubsidiTepat) ? `https://drive.google.com/thumbnail?id=${extractFileId(a.FotoBarcodeSubsidiTepat)}&sz=w90` : a.FotoBarcodeSubsidiTepat) : '';
 
-// Gunakan variabel url di atas untuk generate thumbnail
-const srcThumbStnk = urlSTNK ? (extractFileId(urlSTNK) ? `https://drive.google.com/thumbnail?id=${extractFileId(urlSTNK)}&sz=w90` : urlSTNK) : '';
-const srcThumbKir = urlKIR ? (extractFileId(urlKIR) ? `https://drive.google.com/thumbnail?id=${extractFileId(urlKIR)}&sz=w90` : urlKIR) : '';
-const srcThumbBarcode = urlBarcode ? (extractFileId(urlBarcode) ? `https://drive.google.com/thumbnail?id=${extractFileId(urlBarcode)}&sz=w90` : urlBarcode) : '';
-    
     return `
     <div class="armada-card">
       <div class="armada-photo">
@@ -426,4 +420,4 @@ function exportPDF() {
     startY: 32, styles:{fontSize:9}, headStyles:{fillColor:[13,71,161],textColor:255,fontStyle:'bold'}, alternateRowStyles:{fillColor:[245,249,255]}
   });
   doc.save('Armada_' + new Date().toLocaleDateString('id-ID').replace(/\//g,'-') + '.pdf');
-}  
+}
