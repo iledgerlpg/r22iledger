@@ -192,6 +192,5 @@ function exportPDF() {
 }
 
 
-<script>
 document.addEventListener('DOMContentLoaded', () => initPage('labarugi'));
-</script>
+
