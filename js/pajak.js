@@ -190,6 +190,6 @@ function exportPDF() {
 }
 
 
-<script>
+
 document.addEventListener('DOMContentLoaded', () => initPage('pajak'));
-</script>
+
