@@ -112,6 +112,6 @@ async function deleteUser(userId, nama) {
 }
 
 
-<script>
+
 document.addEventListener('DOMContentLoaded', () => initPage('userManagement'));
-</script>
+
