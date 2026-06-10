@@ -74,36 +74,6 @@ function updateStats(data) {
   document.getElementById('statLate').textContent = late + ' unit';
 }
 
-// ==========================================
-// PENGURUSAN EKSTRAKSI ID & URL FOTO (ANTI-GAGAL)
-// ==========================================
-function extractFileId(url) {
-    if (!url) return null;
-    
-    const cleanUrl = url.trim();
-    
-    // JAGA-JAGA: Kalo di DB ternyata cuma kesimpen ID-nya doang (ga ada http atau slashes)
-    if (!cleanUrl.includes('http') && !cleanUrl.includes('/') && cleanUrl.length > 15) {
-        return cleanUrl;
-    }
-    
-    // Regex cari id=xxxx
-    const directId = cleanUrl.match(/id=([A-Za-z0-9_-]+)/);
-    if (directId) return directId[1];
-    
-    // Regex cari /d/xxxx
-    const fileId = cleanUrl.match(/\/d\/([A-Za-z0-9_-]+)/);
-    if (fileId) return fileId[1];
-    
-    return null;
-}
-
-// Ambil url resolusi tinggi (w1200) untuk Lightbox Preview
-function getLargeDocUrl(url) {
-  const id = extractFileId(url);
-  return id ? `https://drive.google.com/thumbnail?id=${id}&sz=w1200` : url;
-}
-
 function cleanImageUrl(url) {
     if (!url) return '';
     if (url.includes('uc?export=view')) return url;
@@ -115,9 +85,20 @@ function cleanImageUrl(url) {
     return url;
 }
 
-// ==========================================
-// RENDERING VIEW (GRID & LIST)
-// ==========================================
+function extractFileId(url) {
+    if (!url) return null;
+    const directId = url.match(/id=([A-Za-z0-9_-]+)/);
+    const fileId = url.match(/\/d\/([A-Za-z0-9_-]+)/);
+    return directId ? directId[1] : (fileId ? fileId[1] : null);
+}
+
+// Helper ambil url resolusi tinggi (w1200) untuk Lightbox Preview
+function getLargeDocUrl(url) {
+  if (!url) return '';
+  const id = extractFileId(url);
+  return id ? `https://drive.google.com/thumbnail?id=${id}&sz=w1200` : url;
+}
+
 function renderGrid(data) {
   const container = document.getElementById('armadaGrid');
   if (!data.length) {
@@ -133,7 +114,7 @@ function renderGrid(data) {
     const srcFotoUtama = idFotoUtama ? `https://drive.google.com/thumbnail?id=${idFotoUtama}&sz=w300` : mainPhotoUrl;
     
     const photoHtml = mainPhotoUrl
-      ? `<img src="${srcFotoUtama}" alt="${a.noPolisi}" onerror="this.onerror=null; this.src='https://placehold.co/300x200?text=🔒+Akses+Privat';">`
+      ? `<img src="${srcFotoUtama}" alt="${a.noPolisi}" onerror="this.parentElement.innerHTML='<div class=armada-photo-placeholder><svg viewBox=\'0 0 24 24\'><rect x=\'1\' y=\'3\' width=\'15\' height=\'13\' rx=\'1\'/></svg></div>'">`
       : `<div class="armada-photo-placeholder"><svg viewBox="0 0 24 24" width="64" height="64" stroke="currentColor" fill="none" stroke-width="0.8"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div>`;
     
     const srcThumbStnk = a.fotoSTNK ? (extractFileId(a.fotoSTNK) ? `https://drive.google.com/thumbnail?id=${extractFileId(a.fotoSTNK)}&sz=w90` : a.fotoSTNK) : '';
@@ -159,15 +140,15 @@ function renderGrid(data) {
         
         <div class="card-doc-thumbs">
           <div class="doc-thumb-item" onclick="event.stopPropagation(); if('${a.fotoSTNK}') previewImageDirect('${getLargeDocUrl(a.fotoSTNK)}', 'STNK - ${a.noPolisi}')">
-            ${a.fotoSTNK ? `<img src="${srcThumbStnk}" onerror="this.onerror=null; this.src='https://placehold.co/90x90?text=🔒';" loading="lazy">` : `<svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>`}
+            ${a.fotoSTNK ? `<img src="${srcThumbStnk}" loading="lazy">` : `<svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>`}
             <span class="doc-thumb-label">STNK</span>
           </div>
           <div class="doc-thumb-item" onclick="event.stopPropagation(); if('${a.fotoKIR}') previewImageDirect('${getLargeDocUrl(a.fotoKIR)}', 'KIR - ${a.noPolisi}')">
-            ${a.fotoKIR ? `<img src="${srcThumbKir}" onerror="this.onerror=null; this.src='https://placehold.co/90x90?text=🔒';" loading="lazy">` : `<svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/></svg>`}
+            ${a.fotoKIR ? `<img src="${srcThumbKir}" loading="lazy">` : `<svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/></svg>`}
             <span class="doc-thumb-label">KIR</span>
           </div>
           <div class="doc-thumb-item" onclick="event.stopPropagation(); if('${a.fotoBarcodeSubsidiTepat}') previewImageDirect('${getLargeDocUrl(a.fotoBarcodeSubsidiTepat)}', 'Barcode - ${a.noPolisi}')">
-            ${a.fotoBarcodeSubsidiTepat ? `<img src="${srcThumbBarcode}" onerror="this.onerror=null; this.src='https://placehold.co/90x90?text=🔒';" loading="lazy">` : `<svg viewBox="0 0 24 24"><line x1="3" y1="5" x2="3" y2="19"/><line x1="21" y1="5" x2="21" y2="19"/></svg>`}
+            ${a.fotoBarcodeSubsidiTepat ? `<img src="${srcThumbBarcode}" loading="lazy">` : `<svg viewBox="0 0 24 24"><line x1="3" y1="5" x2="3" y2="19"/><line x1="21" y1="5" x2="21" y2="19"/></svg>`}
             <span class="doc-thumb-label">Barcode</span>
           </div>
         </div>
@@ -210,17 +191,17 @@ function renderList(data) {
       <td>${a.pemilik || '-'}</td>
       
       <td>
-        ${a.fotoSTNK ? `<img src="${srcThumbStnk}" class="table-inline-thumb" onclick="previewImageDirect('${getLargeDocUrl(a.fotoSTNK)}', 'STNK - ${a.noPolisi}')" onerror="this.onerror=null; this.src='https://placehold.co/90x90?text=🔒';" loading="lazy">` : '<span class="table-empty-thumb">-</span>'}
+        ${a.fotoSTNK ? `<img src="${srcThumbStnk}" class="table-inline-thumb" onclick="previewImageDirect('${getLargeDocUrl(a.fotoSTNK)}', 'STNK - ${a.noPolisi}')" loading="lazy">` : '<span class="table-empty-thumb">-</span>'}
         <div style="font-size:11px; margin-top:2px; color:var(--text-secondary); white-space:nowrap;">${a.tanggalSTNK || '-'}</div>
       </td>
       
       <td>
-        ${a.fotoKIR ? `<img src="${srcThumbKir}" class="table-inline-thumb" onclick="previewImageDirect('${getLargeDocUrl(a.fotoKIR)}', 'KIR - ${a.noPolisi}')" onerror="this.onerror=null; this.src='https://placehold.co/90x90?text=🔒';" loading="lazy">` : '<span class="table-empty-thumb">-</span>'}
+        ${a.fotoKIR ? `<img src="${srcThumbKir}" class="table-inline-thumb" onclick="previewImageDirect('${getLargeDocUrl(a.fotoKIR)}', 'KIR - ${a.noPolisi}')" loading="lazy">` : '<span class="table-empty-thumb">-</span>'}
         <div style="font-size:11px; margin-top:2px; color:var(--text-secondary); white-space:nowrap;">${a.tanggalKIR || '-'}</div>
       </td>
       
       <td>
-        ${a.fotoBarcodeSubsidiTepat ? `<img src="${srcThumbBarcode}" class="table-inline-thumb" onclick="previewImageDirect('${getLargeDocUrl(a.fotoBarcodeSubsidiTepat)}', 'Barcode - ${a.noPolisi}')" onerror="this.onerror=null; this.src='https://placehold.co/90x90?text=🔒';" loading="lazy">` : '<span class="table-empty-thumb">-</span>'}
+        ${a.fotoBarcodeSubsidiTepat ? `<img src="${srcThumbBarcode}" class="table-inline-thumb" onclick="previewImageDirect('${getLargeDocUrl(a.fotoBarcodeSubsidiTepat)}', 'Barcode - ${a.noPolisi}')" loading="lazy">` : '<span class="table-empty-thumb">-</span>'}
         <div style="font-size:11px; margin-top:2px; font-family:monospace; color:var(--text-secondary)">${a.barcodeSubsidiTepat || '-'}</div>
       </td>
       
@@ -255,9 +236,7 @@ function setView(v) {
   if (v === 'list') renderList(allData);
 }
 
-// ==========================================
-// FORM MANAGEMENT & FILE UPLOAD HANDLER
-// ==========================================
+// Handler pas user milih file baru di form input/modal edit
 function handleFotoSelect(e, jenis) {
   const file = e.target.files[0]; if (!file) return;
   const reader = new FileReader();
@@ -268,6 +247,7 @@ function handleFotoSelect(e, jenis) {
     const previewImg = document.getElementById(`preview${jenis}Img`);
     previewImg.src = ev.target.result;
     
+    // Kasih class pointer biar user tahu ini bisa diklik lightbox
     previewImg.className = 'cursor-pointer hover:opacity-80 transition object-cover rounded border border-gray-300';
     previewImg.onclick = () => {
       if (typeof previewImageDirect === 'function') {
@@ -293,31 +273,27 @@ function removeFoto(jenis) {
   if(fileInput) fileInput.value = '';
 }
 
-// Memunculkan foto awal di modal edit + aktifkan klik lightbox global
+// MEMUNCULKAN FOTO AWAL DI MODAL EDIT + AKTIFKAN KLIK LIGHTBOX
 function setupEditPreview(jenis, url) {
     const previewBox = document.getElementById(`preview${jenis}`);
     const previewImg = document.getElementById(`preview${jenis}Img`);
     
     uploadState[jenis] = { base64: null, mime: null };
     
-    const id = extractFileId(url);
-    if (id) {
-        const thumbUrl = `https://drive.google.com/thumbnail?id=${id}&sz=w300`;
-        const largeUrl = `https://drive.google.com/thumbnail?id=${id}&sz=w1200`;
+    if (url) {
+        const id = extractFileId(url);
+        const thumbUrl = id ? `https://drive.google.com/thumbnail?id=${id}&sz=w300` : url;
+        const largeUrl = getLargeDocUrl(url);
         
         previewImg.src = thumbUrl;
         previewImg.className = 'cursor-pointer hover:opacity-80 transition object-cover rounded border border-gray-300';
         
-        // Metode pengeluaran: klik preview modal langsung nembus lightbox
+        // Metode pengeluaran: klik preview modal langsung tembus lightbox global
         previewImg.onclick = () => {
           if (typeof previewImageDirect === 'function') {
             const nopol = document.getElementById('fNopol').value || 'Kendaraan';
             previewImageDirect(largeUrl, `${jenis.toUpperCase()} - ${nopol}`);
           }
-        };
-        
-        previewImg.onerror = () => {
-          previewImg.src = 'https://placehold.co/300x200?text=🔒+Akses+Privat';
         };
         
         previewBox.style.display = 'block';
@@ -328,9 +304,6 @@ function setupEditPreview(jenis, url) {
     }
 }
 
-// ==========================================
-// CRUD ACTIONS (SAVE, EDIT, DELETE)
-// ==========================================
 async function saveData() {
   const id = document.getElementById('editId').value;
   const noPolisi = document.getElementById('fNopol').value.trim().toUpperCase();
@@ -375,26 +348,12 @@ function editRow(row) {
   document.getElementById('fStatus').value = row.status;
   document.getElementById('editStatusGroup').style.display = 'block';
   
-  // Set up preview gambar awal saat klik edit
+  // Triger pemuatan foto awal pas baris di-klik edit
   setupEditPreview('stnk', row.fotoSTNK);
   setupEditPreview('kir', row.fotoKIR);
   setupEditPreview('barcode', row.fotoBarcodeSubsidiTepat);
 
   openModal('modalAdd');
-}
-
-async function deleteRow(id, noPolisi) {
-  if (!id) return;
-  if (!confirm(`Apakah Anda yakin ingin menghapus armada dengan No. Polisi ${noPolisi}?`)) return;
-  
-  const res = await callAPI('deleteArmada', { id });
-  
-  if (res.success) {
-    showToast(res.message || 'Armada berhasil dihapus', 'success');
-    loadData();
-  } else {
-    showToast(res.error || 'Gagal menghapus armada', 'error');
-  }
 }
 
 function resetForm() {
