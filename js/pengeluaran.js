@@ -33,6 +33,43 @@ function setDefaultDT() {
     `${now.getFullYear()}-${p(now.getMonth()+1)}`;
 }
 
+function cleanImageUrl(url) {
+    if (!url) return '';
+    
+    // Jika sudah format direct link, biarkan saja
+    if (url.includes('uc?export=view')) return url;
+    
+    // Jika format lama, baru kita konversi
+    if (url.includes('drive.google.com')) {
+        return url.replace('/view?usp=sharing', '/uc?export=view')
+                  .replace('/file/d/', '/uc?id=')
+                  .replace('/view', '');
+    }
+    return url;
+}
+function extractFileId(url) {
+    if (!url) return null;
+    const directId = url.match(/id=([A-Za-z0-9_-]+)/);
+    const fileId = url.match(/\/d\/([A-Za-z0-9_-]+)/);
+    return directId ? directId[1] : (fileId ? fileId[1] : null);
+}
+
+function renderThumb(url) {
+    const id = extractFileId(url);
+    if (!id) return '-';
+    // Link thumbnail untuk preview, Link uc?export=view untuk full image
+    const thumbUrl = `https://drive.google.com/thumbnail?id=${id}&sz=w300`;
+    const fullUrl = `https://drive.google.com/uc?export=view&id=${id}`;
+    
+    return `<a href="${fullUrl}" target="_blank" class="hover:opacity-80 transition">
+                <img src="${thumbUrl}" class="h-12 w-12 object-cover rounded shadow mx-auto border border-gray-200" loading="lazy" />
+            </a>`;
+}
+
+
+
+
+
 // ============================================================
 // LOAD DATA SOURCES
 // ============================================================
