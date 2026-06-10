@@ -43,6 +43,13 @@ async function loadData() {
   updateStats(allData);
   if (currentView === 'grid') renderGrid(allData);
   else renderList(allData);
+console.log("👉 ISI RESPON DARI APPS SCRIPT:", res); // <--- SELIPIN INI BUAT NGINTIP
+  
+  if (res && res.success) {
+    // ... render data ...
+  } else {
+    alert("Gagal memuat data");
+  }
 }
 
 function updateStats(data) {
