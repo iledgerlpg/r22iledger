@@ -336,35 +336,28 @@ function toggleSection(id) {
 }
 
 function exportExcel() {
-  // 1. Ambil input dari user/UI
-  // Pastikan ID elemen (periodSelect, dsb) sesuai dengan HTML lu
+  // Ambil tenantId dari input hidden
+  const tenantId = document.getElementById('tenantId').value;
+
   const data = {
-    sessionUser: sessionUser, // Pastikan variabel global ini tersedia
+    sessionUser: { tenantId: tenantId }, // Bungkus jadi object biar backend lu nggak error
     period: document.getElementById('periodSelect').value,
     year: document.getElementById('yearSelect').value,
     month: document.getElementById('monthSelect').value
   };
 
-  // 2. Beri indikator ke user bahwa proses sedang berjalan
-  // (Asumsi lu punya fungsi showToast)
   showToast('Sedang memproses laporan ke Excel...', 'info');
 
-  // 3. Panggil fungsi di backend
-  // Ini fungsi 'magic' yang menjalankan backend secara async
   google.script.run
     .withSuccessHandler((response) => {
-      // response datang dari return object di fungsi backend
       if (response.success) {
-        // Jika sukses, buka link download di tab baru
         window.open(response.downloadUrl, '_blank');
         showToast('Excel berhasil di-generate!', 'success');
       } else {
-        // Jika backend mengirim error (misal file tidak ketemu)
         showToast('Gagal export: ' + response.error, 'error');
       }
     })
     .withFailureHandler((err) => {
-      // Jika terjadi error koneksi sistem Google
       showToast('Error Sistem: ' + err, 'error');
     })
     .exportLabaRugiToExcel(data);
