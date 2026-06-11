@@ -6,13 +6,18 @@ document.addEventListener('DOMContentLoaded', () => {
   populateYearSelect();
   setDefaultSelects();
   loadData();
+  
+  if (typeof initPage === 'function') initPage('labarugi');
+  
+  const fPembelian = document.getElementById('formPembelian');
+  if (fPembelian) fPembelian.addEventListener('submit', handleSimpanPembelian);
 });
 
 function populateYearSelect() {
   const sel = document.getElementById('selectYear');
   if (!sel) return;
   const now = new Date().getFullYear();
-  sel.innerHTML = ''; // Clear existing
+  sel.innerHTML = ''; 
   for (let y = now; y >= now - 5; y--) {
     sel.innerHTML += `<option value="${y}">${y}</option>`;
   }
@@ -37,14 +42,12 @@ function setPeriod(p) {
   loadData();
 }
 
-// Fungsi Handler untuk Form Input Pembelian LPG 3 Kg
 async function handleSimpanPembelian(event) {
   event.preventDefault();
   const tanggal = document.getElementById('beliTanggal').value;
   const qty = document.getElementById('beliQty').value;
   const nominal = document.getElementById('beliNominal').value;
 
-  // Memanggil API simpan data pembelian ke database
   const res = await callAPI('simpanPembelian', { 
     tanggal, 
     qty: parseInt(qty), 
@@ -54,7 +57,7 @@ async function handleSimpanPembelian(event) {
   if (res.success) {
     showToast('Data pembelian berhasil disimpan!', 'success');
     document.getElementById('formPembelian').reset();
-    loadData(); // Reload data laporan agar langsung ter-update
+    loadData(); 
   } else {
     showToast('Gagal menyimpan data pembelian.', 'error');
   }
@@ -70,50 +73,51 @@ async function loadData() {
   const res = await callAPI('getLabaRugi', { period: currentPeriod, year: parseInt(year), month: parseInt(month) });
   if (!res.success) { showToast('Gagal memuat data.', 'error'); return; }
   
-  globalDataRaw = res.data; // Simpan ke scope global untuk kebutuhan unduh berkas
+  globalDataRaw = res.data; 
   renderLabaRugi(res.data);
 }
 
 function renderLabaRugi(d) {
-  // Set label periode aktif
+  if (!d) return;
+
   if (document.getElementById('lrPeriode')) document.getElementById('lrPeriode').textContent = d.periode;
   if (document.getElementById('lrNetPeriode')) document.getElementById('lrNetPeriode').textContent = d.periode;
 
-  // 1. SEKSI PENDAPATAN
-  // Mengambil item pendapatan spesifik (LPG Refill & Transport Fee) dari detail data API
-  const penjualanLpg = d.penjualanLpg3kg || 0;
-  const transportFee = d.transportFee || 0;
-  const totalPendapatan = penjualanLpg + transportFee;
+  // =========================================================================
+  // 1. SEKSI PENDAPATAN (SEKARANG DINAMIS BERDASARKAN URAIAN)
+  // =========================================================================
+  let totalPendapatan = 0;
+  const pendapatanRows = document.getElementById('pendapatanRows');
+  
+  if (d.pendapatanByUraian && d.pendapatanByUraian.length) {
+    pendapatanRows.innerHTML = d.pendapatanByUraian.map(p => {
+      totalPendapatan += p.total; // Akumulasi total langsung dari loop data asli
+      return `
+        <div class="lr-item">
+          <div class="lr-item-label">
+            <svg viewBox="0 0 24 24" width="14" height="14" stroke="var(--success)" fill="none" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+            ${p.uraian}
+          </div>
+          <div class="lr-item-value">${formatRupiah(p.total)}</div>
+        </div>
+      `;
+    }).join('');
+  } else {
+    if (pendapatanRows) {
+      pendapatanRows.innerHTML = `<div class="lr-item" style="justify-content:center;color:var(--text-secondary);font-size:13px">Belum ada data pendapatan</div>`;
+    }
+  }
 
+  // Set komponen nilai total pendapatan di UI
   if (document.getElementById('secPendapatanTotal')) document.getElementById('secPendapatanTotal').textContent = formatRupiah(totalPendapatan);
   if (document.getElementById('totalPendapatanLabel')) document.getElementById('totalPendapatanLabel').textContent = formatRupiah(totalPendapatan);
 
-  const pendapatanRows = document.getElementById('pendapatanRows');
-  if (pendapatanRows) {
-    pendapatanRows.innerHTML = `
-      <div class="lr-item">
-        <div class="lr-item-label">
-          <svg viewBox="0 0 24 24" width="14" height="14" stroke="var(--success)" fill="none" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
-          Penjualan Refill LPG 3 Kg. Pertamina
-        </div>
-        <div class="lr-item-value">${formatRupiah(penjualanLpg)}</div>
-      </div>
-      <div class="lr-item">
-        <div class="lr-item-label">
-          <svg viewBox="0 0 24 24" width="14" height="14" stroke="var(--success)" fill="none" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
-          Penerimaan Transport Fee
-        </div>
-        <div class="lr-item-value">${formatRupiah(transportFee)}</div>
-      </div>
-    `;
-  }
-
-  // 2. SEKSI HARGA POKOK PEMBELIAN (AMBIL BERDASARKAN FILTER TANGGAL/BULAN)
+  // 2. SEKSI HARGA POKOK PEMBELIAN
   const totalPembelian = d.pembelianLpg3kgPeriode || 0;
   const hppElement = document.getElementById('lrPembelianHPP');
   if (hppElement) hppElement.textContent = formatRupiah(totalPembelian);
 
-  // 3. HITUNG LABA (RUGI) KOTOR = Pendapatan - Pembelian
+  // 3. HITUNG LABA (RUGI) KOTOR
   const labaKotor = totalPendapatan - totalPembelian;
   const labaKotorEl = document.getElementById('lrLabaKotor');
   if (labaKotorEl) {
@@ -145,7 +149,6 @@ function renderLabaRugi(d) {
       </div>`;
     }).join('');
 
-    // Render grafik Chart.js bawaan
     renderLRChart(d.pengeluaranByPos);
     if (document.getElementById('chartSection')) document.getElementById('chartSection').style.display = 'block';
   } else {
@@ -158,7 +161,7 @@ function renderLabaRugi(d) {
   if (document.getElementById('secPengeluaranTotal')) document.getElementById('secPengeluaranTotal').textContent = formatRupiah(totalBiaya);
   if (document.getElementById('totalPengeluaranLabel')) document.getElementById('totalPengeluaranLabel').textContent = formatRupiah(totalBiaya);
 
-  // 5. HITUNG LABA (RUGI) USAHA = LABA RUGI KOTOR - BIAYA
+  // 5. HITUNG LABA (RUGI) USAHA
   const labaUsaha = labaKotor - totalBiaya;
 
   const labaEl = document.getElementById('lrLaba');
@@ -204,7 +207,7 @@ function toggleSection(id) {
 }
 
 // =========================================================================
-// FUNGSI EXPORT EXCEL MULTI-SHEET (Wajib Sheet LR, Global, & 1 Sheet 1 Pos)
+// FUNGSI EXPORT EXCEL MULTI-SHEET (DINAMIS)
 // =========================================================================
 function exportExcel() {
   if (!globalDataRaw) {
@@ -216,30 +219,34 @@ function exportExcel() {
   const wb = XLSX.utils.book_new();
 
   // --- SHEET 1: LABA RUGI ---
-  const penjualanLpg = d.penjualanLpg3kg || 0;
-  const transportFee = d.transportFee || 0;
-  const totalPendapatan = penjualanLpg + transportFee;
-  const totalPembelian = d.pembelianLpg3kgPeriode || 0;
-  const labaKotor = totalPendapatan - totalPembelian;
-  let totalBiaya = 0;
-
   const lrRows = [
     ["LAPORAN LABA RUGI USAHA"],
-    [`Periode: ${d.periode}`],
+    ["Periode: " + (d.periode || '')],
     [],
-    ["PENDAPATAN", ""],
-    ["  - Penjualan Refill LPG 3 Kg. Pertamina", penjualanLpg],
-    ["  - Penerimaan Transport Fee", transportFee],
-    ["JUMLAH PENDAPATAN", totalPendapatan],
-    [],
-    ["HARGA POKOK PEMBELIAN", ""],
-    ["  - Pembelian LPG 3 Kg", totalPembelian],
-    [],
-    ["LABA (RUGI) KOTOR", labaKotor],
-    [],
-    ["BIAYA", ""]
+    ["PENDAPATAN", ""]
   ];
 
+  let totalPendapatan = 0;
+  if (d.pendapatanByUraian && d.pendapatanByUraian.length) {
+    d.pendapatanByUraian.forEach(p => {
+      totalPendapatan += p.total;
+      lrRows.push([`  - ${p.uraian}`, p.total]);
+    });
+  }
+  lrRows.push(["JUMLAH PENDAPATAN", totalPendapatan]);
+  lrRows.push([]);
+  
+  const totalPembelian = d.pembelianLpg3kgPeriode || 0;
+  const labaKotor = totalPendapatan - totalPembelian;
+
+  lrRows.push(["HARGA POKOK PEMBELIAN", ""]);
+  lrRows.push(["  - Pembelian LPG 3 Kg", totalPembelian]);
+  lrRows.push([]);
+  lrRows.push(["LABA (RUGI) KOTOR", labaKotor]);
+  lrRows.push([]);
+  lrRows.push(["BIAYA OPERASIONAL", ""]);
+
+  let totalBiaya = 0;
   if (d.pengeluaranByPos) {
     d.pengeluaranByPos.forEach(p => {
       totalBiaya += p.total;
@@ -257,7 +264,7 @@ function exportExcel() {
   // --- SHEET 2: DATA PENGELUARAN GLOBAL ---
   const globalExpenseRows = [
     ["DATA PENGELUARAN GLOBAL"],
-    [`Periode: ${d.periode}`],
+    ["Periode: " + (d.periode || '')],
     [],
     ["Nama Pos Pengeluaran / Biaya", "Total Pengeluaran (Rp)"]
   ];
@@ -272,52 +279,49 @@ function exportExcel() {
   const wsGlobal = XLSX.utils.aoa_to_sheet(globalExpenseRows);
   XLSX.utils.book_append_sheet(wb, wsGlobal, "Data Pengeluaran Global");
 
-  // --- SHEET 3 DST: POS MASUK (1 SHEET = 1 POS MASUK / BIAYA) ---
-  // Sheet individual untuk Penjualan LPG
-  const wsLpg = XLSX.utils.aoa_to_sheet([
-    ["RINCIAN POS MASUK: PENJUALAN REFILL LPG 3 KG"],
-    [`Periode: ${d.periode}`],
-    [],
-    ["Uraian Pendapatan", "Total"],
-    ["Penjualan Refill LPG 3 Kg. Pertamina", penjualanLpg]
-  ]);
-  XLSX.utils.book_append_sheet(wb, wsLpg, "Pos_Penjualan_LPG");
+  // --- SHEET 3 DST: SHEET INDIVIDUAL POS MASUK (DINAMIS) ---
+  if (d.pendapatanByUraian) {
+    d.pendapatanByUraian.forEach(p => {
+      const safeSheetName = p.uraian.replace(/[/\\?*:[\]]/g, "").substring(0, 23);
+      const wsIncomeCenter = XLSX.utils.aoa_to_sheet([
+        [`RINCIAN POS MASUK: ${p.uraian.toUpperCase()}`],
+        ["Periode: " + (d.periode || '')],
+        [],
+        ["Uraian Pendapatan", "Total Akumulasi Masuk"],
+        [p.uraian, p.total]
+      ]);
+      XLSX.utils.book_append_sheet(wb, wsIncomeCenter, `In_${safeSheetName}`);
+    });
+  }
 
-  // Sheet individual untuk Transport Fee
-  const wsTransport = XLSX.utils.aoa_to_sheet([
-    ["RINCIAN POS MASUK: PENERIMAAN TRANSPORT FEE"],
-    [`Periode: ${d.periode}`],
-    [],
-    ["Uraian Pendapatan", "Total"],
-    ["Penerimaan Transport Fee", transportFee]
-  ]);
-  XLSX.utils.book_append_sheet(wb, wsTransport, "Pos_Transport_Fee");
-
-  // Sheet individual dinamis untuk setiap Pos Biaya Operasional
+  // --- SHEET KELOMPOK POS KELUAR / BIAYA ---
   if (d.pengeluaranByPos) {
     d.pengeluaranByPos.forEach(p => {
-      // Hilangkan karakter ilegal excel untuk penamaan tab sheet (: \ / ? * [ ] dll)
-      const safeSheetName = p.pos.replace(/[/\\?*:[\]]/g, "").substring(0, 25);
+      const safeSheetName = p.pos.replace(/[/\\?*:[\]]/g, "").substring(0, 23);
       const wsCostCenter = XLSX.utils.aoa_to_sheet([
         [`RINCIAN ALOKASI POS: ${p.pos.toUpperCase()}`],
-        [`Periode: ${d.periode}`],
+        ["Periode: " + (d.periode || '')],
         [],
         ["Keterangan Pos", "Total Akumulasi Terpakai"],
         [p.pos, p.total]
       ]);
-      XLSX.utils.book_append_sheet(wb, wsCostCenter, `Pos_${safeSheetName}`);
+      XLSX.utils.book_append_sheet(wb, wsCostCenter, `Out_${safeSheetName}`);
     });
   }
 
-  // Download File Excel
-  const fileExcelName = `Laporan_LabaRugi_LPG_${d.periode.replace(/\s/g, '_')}.xlsx`;
+  const fileExcelName = `Laporan_LabaRugi_Operasional_${(d.periode || 'Undated').replace(/\s/g, '_')}.xlsx`;
   XLSX.writeFile(wb, fileExcelName);
 }
 
 // =========================================================================
-// UPDATE FUNGSI EXPORT PDF AGAR STRUKTURNYA RELEVAN DENGAN ALUR BARU
+// FUNGSI EXPORT PDF (DINAMIS)
 // =========================================================================
 function exportPDF() {
+  if (!globalDataRaw) {
+    showToast('Data tidak tersedia untuk di-export.', 'error');
+    return;
+  }
+
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
   
@@ -335,22 +339,38 @@ function exportPDF() {
   doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(0);
   doc.text('1. PENDAPATAN', 14, y); y += 6;
 
+  // Render Pendapatan Secara Dinamis ke Tabel PDF
   const pendapatanRows = [];
-  const penjualanLpg = globalDataRaw?.penjualanLpg3kg || 0;
-  const transportFee = globalDataRaw?.transportFee || 0;
-  const totalPendapatan = penjualanLpg + transportFee;
-  const totalPembelian = globalDataRaw?.pembelianLpg3kgPeriode || 0;
-  const labaKotor = totalPendapatan - totalPembelian;
-
-  pendapatanRows.push(["Penjualan Refill LPG 3 Kg. Pertamina", formatRupiah(penjualanLpg)]);
-  pendapatanRows.push(["Penerimaan Transport Fee", formatRupiah(transportFee)]);
+  let totalPendapatan = 0;
+  
+  if (globalDataRaw.pendapatanByUraian && globalDataRaw.pendapatanByUraian.length) {
+    globalDataRaw.pendapatanByUraian.forEach(p => {
+      totalPendapatan += p.total;
+      pendapatanRows.push([p.uraian, formatRupiah(p.total)]);
+    });
+  }
   pendapatanRows.push(["JUMLAH PENDAPATAN", formatRupiah(totalPendapatan)]);
 
-  doc.autoTable({ body: pendapatanRows, startY: y, margin:{left:20,right:20}, styles:{fontSize:10}, didDrawPage: d => { y = d.cursor.y; } });
+  doc.autoTable({ 
+    body: pendapatanRows, 
+    startY: y, 
+    margin:{left:20,right:20}, 
+    styles:{fontSize:10}, 
+    didDrawPage: data => { y = data.cursor.y; } 
+  });
   y = (doc.lastAutoTable?.finalY || y) + 6;
 
+  // 2. HPP & Perhitungan Laba Kotor
+  const totalPembelian = globalDataRaw.pembelianLpg3kgPeriode || 0;
+  const labaKotor = totalPendapatan - totalPembelian;
+
   doc.setFont('helvetica','bold'); doc.text('2. HARGA POKOK PEMBELIAN', 14, y); y += 6;
-  doc.autoTable({ body: [["Pembelian LPG 3 Kg (Berdasarkan Periode Tgl)", formatRupiah(totalPembelian)]], startY: y, margin:{left:20,right:20}, styles:{fontSize:10} });
+  doc.autoTable({ 
+    body: [["Pembelian LPG 3 Kg (Berdasarkan Periode Tgl)", formatRupiah(totalPembelian)]], 
+    startY: y, 
+    margin:{left:20,right:20}, 
+    styles:{fontSize:10} 
+  });
   y = (doc.lastAutoTable?.finalY || y) + 6;
 
   doc.setFillColor(227,242,253); doc.rect(14, y, 182, 10, 'F');
@@ -359,12 +379,13 @@ function exportPDF() {
   doc.text(formatRupiah(labaKotor), 196, y + 7, { align: 'right' });
   y += 18;
 
+  // 3. Biaya Operasional Dinamis
   doc.setFont('helvetica','bold'); doc.setTextColor(0);
   doc.text('3. BIAYA OPERASIONAL', 14, y); y += 6;
 
   const pengeluaranRows = [];
   let totalBiaya = 0;
-  if (globalDataRaw?.pengeluaranByPos) {
+  if (globalDataRaw.pengeluaranByPos) {
     globalDataRaw.pengeluaranByPos.forEach(p => {
       totalBiaya += p.total;
       pengeluaranRows.push([p.pos, formatRupiah(p.total)]);
@@ -375,6 +396,7 @@ function exportPDF() {
   doc.autoTable({ body: pengeluaranRows, startY: y, margin:{left:20,right:20}, styles:{fontSize:10} });
   y = (doc.lastAutoTable?.finalY || y) + 6;
 
+  // Final Laba Rugi Usaha Bersih
   const labaUsaha = labaKotor - totalBiaya;
   doc.setFillColor(labaUsaha >= 0 ? 27 : 185, labaUsaha >= 0 ? 94 : 28, labaUsaha >= 0 ? 32 : 28); doc.rect(14, y, 182, 14, 'F');
   doc.setFontSize(12); doc.setTextColor(255);
@@ -385,7 +407,6 @@ function exportPDF() {
   doc.save('LabaRugi_' + pName.replace(/\s/g,'_') + '.pdf');
 }
 
-// Helper utility untuk melengkapi sisa halaman web
 function formatRupiah(num) {
   return 'Rp ' + Number(num).toLocaleString('id-ID');
 }
@@ -394,12 +415,3 @@ function showToast(msg, type) {
   console.log(`[${type.toUpperCase()}] ${msg}`);
   if(typeof window.showToastLocal === 'function') window.showToastLocal(msg, type);
 }
-
-// Integrasi DOM Binder bawaan sistem multi-page
-document.addEventListener('DOMContentLoaded', () => {
-  if(typeof initPage === 'function') initPage('labarugi');
-  
-  // Daftarkan event listener form pembelian jika elemennya eksis di halaman html
-  const fPembelian = document.getElementById('formPembelian');
-  if(fPembelian) fPembelian.addEventListener('submit', handleSimpanPembelian);
-});
