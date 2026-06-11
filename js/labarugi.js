@@ -336,129 +336,34 @@ function toggleSection(id) {
 }
 
 function exportExcel() {
-  if (!globalDataRaw) {
-    showToast('Data tidak tersedia untuk di-export.', 'error');
-    return;
-  }
+  // 1. Ambil input dari UI
+  const currentData = {
+    sessionUser: sessionUser, // Pastikan variabel global ini ada
+    period: document.getElementById('periodSelect').value,
+    year: document.getElementById('yearSelect').value,
+    month: document.getElementById('monthSelect').value
+  };
 
-  const d = globalDataRaw;
-  const wb = XLSX.utils.book_new();
-  const dataBiayaSummary = d.pengeluaranByPos || d.biayaByKategori || d.pengeluaranByUraian || [];
-  const rawPengeluaran = d.rawPengeluaran || d.pengeluaranRows || [];
+  // 2. Kasih tau user kalau lagi proses (biar nggak diklik berkali-kali)
+  showToast('Sedang memproses laporan ke Excel...', 'info');
 
-  // -------------------------------------------------------------------------
-  // SHEET 1: Laba Rugi
-  // -------------------------------------------------------------------------
-  const lrRows = [
-    ["LAPORAN LABA RUGI USAHA"],
-    ["Periode: " + (d.periode || '')],
-    [],
-    ["PENDAPATAN", ""]
-  ];
-
-  let totalPendapatan = 0;
-  if (d.pendapatanByUraian && d.pendapatanByUraian.length) {
-    d.pendapatanByUraian.forEach(p => {
-      const nilaiNominal = p.nominal || 0;
-      totalPendapatan += nilaiNominal;
-      lrRows.push([`  - ${p.uraian}`, nilaiNominal]);
-    });
-  }
-  lrRows.push(["JUMLAH PENDAPATAN", totalPendapatan]);
-  lrRows.push([]);
-  
-  const totalPembelian = d.totalPembelianSheet || d.totalHpp || 0;
-  const labaKotor = totalPendapatan - totalPembelian;
-
-  lrRows.push(["HARGA POKOK PEMBELIAN", ""]);
-  lrRows.push(["  - Total Pembelian", totalPembelian]);
-  lrRows.push([]);
-  lrRows.push(["LABA (RUGI) KOTOR", labaKotor]);
-  lrRows.push([]);
-  lrRows.push(["BIAYA OPERASIONAL", ""]);
-
-  let totalBiayaSummary = 0;
-  if (dataBiayaSummary.length) {
-    dataBiayaSummary.forEach(p => {
-      const nilaiBiaya = p.total || p.nominal || 0;
-      const namaPos = p.pos || p.kategori || p.uraian || 'Operasional';
-      totalBiayaSummary += nilaiBiaya;
-      lrRows.push([`  - ${namaPos}`, nilaiBiaya]);
-    });
-  }
-  
-  lrRows.push(["TOTAL BIAYA OPERASIONAL", totalBiayaSummary]);
-  lrRows.push([]);
-  lrRows.push(["LABA (RUGI) USAHA FINAL", labaKotor - totalBiayaSummary]);
-
-  const wsLR = XLSX.utils.aoa_to_sheet(lrRows);
-  XLSX.utils.book_append_sheet(wb, wsLR, "Laba Rugi");
-
-  // -------------------------------------------------------------------------
-  // SHEET 2: Global (Berdasarkan filter per bulan)
-  // -------------------------------------------------------------------------
-  const globalHeader = [["Timestamp", "Nama", "Uraian", "NamaPos", "Nominal", "MetodePembayaran"]];
-  const globalRows = rawPengeluaran.map(p => [
-    p.timestamp ? cleanDate(p.timestamp) : (p.tanggal ? cleanDate(p.tanggal) : ''),
-    p.nama || p.Nama || '',
-    p.uraian || p.Uraian || '',
-    p.namaPos || p.pos || p.NamaPos || '',
-    Number(p.nominal || p.Nominal) || 0,
-    p.metodePembayaran || p.metode || p.MetodePembayaran || ''
-  ]);
-
-  const wsGlobal = XLSX.utils.aoa_to_sheet(globalHeader.concat(globalRows));
-  XLSX.utils.book_append_sheet(wb, wsGlobal, "Global");
-
-  // -------------------------------------------------------------------------
-  // SHEET 3: Gaji Karyawan
-  // -------------------------------------------------------------------------
-  const gajiHeader = [["Tanggal", "Nama", "Nominal"]];
-  const gajiRows = rawPengeluaran
-    .filter(p => {
-      const posName = String(p.namaPos || p.pos || p.NamaPos || '').toLowerCase();
-      return posName.includes('gaji') || posName.includes('karyawan');
+  // 3. Panggil fungsi di backend (Google Apps Script)
+  google.script.run
+    .withSuccessHandler((response) => {
+      if (response.success) {
+        // Jika sukses, backend kirim balik downloadUrl
+        window.open(response.downloadUrl, '_blank');
+        showToast('Download berhasil!', 'success');
+      } else {
+        // Jika gagal, tampilkan error dari backend
+        showToast('Gagal: ' + response.error, 'error');
+      }
     })
-    .map(p => [
-      p.timestamp ? cleanDate(p.timestamp) : (p.tanggal ? cleanDate(p.tanggal) : ''),
-      p.nama || p.Nama || '',
-      Number(p.nominal || p.Nominal) || 0
-    ]);
-
-  const wsGaji = XLSX.utils.aoa_to_sheet(gajiHeader.concat(gajiRows));
-  XLSX.utils.book_append_sheet(wb, wsGaji, "Gaji Karyawan");
-
-  // -------------------------------------------------------------------------
-  // SHEET 4: Seluruh Pos Terpisah Otomatis
-  // -------------------------------------------------------------------------
-  const dataByPosGroup = {};
-  rawPengeluaran.forEach(p => {
-    const namaPos = p.namaPos || p.pos || p.NamaPos || 'Lain_Lain';
-    if (!dataByPosGroup[namaPos]) {
-      dataByPosGroup[namaPos] = [];
-    }
-    dataByPosGroup[namaPos].push([
-      p.timestamp ? cleanDate(p.timestamp) : (p.tanggal ? cleanDate(p.tanggal) : ''),
-      p.nama || p.Nama || '',
-      p.uraian || p.Uraian || '',
-      namaPos
-    ]);
-  });
-
-  Object.keys(dataByPosGroup).forEach(namaPos => {
-    const posHeader = [["Timestamp", "Nama", "Uraian", "NamaPos"]];
-    const rowsSpecPos = dataByPosGroup[namaPos];
-    
-    // Keamanan karakter ilegal & limit panjang nama sheet Excel
-    const safeSheetName = namaPos.replace(/[/\\?*:[\]]/g, "").substring(0, 30);
-    
-    const wsPos = XLSX.utils.aoa_to_sheet(posHeader.concat(rowsSpecPos));
-    XLSX.utils.book_append_sheet(wb, wsPos, safeSheetName || "Pos_Operasional");
-  });
-
-  // Write File
-  const fileExcelName = `Laporan_LabaRugi_MultiSheet_${(d.periode || 'Undated').replace(/\s/g, '_')}.xlsx`;
-  XLSX.writeFile(wb, fileExcelName);
+    .withFailureHandler((err) => {
+      // Jika koneksi ke server gagal
+      showToast('Error sistem: ' + err, 'error');
+    })
+    .exportLabaRugiToExcel(currentData);
 }
 function exportPDF() {
   if (!globalDataRaw) {
