@@ -98,7 +98,7 @@ function renderLabaRugi(d) {
   if (document.getElementById('lrPeriode')) document.getElementById('lrPeriode').textContent = d.periode;
   if (document.getElementById('lrNetPeriode')) document.getElementById('lrNetPeriode').textContent = d.periode;
 
-  // =========================================================================
+// =========================================================================
   // 1. URAIAN PENDAPATAN (LANGSUNG DIURAI PER BARIS DARI SHEET PEMASUKAN)
   // =========================================================================
   let totalPendapatan = 0;
@@ -124,9 +124,12 @@ function renderLabaRugi(d) {
     }
   }
 
+  // FIX: Mengisi KPI Card Utama di bagian atas header yang tadinya (-)
+  if (document.getElementById('lrPendapatan')) document.getElementById('lrPendapatan').textContent = formatRupiah(totalPendapatan);
+
+  // Mengisi text total di accordion detail bawah
   if (document.getElementById('secPendapatanTotal')) document.getElementById('secPendapatanTotal').textContent = formatRupiah(totalPendapatan);
   if (document.getElementById('totalPendapatanLabel')) document.getElementById('totalPendapatanLabel').textContent = formatRupiah(totalPendapatan);
-
   // =========================================================================
 // =========================================================================
 // =========================================================================
