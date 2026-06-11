@@ -1,12 +1,7 @@
-// ============================================================
-// iLedgerV2 - GitHub Pages Configuration
-// ⚠️ GANTI APP_SCRIPT_URL dengan URL Apps Script kamu!
-// ============================================================
 
 const CONFIG = {
-  // Ganti ini dengan URL deployment Apps Script kamu
-  // Contoh: 'https://script.google.com/macros/s/AKfycbxXXXXXXX/exec'
-  APP_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbw1ySugFBQ4Aj6mZglDJlqDRudZvoN45enM6PbH_rMXeYwtimrM6SDGUb4iX3F4L67v/exec',
+
+  APP_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbyyGCEVBxKjtg0J3wEllRZemF69N8h3DbS0ar-p5IzF-Rl8-Zkmh9Ww9zmG3UsQQTsi/exec',
 
   APP_NAME: 'iLedgerV2',
   APP_VERSION: '2.0.0',
