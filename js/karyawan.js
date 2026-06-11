@@ -1,18 +1,28 @@
+const _user = JSON.parse(localStorage.getItem('user') || '{}'); 
+
 let allData = [];
 let searchTimeout = null;
-let activeRowData = null; // FIX: Untuk menyimpan data asli karyawan yang sedang diedit
+let activeRowData = null;
 const avatarBg = ['#0D47A1','#1565C0','#0288D1','#00838F','#558B2F','#6A1B9A','#D84315','#37474F'];
 
-// Merged DOMContentLoaded agar lebih rapi dan bersih
 document.addEventListener('DOMContentLoaded', () => {
-  if (_user.role !== 'HRD') {
-    document.querySelector('.main-content').innerHTML = '<div style="text-align:center;padding:60px;color:var(--text-secondary)"><h2>Akses Ditolak</h2><p>Halaman ini hanya untuk HRD.</p></div>';
+  // Amankan pengecekan dengan trim dan Upercase agar kebal typo huruf besar/kecil
+  const currentRole = (_user && _user.role) ? _user.role.trim().toUpperCase() : '';
+
+  if (currentRole !== 'HRD') {
+    document.querySelector('.main-content').innerHTML = `
+      <div style="text-align:center;padding:60px;color:var(--text-secondary)">
+        <h2>Akses Ditolak</h2>
+        <p>Halaman ini hanya untuk HRD.</p>
+        <p style="font-size: 12px; color: red; margin-top: 10px;">
+          Debug Info: Role terbaca "${_user.role || 'KOSONG'}" (Pastikan Anda sudah login ulang).
+        </p>
+      </div>`;
     return;
   }
   if (typeof initPage === 'function') initPage('karyawan');
   loadData();
 });
-
 async function loadData() {
   const res = await callAPI('getKaryawan', {
     search: document.getElementById('searchInput').value,
