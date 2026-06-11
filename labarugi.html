@@ -126,19 +126,23 @@
   </div>
 
   <div class="form-card">
-    <div style="font-size:14px;font-weight:700;color:var(--text-primary);margin-bottom:14px;display:flex;align-items:center;gap:8px">
-      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--primary)" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-      Form Input Pembelian LPG 3 Kg
+    <div onclick="toggleForm()" style="font-size:14px;font-weight:700;color:var(--text-primary);display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;">
+      <div style="display:flex;align-items:center;gap:8px">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--primary)" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        Form Input Pembelian LPG 3 Kg
+      </div>
+      <svg id="chevronForm" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2" style="transition:transform .2s; transform:rotate(-90deg);"><polyline points="6 9 12 15 18 9"/></svg>
     </div>
-    <form id="formPembelian">
+    
+    <form id="formPembelian" style="display:none; margin-top:16px;">
       <div class="form-grid">
         <div class="form-group">
           <label for="beliTanggal">Tanggal Transaksi</label>
           <input type="date" id="beliTanggal" required>
         </div>
         <div class="form-group">
-          <label for="beliQty">Jumlah Tabung (Refill)</label>
-          <input type="number" id="beliQty" min="1" placeholder="Misal: 560" required>
+          <label for="beliUraian">Uraian Pembelian</label>
+          <input type="text" id="beliUraian" placeholder="Misal: Refill 560 Tabung PO Cecep" required>
         </div>
         <div class="form-group">
           <label for="beliNominal">Total Nilai Pembelian (Rp)</label>
@@ -261,21 +265,31 @@
 </main>
 
 <script>
+  // Fungsi Pembantu Toggle Show/Hide khusus Form Input Pembelian
+  function toggleForm() {
+    const form = document.getElementById('formPembelian');
+    const chevron = document.getElementById('chevronForm');
+    if (form.style.display === 'none') {
+      form.style.display = 'block';
+      chevron.style.transform = 'rotate(0deg)';
+    } else {
+      form.style.display = 'none';
+      chevron.style.transform = 'rotate(-90deg)';
+    }
+  }
+
   // Fungsi pembantu format rupiah lokal jika belum terdefinisi di labarugi.js
   const toRp = (v) => typeof formatRupiah === 'function' ? formatRupiah(v) : 'Rp ' + Number(v).toLocaleString('id-ID');
 
   const originalRender = window.renderLabaRugi;
   window.renderLabaRugi = function(d) {
-    // 1. Jalankan fungsi render utama dari labarugi.js jika ada
     if(typeof originalRender === 'function') originalRender(d);
     
     if (!d) return;
 
-    // 2. Ambil data kontainer baris pendapatan
     const pendapatanRows = document.getElementById('pendapatanRows');
     const totalPendapatan = d.totalPendapatan || 0;
 
-    // 3. Render baris pendapatan menggunakan payload terstandardisasi (d.pendapatanByUraian dan p.nominal)
     if (pendapatanRows && d.pendapatanByUraian && d.pendapatanByUraian.length > 0) {
       pendapatanRows.innerHTML = d.pendapatanByUraian.map(p => {
         const nilaiNominal = p.nominal || 0;
@@ -294,12 +308,10 @@
       pendapatanRows.innerHTML = `<div class="lr-item" style="justify-content:center;color:var(--text-secondary);font-size:13px">Belum ada data pendapatan dari sheet</div>`;
     }
 
-    // 4. Sinkronisasi nilai total pendapatan ke elemen-elemen sisa di HTML
     if (document.getElementById('secPendapatanTotal')) document.getElementById('secPendapatanTotal').textContent = toRp(totalPendapatan);
     if (document.getElementById('totalPendapatanLabel')) document.getElementById('totalPendapatanLabel').textContent = toRp(totalPendapatan);
     if (document.getElementById('lrPendapatan')) document.getElementById('lrPendapatan').textContent = toRp(totalPendapatan);
 
-    // 5. Sinkronisasi data HPP & Laba Kotor tambahan ke baris ekstra di HTML
     const totalPembelian = d.totalPembelianSheet || 0;
     const labaKotor = totalPendapatan - totalPembelian;
     
