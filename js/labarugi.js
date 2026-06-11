@@ -130,30 +130,23 @@ function renderLabaRugi(d) {
   // =========================================================================
   // 4. BIAYA OPERASIONAL (DARI SHEET PENGELUARAN - PER POS)
   // =========================================================================
+    // 4. SEKSI BIAYA / PENGELUARAN OPERASIONAL
   const pengeluaranRows = document.getElementById('pengeluaranRows');
   let totalBiaya = 0;
 
-  // Toleransi multi-nama properti array pengeluaran dari backend + fallback kalkulasi otomatis (.reduce)
-  const dataBiaya = d.pengeluaranByPos || d.biayaByKategori || d.pengeluaranByUraian || [];
-  const baseTotalPengeluaran = d.totalPengeluaran || d.totalBiaya || dataBiaya.reduce((sum, item) => sum + (item.total || item.nominal || 0), 0);
-
-  if (dataBiaya.length) {
-    pengeluaranRows.innerHTML = dataBiaya.map(p => {
-      const nilaiBiaya = p.total || p.nominal || 0;
-      const namaPos = p.pos || p.kategori || p.uraian || 'Operasional';
-      totalBiaya += nilaiBiaya;
-      
-      const pct = baseTotalPengeluaran > 0 ? ((nilaiBiaya / baseTotalPengeluaran) * 100).toFixed(1) : 0;
+  if (d.pengeluaranByPos && d.pengeluaranByPos.length) {
+    pengeluaranRows.innerHTML = d.pengeluaranByPos.map(p => {
+      totalBiaya += p.total;
+      const pct = d.totalPengeluaran > 0 ? ((p.total / d.totalPengeluaran) * 100).toFixed(1) : 0;
       const barWidth = Math.min(100, parseFloat(pct));
-      
       return `<div class="lr-item" style="flex-direction:column;align-items:stretch;gap:6px">
         <div style="display:flex;align-items:center;justify-content:space-between">
           <div class="lr-item-label">
             <svg viewBox="0 0 24 24" width="14" height="14" stroke="var(--error)" fill="none" stroke-width="2"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/></svg>
-            ${namaPos}
+            ${p.pos}
             <span class="lr-item-pct">${pct}%</span>
           </div>
-          <div class="lr-item-value red">${formatRupiah(nilaiBiaya)}</div>
+          <div class="lr-item-value red">${formatRupiah(p.total)}</div>
         </div>
         <div style="height:4px;background:var(--gray-100);border-radius:2px;overflow:hidden">
           <div style="height:100%;width:${barWidth}%;background:linear-gradient(90deg,#ef4444,#f87171);border-radius:2px;transition:width .6s ease"></div>
@@ -161,13 +154,8 @@ function renderLabaRugi(d) {
       </div>`;
     }).join('');
 
-    // Mapping data agar struktur key property Chart.js seragam (.pos & .total)
-    const normalizedChartData = dataBiaya.map(p => ({
-      pos: p.pos || p.kategori || p.uraian || 'Operasional',
-      total: p.total || p.nominal || 0
-    }));
-
-    renderLRChart(normalizedChartData);
+    // Render grafik Chart.js bawaan
+    renderLRChart(d.pengeluaranByPos);
     if (document.getElementById('chartSection')) document.getElementById('chartSection').style.display = 'block';
   } else {
     if (pengeluaranRows) {
@@ -179,8 +167,24 @@ function renderLabaRugi(d) {
   if (document.getElementById('secPengeluaranTotal')) document.getElementById('secPengeluaranTotal').textContent = formatRupiah(totalBiaya);
   if (document.getElementById('totalPengeluaranLabel')) document.getElementById('totalPengeluaranLabel').textContent = formatRupiah(totalBiaya);
 
+  // 5. HITUNG LABA (RUGI) USAHA = LABA RUGI KOTOR - BIAYA
+  const labaUsaha = labaKotor - totalBiaya;
+
+  const labaEl = document.getElementById('lrLaba');
+  if (labaEl) {
+    labaEl.textContent = formatRupiah(labaUsaha);
+    labaEl.className = 'lr-kpi-value ' + (labaUsaha >= 0 ? 'positive' : 'negative');
+  }
+
+  const netEl = document.getElementById('lrNetValue');
+  if (netEl) {
+    netEl.textContent = formatRupiah(labaUsaha);
+    netEl.className = 'lr-net-value ' + (labaUsaha >= 0 ? 'positive' : 'negative');
+  }
+}
+
   // =========================================================================
-  // 5. HITUNG LABA (RUGI) USAHA FINAL (DUPLIKASI SUDAH DIBERSIHKAN)
+  // 5. HITUNG LABA (RUGI) USAHA FINAL
   // =========================================================================
   const labaUsaha = labaKotor - totalBiaya;
 
@@ -204,6 +208,8 @@ function renderLRChart(posData) {
   if (lrChart) lrChart.destroy();
   
   const palette = ['#0D47A1','#1565C0','#1976D2','#42A5F5','#00BCD4','#26C6DA','#4DD0E1','#ef4444','#f59e0b','#10b981'];
+  
+  // Modulo loop warna biar ga pecah/transparan kalau jumlah pos pengeluaran lebih dari 10
   const bgColors = posData.map((_, i) => palette[i % palette.length] + 'CC');
 
   lrChart = new Chart(ctx, {
@@ -254,6 +260,7 @@ function exportExcel() {
 
   const d = globalDataRaw;
   const wb = XLSX.utils.book_new();
+
   const dataBiaya = d.pengeluaranByPos || d.biayaByKategori || d.pengeluaranByUraian || [];
 
   // --- SHEET 1: LABA RUGI ---
