@@ -1,12 +1,15 @@
 let allData = [];
 let searchTimeout = null;
+let activeRowData = null; // FIX: Untuk menyimpan data asli karyawan yang sedang diedit
 const avatarBg = ['#0D47A1','#1565C0','#0288D1','#00838F','#558B2F','#6A1B9A','#D84315','#37474F'];
 
+// Merged DOMContentLoaded agar lebih rapi dan bersih
 document.addEventListener('DOMContentLoaded', () => {
   if (_user.role !== 'HRD') {
     document.querySelector('.main-content').innerHTML = '<div style="text-align:center;padding:60px;color:var(--text-secondary)"><h2>Akses Ditolak</h2><p>Halaman ini hanya untuk HRD.</p></div>';
     return;
   }
+  if (typeof initPage === 'function') initPage('karyawan');
   loadData();
 });
 
@@ -80,11 +83,25 @@ async function saveData() {
   const nik = document.getElementById('fNIK').value.trim();
   const nama = document.getElementById('fNama').value.trim();
   const jabatan = document.getElementById('fJabatan').value.trim();
+  const gajiInput = document.getElementById('fGaji').value;
 
   if (!nik || !nama || !jabatan) { showToast('NIK, Nama, dan Jabatan wajib diisi.','error'); return; }
 
   const btn = document.getElementById('btnSave');
   btn.disabled = true; btn.textContent = 'Menyimpan...';
+
+  // Logika Cerdas penentuan Tanggal Berlaku Gaji agar tidak merusak histori Laba Rugi
+  let tanggalGajiBerlaku = document.getElementById('fTglMasuk').value; // Default data baru
+  
+  if (id && activeRowData) {
+    // Jika gajinya sama (cuma edit profil biasa), kunci pakai tanggal lama agar data Riwayat_Gaji gak pindah bulan
+    if (Number(gajiInput) === Number(activeRowData.gaji)) {
+      tanggalGajiBerlaku = activeRowData.tanggalGajiBerlaku || formatDateToInput(activeRowData.tanggalMasuk);
+    } else {
+      // Jika memang gajinya diubah/naik, baru set berlaku per hari ini
+      tanggalGajiBerlaku = new Date().toISOString().split('T')[0];
+    }
+  }
 
   const res = await callAPI(id ? 'updateKaryawan' : 'addKaryawan', {
     id, nik, namaKaryawan: nama,
@@ -95,15 +112,14 @@ async function saveData() {
     alamat: document.getElementById('fAlamat').value,
     jabatan, departemen: document.getElementById('fDepartemen').value,
     tanggalMasuk: document.getElementById('fTglMasuk').value,
-    gaji: document.getElementById('fGaji').value,
+    gaji: gajiInput,
     noBPJSKES: document.getElementById('fBPJSKES').value,
     noBPJSTK: document.getElementById('fBPJSTK').value,
     noRekening: document.getElementById('fNoRek').value,
     namaBank: document.getElementById('fNamaBank').value,
     status: id ? document.getElementById('fStatus').value : 'ACTIVE',
     tanggalKeluar: document.getElementById('fTglKeluar').value,
-    // Mengirim info tanggal efektif kenaikan gaji (untuk keperluan histori lembar Riwayat_Gaji)
-    tanggalGajiBerlaku: id ? new Date().toISOString().split('T')[0] : document.getElementById('fTglMasuk').value
+    tanggalGajiBerlaku: tanggalGajiBerlaku
   });
 
   btn.disabled = false;
@@ -114,6 +130,8 @@ async function saveData() {
 }
 
 function editRow(row) {
+  activeRowData = row; // FIX: Ikat data row ke variabel global saat modal edit dibuka
+  
   document.getElementById('editId').value = row.id;
   document.getElementById('modalTitle').textContent = 'Edit Karyawan';
   document.getElementById('fNIK').value = row.nik;
@@ -131,7 +149,7 @@ function editRow(row) {
   document.getElementById('fNamaBank').value = row.namaBank || '';
   document.getElementById('fStatus').value = row.status;
 
-  // FIX BUG: Mapping input tanggal agar sukses masuk ke input HTML type="date" (Format Harus YYYY-MM-DD)
+  // Mapping format tanggal agar sukses masuk ke input HTML type="date"
   document.getElementById('fTglMasuk').value = formatDateToInput(row.tanggalMasuk);
   document.getElementById('fTglKeluar').value = formatDateToInput(row.tanggalKeluar);
   document.getElementById('fTglLahir').value = formatDateToInput(row.tanggalLahir);
@@ -149,6 +167,7 @@ async function deleteRow(id, nama) {
 }
 
 function resetForm() {
+  activeRowData = null; // Reset data simpanan
   document.getElementById('editId').value = '';
   document.getElementById('modalTitle').textContent = 'Tambah Karyawan';
   document.getElementById('editStatusField').style.display = 'none';
@@ -200,7 +219,3 @@ function formatDateToInput(dateStr) {
   }
   return '';
 }
-
-document.addEventListener('DOMContentLoaded', () => {
-  if (typeof initPage === 'function') initPage('karyawan');
-});
