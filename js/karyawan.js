@@ -6,36 +6,29 @@ let activeRowData = null;
 const avatarBg = ['#0D47A1','#1565C0','#0288D1','#00838F','#558B2F','#6A1B9A','#D84315','#37474F'];
 
 document.addEventListener('DOMContentLoaded', () => {
-  // 1. Ambil data user di dalam sini setelah semua helper dipastikan ke-load
-  try {
-    _user = getUser();
-  } catch (e) {
-    console.error("Helper belum terload sempurna:", e);
-    _user = {};
-  }
+  // Pake setTimeout 0 supaya script page-template selesai ngerender Nav Bar dulu
+  setTimeout(() => {
+    // Ambil role dengan aman
+    const currentRole = (_user && _user.role) ? _user.role.toString().trim().toUpperCase() : '';
 
-  // 2. Ambil role dengan aman
-  const currentRole = (_user && _user.role) ? _user.role.toString().trim().toUpperCase() : '';
-
-  if (currentRole !== 'HRD') {
-    const mainContent = document.querySelector('.main-content');
-    
-    // Pastikan elemen .main-content beneran ada sebelum di-overwrite
-    if (mainContent) {
-      mainContent.innerHTML = `
-        <div style="text-align:center;padding:60px;">
-          <h2>Akses Ditolak</h2>
-          <p>Halaman ini hanya untuk HRD.</p>
-          <p style="font-size:12px;color:red;">Debug Frontend: Role lu terbaca sebagai "${_user.role || 'KOSONG'}"</p>
-        </div>`;
-    } else {
-      // Jika class .main-content gak ada, fallback pakai body agar lu tahu permasalahannya
-      document.body.innerHTML = `<h2 style="text-align:center;margin-top:100px;">Akses Ditolak & Struktur HTML .main-content Tidak Ditemukan</h2>`;
+    if (currentRole !== 'HRD') {
+      const mainContent = document.getElementById('mainContent');
+      if (mainContent) {
+        mainContent.innerHTML = `
+          <div style="text-align:center;padding:60px;background:var(--bg-card);border-radius:var(--radius-lg);border:1px solid var(--border-color)">
+            <h2 style="color:var(--text-primary)">Akses Ditolak</h2>
+            <p style="color:var(--text-secondary);margin-top:8px;">Halaman manajemen karyawan hanya dapat diakses oleh HRD.</p>
+            <div style="margin-top:20px;padding:10px;background:rgba(239,68,68,0.1);color:#ef4444;border-radius:6px;font-size:12px;display:inline-block;font-family:monospace;">
+              Debug Frontend: Akun lu terbaca sebagai rolenya "${_user.role || 'KOSONG/GAK ADA'}"
+            </div>
+          </div>`;
+      }
+      return;
     }
-    return;
-  }
-  
-  loadData();
+    
+    // Kalau lolos proteksi, baru load data karyawan
+    loadData();
+  }, 0);
 });
 async function loadData() {
   const res = await callAPI('getKaryawan', {
