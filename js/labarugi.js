@@ -128,18 +128,58 @@ function renderLabaRugi(d) {
   if (document.getElementById('totalPendapatanLabel')) document.getElementById('totalPendapatanLabel').textContent = formatRupiah(totalPendapatan);
 
   // =========================================================================
-  // 2. PEMBELIAN (DARI SHEET PEMBELIAN)
+// =========================================================================
+  // 2. PEMBELIAN / HPP (DIURAI PER BARIS DARI SHEET PEMBELIAN)
   // =========================================================================
   const totalPembelian = d.totalPembelianSheet || d.totalHpp || 0; 
   
-  // Mengisi nilai di Card Header atas
+  // 1. Tetap isi KPI Card Header di atas
   const hppElement = document.getElementById('lrPembelianHPP');
   if (hppElement) hppElement.textContent = formatRupiah(totalPembelian);
   
-  // FIX: Mengisi nilai di Baris Detail Accordion HPP agar tidak '-' lagi
-  const hppRowElement = document.getElementById('lrPembelianHppRow');
-  if (hppRowElement) hppRowElement.textContent = formatRupiah(totalPembelian);
+  // 2. Urai data asli ke dalam Accordion HPP
+  const secHpp = document.getElementById('secHpp');
+  const listPembelian = d.pembelianByUraian || d.pembelianRows || d.hppRows || [];
 
+  if (secHpp) {
+    if (listPembelian.length > 0) {
+      // Petakan semua uraian asli dari database
+      let hppRowsHtml = listPembelian.map(p => {
+        const nilaiBeli = p.nominal || p.total || 0;
+        const uraianBeli = p.uraian || 'Pembelian LPG';
+        return `
+          <div class="lr-item">
+            <div class="lr-item-label">
+              <svg viewBox="0 0 24 24" width="14" height="14" stroke="#D65A31" fill="none" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+              </svg>
+              ${uraianBeli}
+            </div>
+            <div class="lr-item-value" style="color:#D65A31">${formatRupiah(nilaiBeli)}</div>
+          </div>
+        `;
+      }).join('');
+
+      // Selipkan baris Grand Total di paling bawah accordion HPP
+      hppRowsHtml += `
+        <div class="lr-total-row">
+          <span>JUMLAH HARGA POKOK PEMBELIAN</span>
+          <span style="color:#D65A31">${formatRupiah(totalPembelian)}</span>
+        </div>
+      `;
+      
+      secHpp.innerHTML = hppRowsHtml;
+    } else {
+      // Jika filter tanggal kosong / belum ada data
+      secHpp.innerHTML = `
+        <div class="lr-item" style="justify-content:center;color:var(--text-secondary);font-size:13px">Belum ada data pembelian</div>
+        <div class="lr-total-row">
+          <span>JUMLAH HARGA POKOK PEMBELIAN</span>
+          <span style="color:#D65A31">${formatRupiah(totalPembelian)}</span>
+        </div>
+      `;
+    }
+  }
   // =========================================================================
   // 3. HITUNG LABA (RUGI) KOTOR
   // =========================================================================
