@@ -1,282 +1,408 @@
-<!DOCTYPE html>
-<html lang="id" data-theme="light">
-<head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>iLedgerV2 – Laba Rugi</title>
-<link rel="stylesheet" href="css/style.css">
-<script src="js/config.js"></script>
-<script src="js/labarugi.js"></script>
-<script src="js/page-template.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script> window.CURRENT_PAGE='labarugi';</script>
-<div id="navbarMount"></div>
-<style>
-.lr-header{background:linear-gradient(135deg,var(--primary) 0%,var(--primary-light) 100%);border-radius:var(--radius-lg);padding:28px 32px;color:white;margin-bottom:24px;position:relative;overflow:hidden}
-.lr-header::after{content:'';position:absolute;right:-40px;top:-40px;width:180px;height:180px;background:rgba(255,255,255,.08);border-radius:50%}
-.lr-header::before{content:'';position:absolute;right:60px;bottom:-30px;width:120px;height:120px;background:rgba(255,255,255,.05);border-radius:50%}
-.lr-title{font-size:22px;font-weight:800;margin-bottom:4px;position:relative;z-index:1}
-.lr-subtitle{font-size:13px;opacity:.75;position:relative;z-index:1}
-.lr-kpi-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:20px;position:relative;z-index:1}
-.lr-kpi{background:rgba(255,255,255,.12);border-radius:12px;padding:16px;border:1px solid rgba(255,255,255,.2);backdrop-filter:blur(4px)}
-.lr-kpi-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;opacity:.8}
-.lr-kpi-value{font-size:20px;font-weight:800;margin-top:4px;letter-spacing:-.5px}
-.lr-kpi-value.positive{color:#a7f3d0}
-.lr-kpi-value.negative{color:#fca5a5}
+let currentPeriod = 'monthly';
+let lrChart = null;
+let globalDataRaw = null; // Menyimpan data aktif dari API untuk kebutuhan Export Excel/PDF
 
-/* Form Input Pembelian Styling */
-.form-card{background:var(--bg-card);border:1px solid var(--border-color);border-radius:var(--radius-lg);padding:20px;margin-bottom:24px}
-.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:16px}
-.form-group{display:flex;flex-direction:column;gap:6px}
-.form-group label{font-size:12px;font-weight:600;color:var(--text-secondary)}
-.form-group input{padding:10px 14px;border:1.5px solid var(--border-color);border-radius:8px;font-family:var(--font);font-size:13px;color:var(--text-primary);background:var(--bg-card);outline:none;transition:border-color .2s}
-.form-group input:focus{border-color:var(--primary)}
+document.addEventListener('DOMContentLoaded', () => {
+  populateYearSelect();
+  setDefaultSelects();
+  loadData();
+});
 
-/* Blok Laba Kotor */
-.lr-gross-profit{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;background:var(--gray-50);border:1px solid var(--border-color);border-radius:var(--radius);font-size:14px;font-weight:800;margin-bottom:20px;color:var(--text-primary)}
-
-.lr-section{margin-bottom:20px}
-.lr-section-header{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:14px 20px;background:var(--bg-card);
-  border-radius:var(--radius) var(--radius) 0 0;
-  border:1px solid var(--border-color);border-bottom:none;
-  font-weight:700;font-size:14px;color:var(--text-primary);
-  cursor:pointer;user-select:none;
+function populateYearSelect() {
+  const sel = document.getElementById('selectYear');
+  if (!sel) return;
+  const now = new Date().getFullYear();
+  sel.innerHTML = ''; // Clear existing
+  for (let y = now; y >= now - 5; y--) {
+    sel.innerHTML += `<option value="${y}">${y}</option>`;
+  }
 }
-.lr-section-header:hover{background:var(--gray-50)}
-.lr-section-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center}
-.lr-section-icon svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2}
-.lr-section-body{border:1px solid var(--border-color);border-radius:0 0 var(--radius) var(--radius);overflow:hidden}
 
-.lr-item{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:12px 20px;border-bottom:1px solid var(--border-color);
-  font-size:13px;transition:background .15s;
+function setDefaultSelects() {
+  const selMonth = document.getElementById('selectMonth');
+  if (!selMonth) return;
+  const now = new Date();
+  selMonth.value = now.getMonth() + 1;
 }
-.lr-item:last-child{border-bottom:none}
-.lr-item:hover{background:var(--gray-50)}
-.lr-item-label{color:var(--text-primary);display:flex;align-items:center;gap:8px}
-.lr-item-pct{font-size:11px;color:var(--text-secondary);background:var(--gray-100);padding:2px 8px;border-radius:10px}
-.lr-item-value{font-weight:700;color:var(--text-primary)}
-.lr-item-value.red{color:var(--error)}
 
-.lr-total-row{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:14px 20px;font-size:14px;font-weight:800;
-  background:var(--gray-50);border-top:2px solid var(--border-color);
+function setPeriod(p) {
+  currentPeriod = p;
+  document.getElementById('tabMonthly')?.classList.toggle('active', p === 'monthly');
+  document.getElementById('tabYearly')?.classList.toggle('active', p === 'yearly');
+  
+  const selMonth = document.getElementById('selectMonth');
+  if (selMonth) {
+    selMonth.style.display = p === 'monthly' ? 'block' : 'none';
+  }
+  loadData();
 }
-.lr-net{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:20px 24px;background:linear-gradient(135deg,var(--primary) 0%,var(--primary-light) 100%);
-  border-radius:var(--radius-lg);color:white;margin-top:16px;
+
+// Fungsi Handler untuk Form Input Pembelian LPG 3 Kg
+async function handleSimpanPembelian(event) {
+  event.preventDefault();
+  const tanggal = document.getElementById('beliTanggal').value;
+  const qty = document.getElementById('beliQty').value;
+  const nominal = document.getElementById('beliNominal').value;
+
+  // Memanggil API simpan data pembelian ke database
+  const res = await callAPI('simpanPembelian', { 
+    tanggal, 
+    qty: parseInt(qty), 
+    nominal: parseInt(nominal) 
+  });
+  
+  if (res.success) {
+    showToast('Data pembelian berhasil disimpan!', 'success');
+    document.getElementById('formPembelian').reset();
+    loadData(); // Reload data laporan agar langsung ter-update
+  } else {
+    showToast('Gagal menyimpan data pembelian.', 'error');
+  }
 }
-.lr-net-label{font-size:15px;font-weight:600;opacity:.85}
-.lr-net-value{font-size:28px;font-weight:800;letter-spacing:-1px}
-.lr-net-value.positive{color:#a7f3d0}
-.lr-net-value.negative{color:#fca5a5}
 
-.period-selector{display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap}
-.period-tab{padding:8px 20px;border-radius:8px;border:1.5px solid var(--border-color);background:transparent;cursor:pointer;font-family:var(--font);font-size:13px;font-weight:600;color:var(--text-secondary);transition:all .2s}
-.period-tab.active{background:var(--primary);color:white;border-color:var(--primary)}
-.yr-select{padding:8px 14px;border:1.5px solid var(--border-color);border-radius:8px;font-family:var(--font);font-size:13px;color:var(--text-primary);background:var(--bg-card);cursor:pointer;outline:none}
-.month-select{padding:8px 14px;border:1.5px solid var(--border-color);border-radius:8px;font-family:var(--font);font-size:13px;color:var(--text-primary);background:var(--bg-card);cursor:pointer;outline:none;min-width:130px}
-.chart-container{background:var(--bg-card);border-radius:var(--radius-lg);border:1px solid var(--border-color);padding:20px;margin-bottom:20px}
+async function loadData() {
+  const year = document.getElementById('selectYear').value;
+  const month = document.getElementById('selectMonth').value;
+  
+  const periodLabel = document.getElementById('lrPeriode');
+  if (periodLabel) periodLabel.textContent = 'Memuat...';
+  
+  const res = await callAPI('getLabaRugi', { period: currentPeriod, year: parseInt(year), month: parseInt(month) });
+  if (!res.success) { showToast('Gagal memuat data.', 'error'); return; }
+  
+  globalDataRaw = res.data; // Simpan ke scope global untuk kebutuhan unduh berkas
+  renderLabaRugi(res.data);
+}
 
-@media(max-width:640px){.lr-kpi-row{grid-template-columns:1fr}.lr-net-value{font-size:20px}.form-grid{grid-template-columns:1fr}}
-</style>
-</head>
-<body>
+function renderLabaRugi(d) {
+  // Set label periode aktif
+  if (document.getElementById('lrPeriode')) document.getElementById('lrPeriode').textContent = d.periode;
+  if (document.getElementById('lrNetPeriode')) document.getElementById('lrNetPeriode').textContent = d.periode;
 
-<header class="main-header">
-  <button class="header-toggle" onclick="toggleSidebar()">
-    <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-  </button>
-  <div class="header-breadcrumb">
-    <span>iLedgerV2</span><span class="breadcrumb-sep">/</span>
-    <span class="breadcrumb-current">Laba Rugi</span>
-  </div>
-  <div class="header-actions">
-    <button class="header-btn" onclick="toggleTheme()"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/></svg></button>
-  </div>
-</header>
+  // 1. SEKSI PENDAPATAN (DINAMIS DARI SHEET PENDAPATAN)
+  const totalPendapatan = d.totalPendapatan || (d.pendapatanDetail ? d.pendapatanDetail.reduce((sum, p) => sum + p.total, 0) : 0);
 
-<main class="main-content" id="mainContent">
-  <div class="page-header">
-    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
-      <div>
-        <h1 class="page-title">Laporan Laba Rugi</h1>
-        <p class="page-subtitle">Analisis keuangan komprehensif logistik & keagenan LPG</p>
-      </div>
-      <div style="display:flex;gap:8px">
-        <button class="btn btn-outline btn-sm" onclick="exportExcel()" style="color: #1b5e20; border-color: #1b5e20;">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> Excel
-        </button>
-        <button class="btn btn-outline btn-sm" onclick="exportPDF()">
-          <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> PDF
-        </button>
-        <button class="btn btn-outline btn-sm" onclick="window.print()">
-          <svg viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg> Print
-        </button>
-      </div>
-    </div>
-  </div>
+  if (document.getElementById('secPendapatanTotal')) document.getElementById('secPendapatanTotal').textContent = formatRupiah(totalPendapatan);
+  if (document.getElementById('totalPendapatanLabel')) document.getElementById('totalPandapatanLabel').textContent = formatRupiah(totalPendapatan);
+  if (document.getElementById('lrPendapatan')) document.getElementById('lrPendapatan').textContent = formatRupiah(totalPendapatan);
 
-  <div class="form-card">
-    <div style="font-size:14px;font-weight:700;color:var(--text-primary);margin-bottom:14px;display:flex;align-items:center;gap:8px">
-      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--primary)" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-      Form Input Pembelian LPG 3 Kg
-    </div>
-    <form id="formPembelian">
-      <div class="form-grid">
-        <div class="form-group">
-          <label for="beliTanggal">Tanggal Transaksi</label>
-          <input type="date" id="beliTanggal" required>
+  const pendapatanRows = document.getElementById('pendapatanRows');
+  if (pendapatanRows) {
+    if (d.pendapatanDetail && d.pendapatanDetail.length > 0) {
+      pendapatanRows.innerHTML = d.pendapatanDetail.map(p => {
+        const pct = totalPendapatan > 0 ? ((p.total / totalPendapatan) * 100).toFixed(1) : '0.0';
+        return `
+          <div class="lr-item">
+            <div class="lr-item-label">
+              <svg viewBox="0 0 24 24" width="14" height="14" stroke="var(--success)" fill="none" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+              <span>${p.uraian}</span>
+              <span class="lr-item-pct">${pct}%</span>
+            </div>
+            <div class="lr-item-value">${formatRupiah(p.total)}</div>
+          </div>`;
+      }).join('');
+    } else {
+      pendapatanRows.innerHTML = `<div class="lr-item" style="justify-content:center;color:var(--text-secondary);font-size:13px">Belum ada data pendapatan dari sheet</div>`;
+    }
+  }
+
+  // 2. SEKSI HARGA POKOK PEMBELIAN
+  const totalPembelian = d.pembelianLpg3kgPeriode || 0;
+  const hppElement = document.getElementById('lrPembelianHPP');
+  if (hppElement) hppElement.textContent = formatRupiah(totalPembelian);
+  
+  const hppRow = document.getElementById('lrPembelianHppRow');
+  if (hppRow) hppRow.textContent = formatRupiah(totalPembelian);
+
+  // 3. HITUNG LABA (RUGI) KOTOR = Pendapatan - Pembelian
+  const labaKotor = totalPendapatan - totalPembelian;
+  const labaKotorEl = document.getElementById('lrLabaKotor');
+  if (labaKotorEl) {
+    labaKotorEl.textContent = formatRupiah(labaKotor);
+    labaKotorEl.className = 'lr-kpi-value ' + (labaKotor >= 0 ? 'positive' : 'negative');
+  }
+  
+  const lkRow = document.getElementById('lrLabaKotorRowValue');
+  if (lkRow) lkRow.textContent = formatRupiah(labaKotor);
+
+  // 4. SEKSI BIAYA / PENGELUARAN OPERASIONAL
+  const pengeluaranRows = document.getElementById('pengeluaranRows');
+  let totalBiaya = 0;
+
+  if (d.pengeluaranByPos && d.pengeluaranByPos.length) {
+    pengeluaranRows.innerHTML = d.pengeluaranByPos.map(p => {
+      totalBiaya += p.total;
+      const pct = d.totalPengeluaran > 0 ? ((p.total / d.totalPengeluaran) * 100).toFixed(1) : 0;
+      const barWidth = Math.min(100, parseFloat(pct));
+      return `<div class="lr-item" style="flex-direction:column;align-items:stretch;gap:6px">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div class="lr-item-label">
+            <svg viewBox="0 0 24 24" width="14" height="14" stroke="var(--error)" fill="none" stroke-width="2"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/></svg>
+            ${p.pos}
+            <span class="lr-item-pct">${pct}%</span>
+          </div>
+          <div class="lr-item-value red">${formatRupiah(p.total)}</div>
         </div>
-        <div class="form-group">
-          <label for="beliQty">Jumlah Tabung (Refill)</label>
-          <input type="number" id="beliQty" min="1" placeholder="Misal: 560" required>
+        <div style="height:4px;background:var(--gray-100);border-radius:2px;overflow:hidden">
+          <div style="height:100%;width:${barWidth}%;background:linear-gradient(90deg,#ef4444,#f87171);border-radius:2px;transition:width .6s ease"></div>
         </div>
-        <div class="form-group">
-          <label for="beliNominal">Total Nilai Pembelian (Rp)</label>
-          <input type="number" id="beliNominal" min="0" placeholder="Misal: 6500000" required>
-        </div>
-      </div>
-      <button type="submit" class="btn btn-primary btn-sm" style="background:var(--primary);color:white;border:none;padding:10px 16px;border-radius:6px;font-weight:600;cursor:pointer;">
-        Simpan Pembelian
-      </button>
-    </form>
-  </div>
+      </div>`;
+    }).join('');
 
-  <div class="period-selector">
-    <button class="period-tab active" id="tabMonthly" onclick="setPeriod('monthly')">Bulanan</button>
-    <button class="period-tab" id="tabYearly" onclick="setPeriod('yearly')">Tahunan</button>
-    <select class="yr-select" id="selectYear" onchange="loadData()"></select>
-    <select class="month-select" id="selectMonth" onchange="loadData()">
-      <option value="1">Januari</option><option value="2">Februari</option>
-      <option value="3">Maret</option><option value="4">April</option>
-      <option value="5">Mei</option><option value="6">Juni</option>
-      <option value="7">Juli</option><option value="8">Agustus</option>
-      <option value="9">September</option><option value="10">Oktober</option>
-      <option value="11">November</option><option value="12">Desember</option>
-    </select>
-  </div>
+    renderLRChart(d.pengeluaranByPos);
+    if (document.getElementById('chartSection')) document.getElementById('chartSection').style.display = 'block';
+  } else {
+    if (pengeluaranRows) {
+      pengeluaranRows.innerHTML = `<div class="lr-item" style="justify-content:center;color:var(--text-secondary);font-size:13px">Belum ada data pengeluaran</div>`;
+    }
+    if (document.getElementById('chartSection')) document.getElementById('chartSection').style.display = 'none';
+  }
 
-  <div class="lr-header" id="lrHeaderCard">
-    <div class="lr-title" id="lrPeriode">Memuat...</div>
-    <div class="lr-subtitle">Ringkasan Nilai Usaha Periodik</div>
-    <div class="lr-kpi-row">
-      <div class="lr-kpi"><div class="lr-kpi-label">Total Pendapatan</div><div class="lr-kpi-value" id="lrPendapatan">-</div></div>
-      <div class="lr-kpi"><div class="lr-kpi-label">Laba Kotor</div><div class="lr-kpi-value" id="lrLabaKotor">-</div></div>
-      <div class="lr-kpi"><div class="lr-kpi-label">Laba Usaha</div><div class="lr-kpi-value" id="lrLaba">-</div></div>
-    </div>
-  </div>
+  if (document.getElementById('secPengeluaranTotal')) document.getElementById('secPengeluaranTotal').textContent = formatRupiah(totalBiaya);
+  if (document.getElementById('totalPengeluaranLabel')) document.getElementById('totalPengeluaranLabel').textContent = formatRupiah(totalBiaya);
 
-  <div class="chart-container" id="chartSection" style="display:none">
-    <div style="font-size:14px;font-weight:700;color:var(--text-primary);margin-bottom:16px">Distribusi Pengeluaran Operasional</div>
-    <div style="height:260px"><canvas id="chartLR"></canvas></div>
-  </div>
+  // 5. HITUNG LABA (RUGI) USAHA = LABA RUGI KOTOR - BIAYA
+  const labaUsaha = labaKotor - totalBiaya;
 
-  <div class="lr-section">
-    <div class="lr-section-header" onclick="toggleSection('secPendapatan')">
-      <div style="display:flex;align-items:center;gap:10px">
-        <div class="lr-section-icon" style="background:#DCFCE7;color:#16A34A">
-          <svg viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
-        </div>
-        <span>Pendapatan</span>
-      </div>
-      <div style="display:flex;align-items:center;gap:10px">
-        <span style="font-weight:800;color:var(--success)" id="secPendapatanTotal">-</span>
-        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2" id="chevronPendapatan"><polyline points="6 9 12 15 18 9"/></svg>
-      </div>
-    </div>
-    <div class="lr-section-body" id="secPendapatan">
-      <div id="pendapatanRows"></div>
-      <div class="lr-total-row">
-        <span>JUMLAH PENDAPATAN</span>
-        <span id="totalPendapatanLabel" style="color:var(--success)">-</span>
-      </div>
-    </div>
-  </div>
+  const labaEl = document.getElementById('lrLaba');
+  if (labaEl) {
+    labaEl.textContent = formatRupiah(labaUsaha);
+    labaEl.className = 'lr-kpi-value ' + (labaUsaha >= 0 ? 'positive' : 'negative');
+  }
 
-  <div class="lr-section">
-    <div class="lr-section-header" onclick="toggleSection('secHpp')">
-      <div style="display:flex;align-items:center;gap:10px">
-        <div class="lr-section-icon" style="background:#FFE8D6;color:#D65A31">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
-        </div>
-        <span>Harga Pokok Pembelian</span>
-      </div>
-      <div style="display:flex;align-items:center;gap:10px">
-        <span style="font-weight:800;color:#D65A31" id="lrPembelianHPP">-</span>
-        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2" id="chevronHpp"><polyline points="6 9 12 15 18 9"/></svg>
-      </div>
-    </div>
-    <div class="lr-section-body" id="secHpp">
-      <div class="lr-item">
-        <div class="lr-item-label">Pembelian LPG 3 Kg (Berdasarkan Filter Tanggal)</div>
-        <div class="lr-item-value" style="color:#D65A31" id="lrPembelianHppRow">-</div>
-      </div>
-    </div>
-  </div>
+  const netEl = document.getElementById('lrNetValue');
+  if (netEl) {
+    netEl.textContent = formatRupiah(labaUsaha);
+    netEl.className = 'lr-net-value ' + (labaUsaha >= 0 ? 'positive' : 'negative');
+  }
+}
 
-  <div class="lr-gross-profit">
-    <span>LABA (RUGI) KOTOR</span>
-    <span id="lrLabaKotorRowValue">-</span>
-  </div>
+function renderLRChart(posData) {
+  const chartEl = document.getElementById('chartLR');
+  if (!chartEl) return;
+  const ctx = chartEl.getContext('2d');
+  if (lrChart) lrChart.destroy();
+  const palette = ['#0D47A1','#1565C0','#1976D2','#42A5F5','#00BCD4','#26C6DA','#4DD0E1','#ef4444','#f59e0b','#10b981'];
+  lrChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: posData.map(p => p.pos),
+      datasets: [{ label: 'Pengeluaran', data: posData.map(p => p.total), backgroundColor: palette.slice(0, posData.length).map(c => c + 'CC'), borderRadius: 6, borderSkipped: false }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ' ' + formatRupiah(c.parsed.x) } } },
+      scales: { x: { ticks: { callback: v => 'Rp ' + (v/1000000).toFixed(1) + 'jt', font: { size: 10 } }, grid: { color: 'rgba(0,0,0,.04)' } }, y: { ticks: { font: { size: 11 } }, grid: { display: false } } }
+    }
+  });
+}
 
-  <div class="lr-section">
-    <div class="lr-section-header" onclick="toggleSection('secPengeluaran')">
-      <div style="display:flex;align-items:center;gap:10px">
-        <div class="lr-section-icon" style="background:#FEE2E2;color:#DC2626">
-          <svg viewBox="0 0 24 24"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>
-        </div>
-        <span>Biaya Operasional</span>
-      </div>
-      <div style="display:flex;align-items:center;gap:10px">
-        <span style="font-weight:800;color:var(--error)" id="secPengeluaranTotal">-</span>
-        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2" id="chevronPengeluaran"><polyline points="6 9 12 15 18 9"/></svg>
-      </div>
-    </div>
-    <div class="lr-section-body" id="secPengeluaran">
-      <div id="pengeluaranRows"></div>
-      <div class="lr-total-row">
-        <span>TOTAL BIAYA</span>
-        <span id="totalPengeluaranLabel" style="color:var(--error)">-</span>
-      </div>
-    </div>
-  </div>
+function toggleSection(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const isHidden = el.style.display === 'none';
+  el.style.display = isHidden ? 'block' : 'none';
+  const chevron = document.getElementById('chevron' + id.replace('sec',''));
+  if (chevron) chevron.style.transform = isHidden ? 'rotate(0deg)' : 'rotate(-90deg)';
+}
 
-  <div class="lr-net" id="lrNetBox">
-    <div>
-      <div class="lr-net-label">📊 LABA (RUGI) USAHA</div>
-      <div style="font-size:12px;opacity:.7;margin-top:2px" id="lrNetPeriode">-</div>
-    </div>
-    <div class="lr-net-value" id="lrNetValue">-</div>
-  </div>
+// =========================================================================
+// FUNGSI EXPORT EXCEL MULTI-SHEET (Dinamis Berdasarkan Data Sheet Riel)
+// =========================================================================
+function exportExcel() {
+  if (!globalDataRaw) {
+    showToast('Data tidak tersedia untuk di-export.', 'error');
+    return;
+  }
 
-</main>
+  const d = globalDataRaw;
+  const wb = XLSX.utils.book_new();
 
-<script>
-  // Mengaitkan fungsi lokal tambahan agar sinkron dengan file JS eksternal
-  const originalRender = window.renderLabaRugi;
-  window.renderLabaRugi = function(d) {
-    if(typeof originalRender === 'function') originalRender(d);
-    
-    // Mapping ID tambahan di HTML baru ini agar nilainya selalu kembar & konsisten
-    const vPendapatan = document.getElementById('totalPendapatanLabel')?.textContent || '-';
-    const vHpp = document.getElementById('lrPembelianHPP')?.textContent || '-';
-    const vLabaKotor = document.getElementById('lrLabaKotor')?.textContent || '-';
-    
-    const hppRow = document.getElementById('lrPembelianHppRow');
-    if(hppRow) hppRow.textContent = vHpp;
-    
-    const lkRow = document.getElementById('lrLabaKotorRowValue');
-    if(lkRow) lkRow.textContent = vLabaKotor;
-  };
-</script>
-</body>
-</html>
+  // --- SHEET 1: LABA RUGI ---
+  const totalPendapatan = d.totalPendapatan || (d.pendapatanDetail ? d.pendapatanDetail.reduce((sum, p) => sum + p.total, 0) : 0);
+  const totalPembelian = d.pembelianLpg3kgPeriode || 0;
+  const labaKotor = totalPendapatan - totalPembelian;
+  let totalBiaya = 0;
+
+  const lrRows = [
+    ["LAPORAN LABA RUGI USAHA"],
+    [`Periode: ${d.periode}`],
+    [],
+    ["PENDAPATAN", ""]
+  ];
+
+  // Loop Pendapatan secara dinamis
+  if (d.pendapatanDetail && d.pendapatanDetail.length > 0) {
+    d.pendapatanDetail.forEach(p => {
+      lrRows.push([`  - ${p.uraian}`, p.total]);
+    });
+  }
+  lrRows.push(["JUMLAH PENDAPATAN", totalPendapatan]);
+  lrRows.push([]);
+  lrRows.push(["HARGA POKOK PEMBELIAN", ""]);
+  lrRows.push(["  - Pembelian LPG 3 Kg", totalPembelian]);
+  lrRows.push([]);
+  lrRows.push(["LABA (RUGI) KOTOR", labaKotor]);
+  lrRows.push([]);
+  lrRows.push(["BIAYA", ""]);
+
+  if (d.pengeluaranByPos) {
+    d.pengeluaranByPos.forEach(p => {
+      totalBiaya += p.total;
+      lrRows.push([`  - ${p.pos}`, p.total]);
+    });
+  }
+  
+  lrRows.push(["TOTAL BIAYA", totalBiaya]);
+  lrRows.push([]);
+  lrRows.push(["LABA (RUGI) USAHA", labaKotor - totalBiaya]);
+
+  const wsLR = XLSX.utils.aoa_to_sheet(lrRows);
+  XLSX.utils.book_append_sheet(wb, wsLR, "Laba Rugi");
+
+  // --- SHEET 2: DATA PENGELUARAN GLOBAL ---
+  const globalExpenseRows = [
+    ["DATA PENGELUARAN GLOBAL"],
+    [`Periode: ${d.periode}`],
+    [],
+    ["Nama Pos Pengeluaran / Biaya", "Total Pengeluaran (Rp)"]
+  ];
+
+  if (d.pengeluaranByPos) {
+    d.pengeluaranByPos.forEach(p => {
+      globalExpenseRows.push([p.pos, p.total]);
+    });
+  }
+  globalExpenseRows.push(["TOTAL KESELURUHAN BIAYA", totalBiaya]);
+
+  const wsGlobal = XLSX.utils.aoa_to_sheet(globalExpenseRows);
+  XLSX.utils.book_append_sheet(wb, wsGlobal, "Data Pengeluaran Global");
+
+  // --- SHEET 3 DST: POS DINAMIS PENDAPATAN ---
+  if (d.pendapatanDetail && d.pendapatanDetail.length > 0) {
+    d.pendapatanDetail.forEach(p => {
+      const safeSheetName = p.uraian.replace(/[/\\?*:[\]]/g, "").substring(0, 22);
+      const wsInc = XLSX.utils.aoa_to_sheet([
+        [`RINCIAN POS MASUK: ${p.uraian.toUpperCase()}`],
+        [`Periode: ${d.periode}`],
+        [],
+        ["Uraian Pendapatan", "Total"],
+        [p.uraian, p.total]
+      ]);
+      XLSX.utils.book_append_sheet(wb, wsInc, `In_${safeSheetName}`);
+    });
+  }
+
+  // --- SHEET INDIVIDUAL POS BIAYA OPERASIONAL ---
+  if (d.pengeluaranByPos) {
+    d.pengeluaranByPos.forEach(p => {
+      const safeSheetName = p.pos.replace(/[/\\?*:[\]]/g, "").substring(0, 22);
+      const wsCostCenter = XLSX.utils.aoa_to_sheet([
+        [`RINCIAN ALOKASI POS: ${p.pos.toUpperCase()}`],
+        [`Periode: ${d.periode}`],
+        [],
+        ["Keterangan Pos", "Total Akumulasi Terpakai"],
+        [p.pos, p.total]
+      ]);
+      XLSX.utils.book_append_sheet(wb, wsCostCenter, `Out_${safeSheetName}`);
+    });
+  }
+
+  // Download File Excel
+  const fileExcelName = `Laporan_LabaRugi_LPG_${d.periode.replace(/\s/g, '_')}.xlsx`;
+  XLSX.writeFile(wb, fileExcelName);
+}
+
+// =========================================================================
+// STRUKTUR EXPORT PDF STRUKTUR DINAMIS
+// =========================================================================
+function exportPDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  
+  doc.setFont('helvetica','bold'); doc.setFontSize(20);
+  doc.setTextColor(13, 71, 161);
+  doc.text('LAPORAN LABA RUGI OPERASIONAL', 105, 20, { align: 'center' });
+  
+  doc.setFont('helvetica','normal'); doc.setFontSize(11);
+  doc.setTextColor(100);
+  doc.text(document.getElementById('lrPeriode')?.textContent || '', 105, 28, { align: 'center' });
+  doc.text('Dicetak: ' + new Date().toLocaleString('id-ID'), 105, 34, { align: 'center' });
+  doc.line(14, 38, 196, 38);
+
+  let y = 46;
+  doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(0);
+  doc.text('1. PENDAPATAN', 14, y); y += 6;
+
+  const pendapatanRows = [];
+  const d = globalDataRaw;
+  const totalPendapatan = d?.totalPendapatan || (d?.pendapatanDetail ? d.pendapatanDetail.reduce((sum, p) => sum + p.total, 0) : 0);
+  const totalPembelian = d?.pembelianLpg3kgPeriode || 0;
+  const labaKotor = totalPendapatan - totalPembelian;
+
+  if (d && d.pendapatanDetail && d.pendapatanDetail.length > 0) {
+    d.pendapatanDetail.forEach(p => {
+      pendapatanRows.push([p.uraian, formatRupiah(p.total)]);
+    });
+  } else {
+    pendapatanRows.push(["Data Pendapatan Kosong", formatRupiah(0)]);
+  }
+  pendapatanRows.push(["JUMLAH PENDAPATAN", formatRupiah(totalPendapatan)]);
+
+  doc.autoTable({ body: pendapatanRows, startY: y, margin:{left:20,right:20}, styles:{fontSize:10}, didDrawPage: d => { y = d.cursor.y; } });
+  y = (doc.lastAutoTable?.finalY || y) + 6;
+
+  doc.setFont('helvetica','bold'); doc.text('2. HARGA POKOK PEMBELIAN', 14, y); y += 6;
+  doc.autoTable({ body: [["Pembelian LPG 3 Kg (Berdasarkan Periode Tgl)", formatRupiah(totalPembelian)]], startY: y, margin:{left:20,right:20}, styles:{fontSize:10} });
+  y = (doc.lastAutoTable?.finalY || y) + 6;
+
+  doc.setFillColor(227,242,253); doc.rect(14, y, 182, 10, 'F');
+  doc.setFont('helvetica','bold'); doc.setTextColor(13, 71, 161);
+  doc.text('LABA (RUGI) KOTOR', 18, y + 7);
+  doc.text(formatRupiah(labaKotor), 196, y + 7, { align: 'right' });
+  y += 18;
+
+  doc.setFont('helvetica','bold'); doc.setTextColor(0);
+  doc.text('3. BIAYA OPERASIONAL', 14, y); y += 6;
+
+  const pengeluaranRows = [];
+  let totalBiaya = 0;
+  if (d && d.pengeluaranByPos) {
+    d.pengeluaranByPos.forEach(p => {
+      totalBiaya += p.total;
+      pengeluaranRows.push([p.pos, formatRupiah(p.total)]);
+    });
+  }
+  pengeluaranRows.push(["TOTAL BIAYA", formatRupiah(totalBiaya)]);
+
+  doc.autoTable({ body: pengeluaranRows, startY: y, margin:{left:20,right:20}, styles:{fontSize:10} });
+  y = (doc.lastAutoTable?.finalY || y) + 6;
+
+  const labaUsaha = labaKotor - totalBiaya;
+  doc.setFillColor(labaUsaha >= 0 ? 27 : 185, labaUsaha >= 0 ? 94 : 28, labaUsaha >= 0 ? 32 : 28); doc.rect(14, y, 182, 14, 'F');
+  doc.setFontSize(12); doc.setTextColor(255);
+  doc.text('LABA (RUGI) USAHA', 18, y + 9);
+  doc.text(formatRupiah(labaUsaha), 196, y + 9, { align: 'right' });
+
+  const pName = document.getElementById('lrPeriode')?.textContent || 'Periode';
+  doc.save('LabaRugi_' + pName.replace(/\s/g,'_') + '.pdf');
+}
+
+// Helper utility untuk melengkapi sisa halaman web
+function formatRupiah(num) {
+  return 'Rp ' + Number(num).toLocaleString('id-ID');
+}
+
+function showToast(msg, type) {
+  console.log(`[${type.toUpperCase()}] ${msg}`);
+  if(typeof window.showToastLocal === 'function') window.showToastLocal(msg, type);
+}
+
+// Integrasi DOM Binder bawaan sistem multi-page
+document.addEventListener('DOMContentLoaded', () => {
+  if(typeof initPage === 'function') initPage('labarugi');
+  
+  // Daftarkan event listener form pembelian jika elemennya eksis di halaman html
+  const fPembelian = document.getElementById('formPembelian');
+  if(fPembelian) fPembelian.addEventListener('submit', handleSimpanPembelian);
+});
