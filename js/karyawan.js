@@ -85,7 +85,7 @@ function renderGrid(data) {
         <div style="display:flex;align-items:flex-start;gap:12px">
           <div class="karyawan-avatar" style="background:${bg}">${initials}</div>
           <div style="flex:1;min-width:0">
-            <div class="karyawan-name">${k.nama || k.namaKaryawan}</div>
+            <div class="karyawan-name">${k.nama}</div>
             <div class="karyawan-jabatan">${k.jabatan} · ${k.departemen}</div>
           </div>
           <span class="badge ${k.status === 'ACTIVE' ? 'badge-success' : 'badge-gray'}" style="flex-shrink:0">${k.status === 'ACTIVE' ? 'Aktif' : 'Nonaktif'}</span>
@@ -99,17 +99,69 @@ function renderGrid(data) {
       </div>
       <div class="karyawan-footer">
         <div class="gaji-display">${formatRupiah(k.gaji)}<span style="font-size:10px;font-weight:400;color:var(--text-secondary)">/bln</span></div>
-        <div style="display:flex;gap:6px">
-          <button class="btn btn-outline btn-sm btn-icon" onclick="editRow('${k.id}')">
+        <div style="display:flex;gap:4px">
+          <button class="btn btn-outline btn-sm btn-icon" title="Riwayat Gaji" onclick="openRiwayatModal('${k.id}', '${k.nama}')" style="color:var(--primary); border-color:rgba(13,71,161,0.2)">
+            <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </button>
+          <button class="btn btn-outline btn-sm btn-icon" title="Edit Profil" onclick="editRow('${k.id}')">
             <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
           </button>
-          <button class="btn btn-danger btn-sm btn-icon" onclick="deleteRow('${k.id}', '${k.nama || k.namaKaryawan}')">
+          <button class="btn btn-danger btn-sm btn-icon" title="Hapus/Nonaktifkan" onclick="deleteRow('${k.id}', '${k.nama}')">
             <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
           </button>
         </div>
       </div>
     </div>`;
   }).join('');
+}
+
+// =================================================================
+// RIWAYAT GAJI FUNCTIONS
+// =================================================================
+async function openRiwayatModal(idKaryawan, namaKaryawan) {
+  document.getElementById('riwayatModalTitle').textContent = 'Riwayat Gaji - ' + namaKaryawan;
+  const container = document.getElementById('riwayatGajiList');
+  container.innerHTML = '<tr><td colspan="3" style="text-align:center;padding:20px;color:var(--text-secondary)">Memuat data...</td></tr>';
+  
+  openModal('modalRiwayatGaji');
+
+  const res = await callAPI('getRiwayatGaji', { idKaryawan });
+  if (!res.success) { 
+    container.innerHTML = `<tr><td colspan="3" style="text-align:center;color:#ef4444;padding:20px;">${res.error || 'Gagal memuat data.'}</td></tr>`;
+    return; 
+  }
+
+  if (!res.data.length) {
+    container.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--text-secondary);padding:20px;">Belum ada log histori gaji untuk karyawan ini.</td></tr>';
+    return;
+  }
+
+  container.innerHTML = res.data.map((r) => `
+    <tr style="border-bottom: 1px solid var(--border-color)">
+      <td style="padding:12px 8px;font-size:13px;color:var(--text-primary);font-weight:600;">${r.tanggalBerlaku || '-'}</td>
+      <td style="padding:12px 8px;font-size:13px;color:var(--success);font-weight:700;">${formatRupiah(r.nominalGaji)}</td>
+      <td style="padding:12px 8px;text-align:right;">
+        <button class="btn btn-danger btn-sm btn-icon" style="padding:4px 6px;" title="Hapus Log Ini" onclick="deleteRiwayatItem('${r.idRiwayat}', '${r.idKaryawan}', '${namaKaryawan}')">
+          <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" fill="none" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+        </button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function deleteRiwayatItem(idRiwayat, idKaryawan, namaKaryawan) {
+  confirmAction('Hapus baris histori perubahan gaji ini?', async () => {
+    const res = await callAPI('deleteRiwayatGaji', { idRiwayat });
+    if (res.success) {
+      showToast('Log riwayat berhasil dihapus!', 'success');
+      // Refresh isi modal riwayat secara real-time
+      openRiwayatModal(idKaryawan, namaKaryawan);
+      // Refresh grid dashboard utama luar buat sinkronisasi KPI stats total gaji terbaru
+      loadData();
+    } else {
+      showToast(res.error, 'error');
+    }
+  });
 }
 async function saveData() {
   const id = document.getElementById('editId').value;
