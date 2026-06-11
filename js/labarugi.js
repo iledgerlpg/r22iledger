@@ -335,32 +335,38 @@ function toggleSection(id) {
   if (chevron) chevron.style.transform = isHidden ? 'rotate(0deg)' : 'rotate(-90deg)';
 }
 
-function exportExcel() {
-  // Ambil tenantId dari input hidden
-  const tenantId = document.getElementById('tenantId').value;
+async function exportExcel() {
+  // 1. Ambil sessionUser dari localStorage pakai helper lu
+  const sessionUser = getUser();
 
-  const data = {
-    sessionUser: { tenantId: tenantId }, // Bungkus jadi object biar backend lu nggak error
+  // Validasi: Pastikan user sudah login
+  if (!sessionUser || !sessionUser.tenantId) {
+    showToast('Sesi tidak valid, silakan login kembali', 'error');
+    return;
+  }
+
+  // 2. Ambil parameter dari UI
+  const payload = {
+    sessionUser: sessionUser,
     period: document.getElementById('periodSelect').value,
     year: document.getElementById('yearSelect').value,
     month: document.getElementById('monthSelect').value
   };
 
+  // 3. Kasih tau user
   showToast('Sedang memproses laporan ke Excel...', 'info');
 
-  google.script.run
-    .withSuccessHandler((response) => {
-      if (response.success) {
-        window.open(response.downloadUrl, '_blank');
-        showToast('Excel berhasil di-generate!', 'success');
-      } else {
-        showToast('Gagal export: ' + response.error, 'error');
-      }
-    })
-    .withFailureHandler((err) => {
-      showToast('Error Sistem: ' + err, 'error');
-    })
-    .exportLabaRugiToExcel(data);
+  // 4. Panggil API pakai fungsi callAPI yang sudah lu buat di config.js
+  // 'exportLabaRugiToExcel' ini adalah nama fungsi yang akan dipanggil di backend
+  const response = await callAPI('exportLabaRugiToExcel', payload);
+
+  // 5. Handle respon
+  if (response.success) {
+    window.open(response.downloadUrl, '_blank');
+    showToast('Excel berhasil di-generate!', 'success');
+  } else {
+    showToast('Gagal export: ' + (response.error || 'Terjadi kesalahan sistem'), 'error');
+  }
 }
 function exportPDF() {
   if (!globalDataRaw) {
