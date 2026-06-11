@@ -1,23 +1,40 @@
-const _user = getUser();
-
+// Biarkan variabel global kosong dulu di atas
+let _user = null; 
 let allData = [];
 let searchTimeout = null;
 let activeRowData = null;
 const avatarBg = ['#0D47A1','#1565C0','#0288D1','#00838F','#558B2F','#6A1B9A','#D84315','#37474F'];
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Ambil role dengan aman
+  // 1. Ambil data user di dalam sini setelah semua helper dipastikan ke-load
+  try {
+    _user = getUser();
+  } catch (e) {
+    console.error("Helper belum terload sempurna:", e);
+    _user = {};
+  }
+
+  // 2. Ambil role dengan aman
   const currentRole = (_user && _user.role) ? _user.role.toString().trim().toUpperCase() : '';
 
   if (currentRole !== 'HRD') {
-    document.querySelector('.main-content').innerHTML = `
-      <div style="text-align:center;padding:60px;">
-        <h2>Akses Ditolak</h2>
-        <p>Halaman ini hanya untuk HRD.</p>
-        <p style="font-size:12px;color:red;">Debug Frontend: Role lu terbaca sebagai "${_user.role || 'KOSONG'}"</p>
-      </div>`;
+    const mainContent = document.querySelector('.main-content');
+    
+    // Pastikan elemen .main-content beneran ada sebelum di-overwrite
+    if (mainContent) {
+      mainContent.innerHTML = `
+        <div style="text-align:center;padding:60px;">
+          <h2>Akses Ditolak</h2>
+          <p>Halaman ini hanya untuk HRD.</p>
+          <p style="font-size:12px;color:red;">Debug Frontend: Role lu terbaca sebagai "${_user.role || 'KOSONG'}"</p>
+        </div>`;
+    } else {
+      // Jika class .main-content gak ada, fallback pakai body agar lu tahu permasalahannya
+      document.body.innerHTML = `<h2 style="text-align:center;margin-top:100px;">Akses Ditolak & Struktur HTML .main-content Tidak Ditemukan</h2>`;
+    }
     return;
   }
+  
   loadData();
 });
 async function loadData() {
