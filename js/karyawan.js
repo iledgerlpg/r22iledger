@@ -1,14 +1,6 @@
 const _user = getUser();
 
 
-
-let allData = [];
-
-let searchTimeout = null;
-
-let activeRowData = null;
-const avatarBg = ['#0D47A1','#1565C0','#0288D1','#00838F','#558B2F','#6A1B9A','#D84315','#37474F'];
-
 let allData = [];
 let searchTimeout = null;
 const avatarBg = ['#0D47A1','#1565C0','#0288D1','#00838F','#558B2F','#6A1B9A','#D84315','#37474F'];
