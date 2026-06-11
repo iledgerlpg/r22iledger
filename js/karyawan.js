@@ -1,17 +1,39 @@
-const _user = getUser();
-
-
+// =================================================================
+// GLOBAL VARIABLES
+// =================================================================
 let allData = [];
 let searchTimeout = null;
+let activeRowData = null;
 const avatarBg = ['#0D47A1','#1565C0','#0288D1','#00838F','#558B2F','#6A1B9A','#D84315','#37474F'];
 
-document.addEventListener('DOMContentLoaded', () => {
-  if (_user.role !== 'HRD') {
-    document.querySelector('.main-content').innerHTML = '<div style="text-align:center;padding:60px;color:var(--text-secondary)"><h2>Akses Ditolak</h2><p>Halaman ini hanya untuk HRD.</p></div>';
-    return;
+// Fungsi inisialisasi halaman karyawan (Dipanggil setelah initPage selesai)
+function initKaryawanPage() {
+  // 🔴 Manggil fungsi getUser() milik lu di sini secara aman
+  const currentUser = getUser(); 
+
+  // Ambil role dengan aman
+  const currentRole = (currentUser && currentUser.role) ? currentUser.role.toString().trim().toUpperCase() : '';
+
+  if (currentRole !== 'HRD') {
+    const mainContent = document.getElementById('mainContent');
+    if (mainContent) {
+      mainContent.innerHTML = `
+        <div style="text-align:center;padding:60px;background:var(--bg-card);border-radius:var(--radius-lg);border:1px solid var(--border-color);margin-top:20px;">
+          <h2 style="color:var(--text-primary)">Akses Ditolak</h2>
+          <p style="color:var(--text-secondary);margin-top:8px;">Halaman manajemen karyawan hanya dapat diakses oleh HRD.</p>
+          <div style="margin-top:20px;padding:10px;background:rgba(239,68,68,0.1);color:#ef4444;border-radius:6px;font-size:12px;display:inline-block;font-family:monospace;">
+            Debug Frontend: Akun lu terbaca sebagai rolenya "${(currentUser && currentUser.role) || 'KOSONG/GAK ADA'}"
+          </div>
+        </div>`;
+    }
+    return; // Stop, jangan load data karyawan kalau bukan HRD
   }
+  
+  // Kalau lolos proteksi HRD, baru sikat load data
   loadData();
-});
+}
+
+// ... Teruskan ke bawah untuk fungsi loadData(), renderGrid(), dll.
 async function loadData() {
   const res = await callAPI('getKaryawan', {
     search: document.getElementById('searchInput').value,
