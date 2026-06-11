@@ -343,8 +343,14 @@ function exportExcel() {
 
   const d = globalDataRaw;
   const wb = XLSX.utils.book_new();
-  const dataBiaya = d.pengeluaranByPos || d.biayaByKategori || d.pengeluaranByUraian || [];
+  const dataBiayaSummary = d.pengeluaranByPos || d.biayaByKategori || d.pengeluaranByUraian || [];
+  
+  // Ambil data transaksi mentah/riil dari backend untuk Sheet 2, 3, dan 4
+  const rawPengeluaran = d.rawPengeluaran || d.pengeluaranRows || [];
 
+  // =========================================================================
+  // 1. SHEET LABA RUGI (Menampilkan semua data summary di halaman)
+  // =========================================================================
   const lrRows = [
     ["LAPORAN LABA RUGI USAHA"],
     ["Periode: " + (d.periode || '')],
@@ -373,70 +379,99 @@ function exportExcel() {
   lrRows.push([]);
   lrRows.push(["BIAYA OPERASIONAL", ""]);
 
-  let totalBiaya = 0;
-  if (dataBiaya.length) {
-    dataBiaya.forEach(p => {
+  let totalBiayaSummary = 0;
+  if (dataBiayaSummary.length) {
+    dataBiayaSummary.forEach(p => {
       const nilaiBiaya = p.total || p.nominal || 0;
       const namaPos = p.pos || p.kategori || p.uraian || 'Operasional';
-      totalBiaya += nilaiBiaya;
+      totalBiayaSummary += nilaiBiaya;
       lrRows.push([`  - ${namaPos}`, nilaiBiaya]);
     });
   }
   
-  lrRows.push(["TOTAL BIAYA", totalBiaya]);
+  lrRows.push(["TOTAL BIAYA OPERASIONAL", totalBiayaSummary]);
   lrRows.push([]);
-  lrRows.push(["LABA (RUGI) USAHA", labaKotor - totalBiaya]);
+  lrRows.push(["LABA (RUGI) USAHA FINAL", labaKotor - totalBiayaSummary]);
 
   const wsLR = XLSX.utils.aoa_to_sheet(lrRows);
   XLSX.utils.book_append_sheet(wb, wsLR, "Laba Rugi");
 
-  const globalExpenseRows = [
-    ["DATA PENGELUARAN GLOBAL"],
-    ["Periode: " + (d.periode || '')],
-    [],
-    ["Nama Pos Pengeluaran / Biaya", "Total Pengeluaran (Rp)"]
-  ];
 
-  if (dataBiaya.length) {
-    dataBiaya.forEach(p => {
-      globalExpenseRows.push([p.pos || p.kategori || p.uraian || 'Operasional', p.total || p.nominal || 0]);
-    });
-  }
-  globalExpenseRows.push(["TOTAL KESELURUHAN BIAYA", totalBiaya]);
+  // =========================================================================
+  // 2. SHEET GLOBAL (Seluruh data pengeluaran mentah berdasarkan filter bulan)
+  // =========================================================================
+  const globalHeader = [["Timestamp", "Nama", "Uraian", "NamaPos", "Nominal", "MetodePembayaran"]];
+  
+  const globalRows = rawPengeluaran.map(p => [
+    p.timestamp || p.tanggal || p.Timestamp || '',
+    p.nama || p.Nama || '',
+    p.uraian || p.Uraian || '',
+    p.namaPos || p.pos || p.NamaPos || '',
+    Number(p.nominal || p.Nominal) || 0,
+    p.metodePembayaran || p.metode || p.MetodePembayaran || ''
+  ]);
 
-  const wsGlobal = XLSX.utils.aoa_to_sheet(globalExpenseRows);
-  XLSX.utils.book_append_sheet(wb, wsGlobal, "Data Pengeluaran Global");
+  const wsGlobal = XLSX.utils.aoa_to_sheet(globalHeader.concat(globalRows));
+  XLSX.utils.book_append_sheet(wb, wsGlobal, "Global");
 
-  if (d.pendapatanByUraian) {
-    d.pendapatanByUraian.forEach(p => {
-      const safeSheetName = p.uraian.replace(/[/\\?*:[\]]/g, "").substring(0, 23);
-      const wsIncomeCenter = XLSX.utils.aoa_to_sheet([
-        [`RINCIAN DATA MASUK: ${p.uraian.toUpperCase()}`],
-        ["Periode: " + (d.periode || '')],
-        [],
-        ["Uraian Pemasukan", "Total Nominal (Rp)"],
-        [p.uraian, p.nominal || 0]
-      ]);
-      XLSX.utils.book_append_sheet(wb, wsIncomeCenter, `In_${safeSheetName}`);
-    });
-  }
 
-  if (dataBiaya.length) {
-    dataBiaya.forEach(p => {
-      const namaPos = p.pos || p.kategori || p.uraian || 'Operasional';
-      const safeSheetName = namaPos.replace(/[/\\?*:[\]]/g, "").substring(0, 23);
-      const wsCostCenter = XLSX.utils.aoa_to_sheet([
-        [`RINCIAN ALOKASI BIAYA: ${namaPos.toUpperCase()}`],
-        ["Periode: " + (d.periode || '')],
-        [],
-        ["Nama Pos", "Total Akumulasi Terpakai"],
-        [namaPos, p.total || p.nominal || 0]
-      ]);
-      XLSX.utils.book_append_sheet(wb, wsCostCenter, `Out_${safeSheetName}`);
-    });
-  }
+  // =========================================================================
+  // 3. SHEET GAJI KARYAWAN (Rincian khusus gaji)
+  // =========================================================================
+  const gajiHeader = [["Tanggal", "Nama", "Nominal"]];
+  
+  // Filter data dari rawPengeluaran yang NamaPos-nya mengandung kata 'gaji' atau 'karyawan'
+  const gajiRows = rawPengeluaran
+    .filter(p => {
+      const posName = String(p.namaPos || p.pos || p.NamaPos || '').toLowerCase();
+      return posName.includes('gaji') || posName.includes('karyawan');
+    })
+    .map(p => [
+      p.timestamp || p.tanggal || p.Timestamp || '',
+      p.nama || p.Nama || '',
+      Number(p.nominal || p.Nominal) || 0
+    ]);
 
-  const fileExcelName = `Laporan_LabaRugi_Dinamis_${(d.periode || 'Undated').replace(/\s/g, '_')}.xlsx`;
+  const wsGaji = XLSX.utils.aoa_to_sheet(gajiHeader.concat(gajiRows));
+  XLSX.utils.book_append_sheet(wb, wsGaji, "Gaji Karyawan");
+
+
+  // =========================================================================
+  // 4. SHEET PER POS (Dibuat otomatis terpisah sesuai nama Pos pengeluaran)
+  // =========================================================================
+  // Mapping kelompokkan data berdasarkan NamaPos
+  const dataByPosGroup = {};
+  
+  rawPengeluaran.forEach(p => {
+    const namaPos = p.namaPos || p.pos || p.NamaPos || 'Lain_Lain';
+    if (!dataByPosGroup[namaPos]) {
+      dataByPosGroup[namaPos] = [];
+    }
+    dataByPosGroup[namaPos].push([
+      p.timestamp || p.tanggal || p.Timestamp || '',
+      p.nama || p.Nama || '',
+      p.uraian || p.Uraian || '',
+      namaPos
+    ]);
+  });
+
+  // Loop map kelompok ke sheet baru masing-masing
+  Object.keys(dataByPosGroup).forEach(namaPos => {
+    const posHeader = [["Timestamp", "Nama", "Uraian", "NamaPos"]];
+    const rowsSpecPos = dataByPosGroup[namaPos];
+    
+    // Excel punya limit nama sheet maksimal 31 karakter dan dilarang pakai karakter tertentu seperti / \ ? * : [ ]
+    const safeSheetName = namaPos.replace(/[/\\?*:[\]]/g, "").substring(0, 30);
+    
+    const wsPos = XLSX.utils.aoa_to_sheet(posHeader.concat(rowsSpecPos));
+    XLSX.utils.book_append_sheet(wb, wsPos, safeSheetName);
+  });
+
+
+  // =========================================================================
+  // PROSES WRITE FILE EXCEL
+  // =========================================================================
+  const fileExcelName = `Laporan_LabaRugi_MultiSheet_${(d.periode || 'Undated').replace(/\s/g, '_')}.xlsx`;
   XLSX.writeFile(wb, fileExcelName);
 }
 
