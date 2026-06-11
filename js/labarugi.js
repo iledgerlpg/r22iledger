@@ -42,15 +42,18 @@ function setPeriod(p) {
   loadData();
 }
 
+// =========================================================================
+// FIX: FORM INPUT SESUAI STRUKTUR SHEET PEMBELIAN (TANGGAL, URAIAN, NOMINAL)
+// =========================================================================
 async function handleSimpanPembelian(event) {
   event.preventDefault();
   const tanggal = document.getElementById('beliTanggal').value;
-  const qty = document.getElementById('beliQty').value;
+  const uraian = document.getElementById('beliUraian').value; // Menggantikan beliQty
   const nominal = document.getElementById('beliNominal').value;
 
   const res = await callAPI('simpanPembelian', { 
     tanggal, 
-    qty: parseInt(qty), 
+    uraian, 
     nominal: parseInt(nominal) 
   });
   
@@ -133,7 +136,6 @@ function renderLabaRugi(d) {
   const pengeluaranRows = document.getElementById('pengeluaranRows');
   let totalBiaya = 0;
 
-  // Proteksi & kalkulasi total pengeluaran mandiri agar persentase bar akurat
   const dataBiaya = d.pengeluaranByPos || d.biayaByKategori || d.pengeluaranByUraian || [];
   const baseTotalPengeluaran = d.totalPengeluaran || d.totalBiaya || dataBiaya.reduce((sum, item) => sum + (item.total || item.nominal || 0), 0);
 
@@ -161,7 +163,6 @@ function renderLabaRugi(d) {
       </div>`;
     }).join('');
 
-    // Standarisasi array untuk Chart.js (memastikan object properti seragam)
     const normalizedChartData = dataBiaya.map(p => ({
       pos: p.pos || p.kategori || p.uraian || 'Operasional',
       total: p.total || p.nominal || 0
@@ -204,8 +205,6 @@ function renderLRChart(posData) {
   if (lrChart) lrChart.destroy();
   
   const palette = ['#0D47A1','#1565C0','#1976D2','#42A5F5','#00BCD4','#26C6DA','#4DD0E1','#ef4444','#f59e0b','#10b981'];
-  
-  // Modulo loop warna biar ga pecah/transparan kalau jumlah pos pengeluaran lebih dari 10
   const bgColors = posData.map((_, i) => palette[i % palette.length] + 'CC');
 
   lrChart = new Chart(ctx, {
@@ -245,9 +244,6 @@ function toggleSection(id) {
   if (chevron) chevron.style.transform = isHidden ? 'rotate(0deg)' : 'rotate(-90deg)';
 }
 
-// =========================================================================
-// EXPORT EXCEL MULTI-SHEET DINAMIS 
-// =========================================================================
 function exportExcel() {
   if (!globalDataRaw) {
     showToast('Data tidak tersedia untuk di-export.', 'error');
@@ -256,10 +252,8 @@ function exportExcel() {
 
   const d = globalDataRaw;
   const wb = XLSX.utils.book_new();
-
   const dataBiaya = d.pengeluaranByPos || d.biayaByKategori || d.pengeluaranByUraian || [];
 
-  // --- SHEET 1: LABA RUGI ---
   const lrRows = [
     ["LAPORAN LABA RUGI USAHA"],
     ["Periode: " + (d.periode || '')],
@@ -305,7 +299,6 @@ function exportExcel() {
   const wsLR = XLSX.utils.aoa_to_sheet(lrRows);
   XLSX.utils.book_append_sheet(wb, wsLR, "Laba Rugi");
 
-  // --- SHEET 2: DATA PENGELUARAN GLOBAL ---
   const globalExpenseRows = [
     ["DATA PENGELUARAN GLOBAL"],
     ["Periode: " + (d.periode || '')],
@@ -323,7 +316,6 @@ function exportExcel() {
   const wsGlobal = XLSX.utils.aoa_to_sheet(globalExpenseRows);
   XLSX.utils.book_append_sheet(wb, wsGlobal, "Data Pengeluaran Global");
 
-  // --- SHEET 3 DST: POS MASUK INDIVIDUAL ---
   if (d.pendapatanByUraian) {
     d.pendapatanByUraian.forEach(p => {
       const safeSheetName = p.uraian.replace(/[/\\?*:[\]]/g, "").substring(0, 23);
@@ -338,7 +330,6 @@ function exportExcel() {
     });
   }
 
-  // --- SHEET GRUP BIAYA ---
   if (dataBiaya.length) {
     dataBiaya.forEach(p => {
       const namaPos = p.pos || p.kategori || p.uraian || 'Operasional';
@@ -358,9 +349,6 @@ function exportExcel() {
   XLSX.writeFile(wb, fileExcelName);
 }
 
-// =========================================================================
-// EXPORT PDF DINAMIS
-// =========================================================================
 function exportPDF() {
   if (!globalDataRaw) {
     showToast('Data tidak tersedia untuk di-export.', 'error');
@@ -456,7 +444,6 @@ function formatRupiah(num) {
   return 'Rp ' + Number(num).toLocaleString('id-ID');
 }
 
-// Fungsi toast bawaan sistem
 function showToast(msg, type) {
   console.log(`[${type.toUpperCase()}] ${msg}`);
   if(typeof window.showToastLocal === 'function') window.showToastLocal(msg, type);
