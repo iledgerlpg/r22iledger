@@ -344,13 +344,11 @@ function exportExcel() {
   const d = globalDataRaw;
   const wb = XLSX.utils.book_new();
   const dataBiayaSummary = d.pengeluaranByPos || d.biayaByKategori || d.pengeluaranByUraian || [];
-  
-  // Ambil data transaksi mentah/riil dari backend untuk Sheet 2, 3, dan 4
   const rawPengeluaran = d.rawPengeluaran || d.pengeluaranRows || [];
 
-  // =========================================================================
-  // 1. SHEET LABA RUGI (Menampilkan semua data summary di halaman)
-  // =========================================================================
+  // -------------------------------------------------------------------------
+  // SHEET 1: Laba Rugi
+  // -------------------------------------------------------------------------
   const lrRows = [
     ["LAPORAN LABA RUGI USAHA"],
     ["Periode: " + (d.periode || '')],
@@ -396,14 +394,12 @@ function exportExcel() {
   const wsLR = XLSX.utils.aoa_to_sheet(lrRows);
   XLSX.utils.book_append_sheet(wb, wsLR, "Laba Rugi");
 
-
-  // =========================================================================
-  // 2. SHEET GLOBAL (Seluruh data pengeluaran mentah berdasarkan filter bulan)
-  // =========================================================================
+  // -------------------------------------------------------------------------
+  // SHEET 2: Global (Berdasarkan filter per bulan)
+  // -------------------------------------------------------------------------
   const globalHeader = [["Timestamp", "Nama", "Uraian", "NamaPos", "Nominal", "MetodePembayaran"]];
-  
   const globalRows = rawPengeluaran.map(p => [
-    p.timestamp || p.tanggal || p.Timestamp || '',
+    p.timestamp ? cleanDate(p.timestamp) : (p.tanggal ? cleanDate(p.tanggal) : ''),
     p.nama || p.Nama || '',
     p.uraian || p.Uraian || '',
     p.namaPos || p.pos || p.NamaPos || '',
@@ -414,20 +410,17 @@ function exportExcel() {
   const wsGlobal = XLSX.utils.aoa_to_sheet(globalHeader.concat(globalRows));
   XLSX.utils.book_append_sheet(wb, wsGlobal, "Global");
 
-
-  // =========================================================================
-  // 3. SHEET GAJI KARYAWAN (Rincian khusus gaji)
-  // =========================================================================
+  // -------------------------------------------------------------------------
+  // SHEET 3: Gaji Karyawan
+  // -------------------------------------------------------------------------
   const gajiHeader = [["Tanggal", "Nama", "Nominal"]];
-  
-  // Filter data dari rawPengeluaran yang NamaPos-nya mengandung kata 'gaji' atau 'karyawan'
   const gajiRows = rawPengeluaran
     .filter(p => {
       const posName = String(p.namaPos || p.pos || p.NamaPos || '').toLowerCase();
       return posName.includes('gaji') || posName.includes('karyawan');
     })
     .map(p => [
-      p.timestamp || p.tanggal || p.Timestamp || '',
+      p.timestamp ? cleanDate(p.timestamp) : (p.tanggal ? cleanDate(p.tanggal) : ''),
       p.nama || p.Nama || '',
       Number(p.nominal || p.Nominal) || 0
     ]);
@@ -435,46 +428,38 @@ function exportExcel() {
   const wsGaji = XLSX.utils.aoa_to_sheet(gajiHeader.concat(gajiRows));
   XLSX.utils.book_append_sheet(wb, wsGaji, "Gaji Karyawan");
 
-
-  // =========================================================================
-  // 4. SHEET PER POS (Dibuat otomatis terpisah sesuai nama Pos pengeluaran)
-  // =========================================================================
-  // Mapping kelompokkan data berdasarkan NamaPos
+  // -------------------------------------------------------------------------
+  // SHEET 4: Seluruh Pos Terpisah Otomatis
+  // -------------------------------------------------------------------------
   const dataByPosGroup = {};
-  
   rawPengeluaran.forEach(p => {
     const namaPos = p.namaPos || p.pos || p.NamaPos || 'Lain_Lain';
     if (!dataByPosGroup[namaPos]) {
       dataByPosGroup[namaPos] = [];
     }
     dataByPosGroup[namaPos].push([
-      p.timestamp || p.tanggal || p.Timestamp || '',
+      p.timestamp ? cleanDate(p.timestamp) : (p.tanggal ? cleanDate(p.tanggal) : ''),
       p.nama || p.Nama || '',
       p.uraian || p.Uraian || '',
       namaPos
     ]);
   });
 
-  // Loop map kelompok ke sheet baru masing-masing
   Object.keys(dataByPosGroup).forEach(namaPos => {
     const posHeader = [["Timestamp", "Nama", "Uraian", "NamaPos"]];
     const rowsSpecPos = dataByPosGroup[namaPos];
     
-    // Excel punya limit nama sheet maksimal 31 karakter dan dilarang pakai karakter tertentu seperti / \ ? * : [ ]
+    // Keamanan karakter ilegal & limit panjang nama sheet Excel
     const safeSheetName = namaPos.replace(/[/\\?*:[\]]/g, "").substring(0, 30);
     
     const wsPos = XLSX.utils.aoa_to_sheet(posHeader.concat(rowsSpecPos));
-    XLSX.utils.book_append_sheet(wb, wsPos, safeSheetName);
+    XLSX.utils.book_append_sheet(wb, wsPos, safeSheetName || "Pos_Operasional");
   });
 
-
-  // =========================================================================
-  // PROSES WRITE FILE EXCEL
-  // =========================================================================
+  // Write File
   const fileExcelName = `Laporan_LabaRugi_MultiSheet_${(d.periode || 'Undated').replace(/\s/g, '_')}.xlsx`;
   XLSX.writeFile(wb, fileExcelName);
 }
-
 function exportPDF() {
   if (!globalDataRaw) {
     showToast('Data tidak tersedia untuk di-export.', 'error');
