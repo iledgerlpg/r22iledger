@@ -8,6 +8,14 @@ const avatarBg = ['#0D47A1','#1565C0','#0288D1','#00838F','#558B2F','#6A1B9A','#
 document.addEventListener('DOMContentLoaded', () => {
   // Pake setTimeout 0 supaya script page-template selesai ngerender Nav Bar dulu
   setTimeout(() => {
+    
+    // 🔴 FIX CRITICAL: Isi dulu variabel _user-nya dari helper!
+    try {
+      _user = getUser(); 
+    } catch (e) {
+      console.error("Fungsi getUser() tidak ditemukan atau error:", e);
+    }
+
     // Ambil role dengan aman
     const currentRole = (_user && _user.role) ? _user.role.toString().trim().toUpperCase() : '';
 
@@ -19,7 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <h2 style="color:var(--text-primary)">Akses Ditolak</h2>
             <p style="color:var(--text-secondary);margin-top:8px;">Halaman manajemen karyawan hanya dapat diakses oleh HRD.</p>
             <div style="margin-top:20px;padding:10px;background:rgba(239,68,68,0.1);color:#ef4444;border-radius:6px;font-size:12px;display:inline-block;font-family:monospace;">
-              Debug Frontend: Akun lu terbaca sebagai rolenya "${_user.role || 'KOSONG/GAK ADA'}"
+              Debug Frontend: Akun lu terbaca sebagai rolenya "${(_user && _user.role) || 'KOSONG/GAK ADA'}"
             </div>
           </div>`;
       }
@@ -29,7 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Kalau lolos proteksi, baru load data karyawan
     loadData();
   }, 0);
-});
+});;
 async function loadData() {
   const res = await callAPI('getKaryawan', {
     search: document.getElementById('searchInput').value,
