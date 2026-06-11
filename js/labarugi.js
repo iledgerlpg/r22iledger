@@ -84,21 +84,22 @@ function renderLabaRugi(d) {
   if (document.getElementById('lrNetPeriode')) document.getElementById('lrNetPeriode').textContent = d.periode;
 
   // =========================================================================
-  // 1. URUAN PENDAPATAN (DARI SHEET PEMASUKAN - LANGSUNG DIURAI SEMUA BARIS)
+  // 1. URUAN PENDAPATAN (LANGSUNG DIURAI PER BARIS DARI SHEET PEMASUKAN)
   // =========================================================================
   let totalPendapatan = 0;
   const pendapatanRows = document.getElementById('pendapatanRows');
   
   if (d.pendapatanByUraian && d.pendapatanByUraian.length) {
     pendapatanRows.innerHTML = d.pendapatanByUraian.map(p => {
-      totalPendapatan += p.total; 
+      const nilaiNominal = p.nominal || 0; // Menggunakan properti 'nominal' sesuai kolom sheet
+      totalPendapatan += nilaiNominal; 
       return `
         <div class="lr-item">
           <div class="lr-item-label">
             <svg viewBox="0 0 24 24" width="14" height="14" stroke="var(--success)" fill="none" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
             ${p.uraian}
           </div>
-          <div class="lr-item-value">${formatRupiah(p.total)}</div>
+          <div class="lr-item-value">${formatRupiah(nilaiNominal)}</div>
         </div>
       `;
     }).join('');
@@ -114,7 +115,7 @@ function renderLabaRugi(d) {
   // =========================================================================
   // 2. PEMBELIAN (DARI SHEET PEMBELIAN)
   // =========================================================================
-  const totalPembelian = d.totalPembelianSheet || 0; // Ganti key sesuai backend lo dari sheet pembelian
+  const totalPembelian = d.totalPembelianSheet || 0; 
   const hppElement = document.getElementById('lrPembelianHPP');
   if (hppElement) hppElement.textContent = formatRupiah(totalPembelian);
 
@@ -210,7 +211,7 @@ function toggleSection(id) {
 }
 
 // =========================================================================
-// EXPORT EXCEL MULTI-SHEET DINAMIS SESUAI STRUKTUR SHEET ASLI
+// EXPORT EXCEL MULTI-SHEET DINAMIS 
 // =========================================================================
 function exportExcel() {
   if (!globalDataRaw) {
@@ -232,8 +233,9 @@ function exportExcel() {
   let totalPendapatan = 0;
   if (d.pendapatanByUraian && d.pendapatanByUraian.length) {
     d.pendapatanByUraian.forEach(p => {
-      totalPendapatan += p.total;
-      lrRows.push([`  - ${p.uraian}`, p.total]);
+      const nilaiNominal = p.nominal || 0;
+      totalPendapatan += nilaiNominal;
+      lrRows.push([`  - ${p.uraian}`, nilaiNominal]);
     });
   }
   lrRows.push(["JUMLAH PENDAPATAN", totalPendapatan]);
@@ -282,7 +284,7 @@ function exportExcel() {
   const wsGlobal = XLSX.utils.aoa_to_sheet(globalExpenseRows);
   XLSX.utils.book_append_sheet(wb, wsGlobal, "Data Pengeluaran Global");
 
-  // --- SHEET 3 DST: POS MASUK INDIVIDUAL (BERDASARKAN SHEET PEMASUKAN) ---
+  // --- SHEET 3 DST: POS MASUK INDIVIDUAL (BARIS SHEET PEMASUKAN) ---
   if (d.pendapatanByUraian) {
     d.pendapatanByUraian.forEach(p => {
       const safeSheetName = p.uraian.replace(/[/\\?*:[\]]/g, "").substring(0, 23);
@@ -290,14 +292,14 @@ function exportExcel() {
         [`RINCIAN DATA MASUK: ${p.uraian.toUpperCase()}`],
         ["Periode: " + (d.periode || '')],
         [],
-        ["Uraian Pemasukan", "Total Nilai"],
-        [p.uraian, p.total]
+        ["Uraian Pemasukan", "Total Nominal (Rp)"],
+        [p.uraian, p.nominal || 0]
       ]);
       XLSX.utils.book_append_sheet(wb, wsIncomeCenter, `In_${safeSheetName}`);
     });
   }
 
-  // --- SHEET GRUP BIAYA (BERDASARKAN SHEET PENGELUARAN) ---
+  // --- SHEET GRUP BIAYA (SHEET PENGELUARAN) ---
   if (d.pengeluaranByPos) {
     d.pengeluaranByPos.forEach(p => {
       const safeSheetName = p.pos.replace(/[/\\?*:[\]]/g, "").substring(0, 23);
@@ -347,8 +349,9 @@ function exportPDF() {
   
   if (globalDataRaw.pendapatanByUraian && globalDataRaw.pendapatanByUraian.length) {
     globalDataRaw.pendapatanByUraian.forEach(p => {
-      totalPendapatan += p.total;
-      pendapatanRows.push([p.uraian, formatRupiah(p.total)]);
+      const nilaiNominal = p.nominal || 0;
+      totalPendapatan += nilaiNominal;
+      pendapatanRows.push([p.uraian, formatRupiah(nilaiNominal)]);
     });
   }
   pendapatanRows.push(["JUMLAH PENDAPATAN", formatRupiah(totalPendapatan)]);
@@ -410,6 +413,7 @@ function formatRupiah(num) {
   return 'Rp ' + Number(num).toLocaleString('id-ID');
 }
 
+// Fungsi toast bawaan sistem
 function showToast(msg, type) {
   console.log(`[${type.toUpperCase()}] ${msg}`);
   if(typeof window.showToastLocal === 'function') window.showToastLocal(msg, type);
