@@ -336,31 +336,29 @@ function toggleSection(id) {
 }
 
 async function exportExcel() {
-  // 1. Ambil sessionUser dari localStorage pakai helper lu
+  // 1. Ambil sessionUser pakai helper lu
   const sessionUser = getUser();
 
-  // Validasi: Pastikan user sudah login
   if (!sessionUser || !sessionUser.tenantId) {
     showToast('Sesi tidak valid, silakan login kembali', 'error');
     return;
   }
 
-  // 2. Ambil parameter dari UI
+  // 2. Ambil data dengan ID yang sesuai (Sinkronisasi ID)
+  // Perhatikan: Gue pakai 'currentPeriod' (variabel global lu) 
+  // dan ID yang sesuai dengan fungsi 'loadData'
   const payload = {
     sessionUser: sessionUser,
-    period: document.getElementById('periodSelect').value,
-    year: document.getElementById('yearSelect').value,
-    month: document.getElementById('monthSelect').value
+    period: currentPeriod, 
+    year: document.getElementById('selectYear').value,
+    month: document.getElementById('selectMonth').value
   };
 
-  // 3. Kasih tau user
+  // 3. Eksekusi
   showToast('Sedang memproses laporan ke Excel...', 'info');
 
-  // 4. Panggil API pakai fungsi callAPI yang sudah lu buat di config.js
-  // 'exportLabaRugiToExcel' ini adalah nama fungsi yang akan dipanggil di backend
   const response = await callAPI('exportLabaRugiToExcel', payload);
 
-  // 5. Handle respon
   if (response.success) {
     window.open(response.downloadUrl, '_blank');
     showToast('Excel berhasil di-generate!', 'success');
