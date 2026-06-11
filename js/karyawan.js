@@ -74,8 +74,6 @@ function renderGrid(data) {
   
   container.innerHTML = data.map((k, i) => {
     const bg = avatarBg[i % avatarBg.length];
-    
-    // Diproteksi filter(Boolean) biar kalau nama ada spasi ganda gak bikin singkatan 'CUNDEFINED'
     const initials = k.nama 
       ? k.nama.split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase() 
       : '??';
@@ -87,7 +85,7 @@ function renderGrid(data) {
         <div style="display:flex;align-items:flex-start;gap:12px">
           <div class="karyawan-avatar" style="background:${bg}">${initials}</div>
           <div style="flex:1;min-width:0">
-            <div class="karyawan-name">${k.nama}</div>
+            <div class="karyawan-name">${k.nama || k.namaKaryawan}</div>
             <div class="karyawan-jabatan">${k.jabatan} · ${k.departemen}</div>
           </div>
           <span class="badge ${k.status === 'ACTIVE' ? 'badge-success' : 'badge-gray'}" style="flex-shrink:0">${k.status === 'ACTIVE' ? 'Aktif' : 'Nonaktif'}</span>
@@ -102,10 +100,10 @@ function renderGrid(data) {
       <div class="karyawan-footer">
         <div class="gaji-display">${formatRupiah(k.gaji)}<span style="font-size:10px;font-weight:400;color:var(--text-secondary)">/bln</span></div>
         <div style="display:flex;gap:6px">
-          <button class="btn btn-outline btn-sm btn-icon" onclick='editRow(${JSON.stringify(k).replace(/'/g, "&#39;")})'>
+          <button class="btn btn-outline btn-sm btn-icon" onclick="editRow('${k.id}')">
             <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
           </button>
-          <button class="btn btn-danger btn-sm btn-icon" onclick="deleteRow('${k.id}', '${k.nama}')">
+          <button class="btn btn-danger btn-sm btn-icon" onclick="deleteRow('${k.id}', '${k.nama || k.namaKaryawan}')">
             <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
           </button>
         </div>
@@ -113,7 +111,6 @@ function renderGrid(data) {
     </div>`;
   }).join('');
 }
-
 async function saveData() {
   const id = document.getElementById('editId').value;
   const nik = document.getElementById('fNIK').value.trim();
@@ -169,27 +166,38 @@ async function saveData() {
   }
 }
 
-function editRow(row) {
+function editRow(id) {
+  // Ambil data utuh dari local state array berdasarkan ID
+  const row = allData.find(item => item.id === id || item.id == id);
+  if (!row) {
+    showToast('Gagal memuat data edit: Karyawan tidak ditemukan.', 'error');
+    return;
+  }
+
   activeRowData = row; 
   
   document.getElementById('editId').value = row.id;
   document.getElementById('modalTitle').textContent = 'Edit Karyawan';
-  document.getElementById('fNIK').value = row.nik;
-  document.getElementById('fNama').value = row.nama;
-  document.getElementById('fJK').value = row.jenisKelamin;
+  document.getElementById('fNIK').value = row.nik || '';
+  
+  // Menggunakan operator || (OR) untuk mengantisipasi perbedaan key nama/namaKaryawan dari database
+  document.getElementById('fNama').value = row.nama || row.namaKaryawan || '';
+  document.getElementById('fJK').value = row.jenisKelamin || 'Laki-laki';
   document.getElementById('fNoTelp').value = row.noTelp || '';
   document.getElementById('fTempatLahir').value = row.tempatLahir || '';
   document.getElementById('fAlamat').value = row.alamat || '';
-  document.getElementById('fJabatan').value = row.jabatan;
-  document.getElementById('fDepartemen').value = row.departemen;
-  document.getElementById('fGaji').value = row.gaji;
+  document.getElementById('fJabatan').value = row.jabatan || '';
+  document.getElementById('fDepartemen').value = row.departemen || 'Operasional';
+  document.getElementById('fGaji').value = row.gaji || 0;
   document.getElementById('fBPJSKES').value = row.noBPJSKES || '';
   document.getElementById('fBPJSTK').value = row.noBPJSTK || '';
-  document.getElementById('fNoRek').value = row.noRekening || '';
+  
+  // Mengantisipasi perbedaan key noRekening/noRek
+  document.getElementById('fNoRek').value = row.noRekening || row.noRek || '';
   document.getElementById('fNamaBank').value = row.namaBank || '';
-  document.getElementById('fStatus').value = row.status;
+  document.getElementById('fStatus').value = row.status || 'ACTIVE';
 
-  // Sync format input kalender tanggal HTML5
+  // Sinkronisasi kalender HTML5 (menggunakan helper format)
   document.getElementById('fTglMasuk').value = formatDateToInput(row.tanggalMasuk);
   document.getElementById('fTglKeluar').value = formatDateToInput(row.tanggalKeluar);
   document.getElementById('fTglLahir').value = formatDateToInput(row.tanggalLahir);
@@ -197,7 +205,6 @@ function editRow(row) {
   document.getElementById('editStatusField').style.display = 'block';
   openModal('modalKaryawan');
 }
-
 async function deleteRow(id, nama) {
   confirmAction(`Nonaktifkan karyawan "${nama}"?`, async () => {
     const res = await callAPI('deleteKaryawan', { id });
