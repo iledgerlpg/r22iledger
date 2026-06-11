@@ -47,19 +47,16 @@ function setPeriod(p) {
 async function handleSimpanPembelian(event) {
   if (event) event.preventDefault();
   
-  const tanggalEl = document.getElementById('beliTanggal');
-  const uraianEl = document.getElementById('beliUraian'); // Menggantikan beliQty
-  const nominalEl = document.getElementById('beliNominal');
+  const tanggal = document.getElementById('beliTanggal').value;
+  const uraian = document.getElementById('beliUraian').value;
+  const nominal = document.getElementById('beliNominal').value;
 
-  if (!tanggalEl || !uraianEl || !nominalEl) {
-    showToast('Elemen form tidak ditemukan.', 'error');
+  if (!tanggal || !uraian || !nominal) {
+    showToast('Mohon lengkapi semua form!', 'error');
     return;
   }
 
-  const tanggal = tanggalEl.value;
-  const uraian = uraianEl.value;
-  const nominal = nominalEl.value;
-
+  // Kirim data sederhana saja, backend yang urus sesi
   const res = await callAPI('simpanPembelian', { 
     tanggal, 
     uraian, 
@@ -67,11 +64,14 @@ async function handleSimpanPembelian(event) {
   });
   
   if (res.success) {
-    showToast('Data pembelian berhasil disimpan!', 'success');
+    showToast('Data berhasil disimpan!', 'success');
     document.getElementById('formPembelian').reset();
-    loadData(); 
+    document.getElementById('formPembelian').style.display = 'none'; // Tutup form
+    document.getElementById('chevronForm').style.transform = 'rotate(-90deg)';
+    loadData(); // Refresh data di layar
   } else {
-    showToast('Gagal menyimpan data pembelian.', 'error');
+    // Sekarang pesan error dari backend akan muncul di sini
+    showToast('Gagal: ' + res.error, 'error');
   }
 }
 
