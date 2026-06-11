@@ -9,10 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
   if (typeof initPage === 'function') initPage('labarugi');
   
-  const fPembelian = document.getElementById('formPembelian');
-  if (fPembelian) {
-    fPembelian.addEventListener('submit', handleSimpanPembelian);
-  }
+
 });
 
 function populateYearSelect() {
