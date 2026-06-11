@@ -11,6 +11,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script> window.CURRENT_PAGE='labarugi';</script>
 <div id="navbarMount"></div>
 <style>
@@ -25,6 +26,17 @@
 .lr-kpi-value{font-size:20px;font-weight:800;margin-top:4px;letter-spacing:-.5px}
 .lr-kpi-value.positive{color:#a7f3d0}
 .lr-kpi-value.negative{color:#fca5a5}
+
+/* Form Input Pembelian Styling */
+.form-card{background:var(--bg-card);border:1px solid var(--border-color);border-radius:var(--radius-lg);padding:20px;margin-bottom:24px}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:16px}
+.form-group{display:flex;flex-direction:column;gap:6px}
+.form-group label{font-size:12px;font-weight:600;color:var(--text-secondary)}
+.form-group input{padding:10px 14px;border:1.5px solid var(--border-color);border-radius:8px;font-family:var(--font);font-size:13px;color:var(--text-primary);background:var(--bg-card);outline:none;transition:border-color .2s}
+.form-group input:focus{border-color:var(--primary)}
+
+/* Blok Laba Kotor */
+.lr-gross-profit{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;background:var(--gray-50);border:1px solid var(--border-color);border-radius:var(--radius);font-size:14px;font-weight:800;margin-bottom:20px;color:var(--text-primary)}
 
 .lr-section{margin-bottom:20px}
 .lr-section-header{
@@ -74,7 +86,7 @@
 .month-select{padding:8px 14px;border:1.5px solid var(--border-color);border-radius:8px;font-family:var(--font);font-size:13px;color:var(--text-primary);background:var(--bg-card);cursor:pointer;outline:none;min-width:130px}
 .chart-container{background:var(--bg-card);border-radius:var(--radius-lg);border:1px solid var(--border-color);padding:20px;margin-bottom:20px}
 
-@media(max-width:640px){.lr-kpi-row{grid-template-columns:1fr}.lr-net-value{font-size:20px}}
+@media(max-width:640px){.lr-kpi-row{grid-template-columns:1fr}.lr-net-value{font-size:20px}.form-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -97,9 +109,12 @@
     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
       <div>
         <h1 class="page-title">Laporan Laba Rugi</h1>
-        <p class="page-subtitle">Analisis keuangan komprehensif perusahaan</p>
+        <p class="page-subtitle">Analisis keuangan komprehensif logistik & keagenan LPG</p>
       </div>
       <div style="display:flex;gap:8px">
+        <button class="btn btn-outline btn-sm" onclick="exportExcel()" style="color: #1b5e20; border-color: #1b5e20;">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> Excel
+        </button>
         <button class="btn btn-outline btn-sm" onclick="exportPDF()">
           <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> PDF
         </button>
@@ -110,7 +125,32 @@
     </div>
   </div>
 
-  <!-- Period Selector -->
+  <div class="form-card">
+    <div style="font-size:14px;font-weight:700;color:var(--text-primary);margin-bottom:14px;display:flex;align-items:center;gap:8px">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--primary)" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      Form Input Pembelian LPG 3 Kg
+    </div>
+    <form id="formPembelian">
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="beliTanggal">Tanggal Transaksi</label>
+          <input type="date" id="beliTanggal" required>
+        </div>
+        <div class="form-group">
+          <label for="beliQty">Jumlah Tabung (Refill)</label>
+          <input type="number" id="beliQty" min="1" placeholder="Misal: 560" required>
+        </div>
+        <div class="form-group">
+          <label for="beliNominal">Total Nilai Pembelian (Rp)</label>
+          <input type="number" id="beliNominal" min="0" placeholder="Misal: 6500000" required>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary btn-sm" style="background:var(--primary);color:white;border:none;padding:10px 16px;border-radius:6px;font-weight:600;cursor:pointer;">
+        Simpan Pembelian
+      </button>
+    </form>
+  </div>
+
   <div class="period-selector">
     <button class="period-tab active" id="tabMonthly" onclick="setPeriod('monthly')">Bulanan</button>
     <button class="period-tab" id="tabYearly" onclick="setPeriod('yearly')">Tahunan</button>
@@ -125,24 +165,21 @@
     </select>
   </div>
 
-  <!-- LR Header Card -->
   <div class="lr-header" id="lrHeaderCard">
     <div class="lr-title" id="lrPeriode">Memuat...</div>
-    <div class="lr-subtitle">Laporan Laba Rugi Komprehensif</div>
+    <div class="lr-subtitle">Ringkasan Nilai Usaha Periodik</div>
     <div class="lr-kpi-row">
       <div class="lr-kpi"><div class="lr-kpi-label">Total Pendapatan</div><div class="lr-kpi-value" id="lrPendapatan">-</div></div>
-      <div class="lr-kpi"><div class="lr-kpi-label">Total Pengeluaran</div><div class="lr-kpi-value" id="lrPengeluaran">-</div></div>
-      <div class="lr-kpi"><div class="lr-kpi-label">Laba Bersih</div><div class="lr-kpi-value" id="lrLaba">-</div></div>
+      <div class="lr-kpi"><div class="lr-kpi-label">Laba Kotor</div><div class="lr-kpi-value" id="lrLabaKotor">-</div></div>
+      <div class="lr-kpi"><div class="lr-kpi-label">Laba Usaha</div><div class="lr-kpi-value" id="lrLaba">-</div></div>
     </div>
   </div>
 
-  <!-- Chart -->
   <div class="chart-container" id="chartSection" style="display:none">
-    <div style="font-size:14px;font-weight:700;color:var(--text-primary);margin-bottom:16px">Distribusi Pengeluaran per Pos</div>
+    <div style="font-size:14px;font-weight:700;color:var(--text-primary);margin-bottom:16px">Distribusi Pengeluaran Operasional</div>
     <div style="height:260px"><canvas id="chartLR"></canvas></div>
   </div>
 
-  <!-- Pendapatan Section -->
   <div class="lr-section">
     <div class="lr-section-header" onclick="toggleSection('secPendapatan')">
       <div style="display:flex;align-items:center;gap:10px">
@@ -159,20 +196,45 @@
     <div class="lr-section-body" id="secPendapatan">
       <div id="pendapatanRows"></div>
       <div class="lr-total-row">
-        <span>Total Pendapatan</span>
+        <span>JUMLAH PENDAPATAN</span>
         <span id="totalPendapatanLabel" style="color:var(--success)">-</span>
       </div>
     </div>
   </div>
 
-  <!-- Pengeluaran Section -->
+  <div class="lr-section">
+    <div class="lr-section-header" onclick="toggleSection('secHpp')">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="lr-section-icon" style="background:#FFE8D6;color:#D65A31">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+        </div>
+        <span>Harga Pokok Pembelian</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-weight:800;color:#D65A31" id="lrPembelianHPP">-</span>
+        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2" id="chevronHpp"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+    </div>
+    <div class="lr-section-body" id="secHpp">
+      <div class="lr-item">
+        <div class="lr-item-label">Pembelian LPG 3 Kg (Berdasarkan Filter Tanggal)</div>
+        <div class="lr-item-value" style="color:#D65A31" id="lrPembelianHppRow">-</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="lr-gross-profit">
+    <span>LABA (RUGI) KOTOR</span>
+    <span id="lrLabaKotorRowValue">-</span>
+  </div>
+
   <div class="lr-section">
     <div class="lr-section-header" onclick="toggleSection('secPengeluaran')">
       <div style="display:flex;align-items:center;gap:10px">
         <div class="lr-section-icon" style="background:#FEE2E2;color:#DC2626">
           <svg viewBox="0 0 24 24"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>
         </div>
-        <span>Pengeluaran per Pos</span>
+        <span>Biaya Operasional</span>
       </div>
       <div style="display:flex;align-items:center;gap:10px">
         <span style="font-weight:800;color:var(--error)" id="secPengeluaranTotal">-</span>
@@ -182,16 +244,15 @@
     <div class="lr-section-body" id="secPengeluaran">
       <div id="pengeluaranRows"></div>
       <div class="lr-total-row">
-        <span>Total Pengeluaran</span>
+        <span>TOTAL BIAYA</span>
         <span id="totalPengeluaranLabel" style="color:var(--error)">-</span>
       </div>
     </div>
   </div>
 
-  <!-- Laba Bersih -->
-  <div class="lr-net">
+  <div class="lr-net" id="lrNetBox">
     <div>
-      <div class="lr-net-label">🏆 Laba Bersih</div>
+      <div class="lr-net-label">📊 LABA (RUGI) USAHA</div>
       <div style="font-size:12px;opacity:.7;margin-top:2px" id="lrNetPeriode">-</div>
     </div>
     <div class="lr-net-value" id="lrNetValue">-</div>
@@ -199,5 +260,23 @@
 
 </main>
 
+<script>
+  // Mengaitkan fungsi lokal tambahan agar sinkron dengan file JS eksternal
+  const originalRender = window.renderLabaRugi;
+  window.renderLabaRugi = function(d) {
+    if(typeof originalRender === 'function') originalRender(d);
+    
+    // Mapping ID tambahan di HTML baru ini agar nilainya selalu kembar & konsisten
+    const vPendapatan = document.getElementById('totalPendapatanLabel')?.textContent || '-';
+    const vHpp = document.getElementById('lrPembelianHPP')?.textContent || '-';
+    const vLabaKotor = document.getElementById('lrLabaKotor')?.textContent || '-';
+    
+    const hppRow = document.getElementById('lrPembelianHppRow');
+    if(hppRow) hppRow.textContent = vHpp;
+    
+    const lkRow = document.getElementById('lrLabaKotorRowValue');
+    if(lkRow) lkRow.textContent = vLabaKotor;
+  };
+</script>
 </body>
 </html>
