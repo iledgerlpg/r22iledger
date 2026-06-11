@@ -1,39 +1,47 @@
-// =================================================================
-// GLOBAL VARIABLES
-// =================================================================
+// ============================================================
+// GLOBAL VARIABLES (Biarkan kosong dulu di atas)
+// ============================================================
+let _user = null; 
 let allData = [];
 let searchTimeout = null;
-let activeRowData = null;
+let activeRowData = null; // Tambahkan ini agar fitur Edit Row tidak bug
 const avatarBg = ['#0D47A1','#1565C0','#0288D1','#00838F','#558B2F','#6A1B9A','#D84315','#37474F'];
 
-// Fungsi inisialisasi halaman karyawan (Dipanggil setelah initPage selesai)
+/**
+ * FUNGSI INISIALISASI UTAMA
+ * Dipanggil dari HTML setelah initPage() selesai memuat Navbar
+ */
 function initKaryawanPage() {
-  // 🔴 Manggil fungsi getUser() milik lu di sini secara aman
-  const currentUser = getUser(); 
+  // 1. Isi variabel global _user setelah sistem auth siap
+  _user = getUser(); 
 
-  // Ambil role dengan aman
-  const currentRole = (currentUser && currentUser.role) ? currentUser.role.toString().trim().toUpperCase() : '';
+  // 2. Ambil role dengan proteksi nilai null/undefined
+  const currentRole = (_user && _user.role) ? _user.role.toString().trim().toUpperCase() : '';
 
+  // 3. Cek Proteksi Akses HRD
   if (currentRole !== 'HRD') {
-    const mainContent = document.getElementById('mainContent');
+    // Gunakan ID spesifik untuk konten, JANGAN timpa wrapper tempat navbar hidup!
+    const mainContent = document.getElementById('mainContent') || document.querySelector('.main-content');
     if (mainContent) {
       mainContent.innerHTML = `
         <div style="text-align:center;padding:60px;background:var(--bg-card);border-radius:var(--radius-lg);border:1px solid var(--border-color);margin-top:20px;">
           <h2 style="color:var(--text-primary)">Akses Ditolak</h2>
           <p style="color:var(--text-secondary);margin-top:8px;">Halaman manajemen karyawan hanya dapat diakses oleh HRD.</p>
           <div style="margin-top:20px;padding:10px;background:rgba(239,68,68,0.1);color:#ef4444;border-radius:6px;font-size:12px;display:inline-block;font-family:monospace;">
-            Debug Frontend: Akun lu terbaca sebagai rolenya "${(currentUser && currentUser.role) || 'KOSONG/GAK ADA'}"
+            Debug Frontend: Akun lu terbaca sebagai rolenya "${(_user && _user.role) || 'KOSONG/GAK ADA'}"
           </div>
         </div>`;
     }
-    return; // Stop, jangan load data karyawan kalau bukan HRD
+    return; // Stop di sini, jangan load data karyawan
   }
-  
-  // Kalau lolos proteksi HRD, baru sikat load data
+
+  // 4. Kalau lolos verifikasi HRD, baru load datanya
   loadData();
 }
 
-// ... Teruskan ke bawah untuk fungsi loadData(), renderGrid(), dll.
+// ============================================================
+// CORE FUNCTIONS
+// ============================================================
 async function loadData() {
   const res = await callAPI('getKaryawan', {
     search: document.getElementById('searchInput').value,
@@ -64,7 +72,12 @@ function renderGrid(data) {
   }
   container.innerHTML = data.map((k, i) => {
     const bg = avatarBg[i % avatarBg.length];
-    const initials = k.nama.split(' ').slice(0,2).map(w => w[0]).join('').toUpperCase();
+    
+    // FIX HIDDEN BUG: Tambahkan .filter(Boolean) agar spasi dobel tidak menghasilkan "CUNDEFINED"
+    const initials = k.nama 
+      ? k.nama.split(' ').filter(Boolean).slice(0,2).map(w => w[0]).join('').toUpperCase() 
+      : '??';
+      
     return `
     <div class="karyawan-card">
       <div class="karyawan-header-bar"></div>
