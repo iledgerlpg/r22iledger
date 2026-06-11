@@ -244,6 +244,7 @@
               <option value="ACTIVE">Aktif</option>
               <option value="INACTIVE">Tidak Aktif</option>
               <option value="RESIGN">Resign</option>
+              <option value="RESIGN">Nonaktif</option>
             </select>
           </div>
           <div class="form-group-m">
@@ -260,6 +261,38 @@
         <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" fill="none" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
         Simpan
       </button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalRiwayatGaji">
+  <div class="modal" style="max-width:500px">
+    <div class="modal-header">
+      <h3 class="modal-title" id="riwayatModalTitle">Riwayat Perubahan Gaji</h3>
+      <button class="modal-close" onclick="closeModal('modalRiwayatGaji')">
+        <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    
+    <div class="modal-body" style="max-height:60vh; overflow-y:auto; padding-top:0;">
+      <p style="font-size:12px; color:var(--text-secondary); margin-bottom:14px; line-height:1.4;">
+        * Menghapus baris log di sini hanya membersihkan riwayat audit perubahan gaji. Gaji aktif di master data tidak otomatis ikut berubah.
+      </p>
+      <table style="width:100%; border-collapse:collapse; text-align:left;">
+        <thead>
+          <tr style="border-bottom:2px solid var(--border-color); color:var(--text-secondary); font-size:11px; text-transform:uppercase; letter-spacing:0.5px;">
+            <th style="padding:8px 8px 8px 0;">Tgl Berlaku</th>
+            <th style="padding:8px;">Nominal Gaji</th>
+            <th style="padding:8px 0; text-align:right;">Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="riwayatGajiList">
+          </tbody>
+      </table>
+    </div>
+    
+    <div class="modal-footer" style="padding-top:12px;">
+      <button class="btn btn-outline btn-sm" onclick="closeModal('modalRiwayatGaji')" style="width:100%">Tutup Halaman</button>
     </div>
   </div>
 </div>
