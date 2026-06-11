@@ -1,4 +1,3 @@
-
 let allData = [];
 let searchTimeout = null;
 const avatarBg = ['#0D47A1','#1565C0','#0288D1','#00838F','#558B2F','#6A1B9A','#D84315','#37474F'];
@@ -102,7 +101,9 @@ async function saveData() {
     noRekening: document.getElementById('fNoRek').value,
     namaBank: document.getElementById('fNamaBank').value,
     status: id ? document.getElementById('fStatus').value : 'ACTIVE',
-    tanggalKeluar: document.getElementById('fTglKeluar').value
+    tanggalKeluar: document.getElementById('fTglKeluar').value,
+    // Mengirim info tanggal efektif kenaikan gaji (untuk keperluan histori lembar Riwayat_Gaji)
+    tanggalGajiBerlaku: id ? new Date().toISOString().split('T')[0] : document.getElementById('fTglMasuk').value
   });
 
   btn.disabled = false;
@@ -129,6 +130,12 @@ function editRow(row) {
   document.getElementById('fNoRek').value = row.noRekening || '';
   document.getElementById('fNamaBank').value = row.namaBank || '';
   document.getElementById('fStatus').value = row.status;
+
+  // FIX BUG: Mapping input tanggal agar sukses masuk ke input HTML type="date" (Format Harus YYYY-MM-DD)
+  document.getElementById('fTglMasuk').value = formatDateToInput(row.tanggalMasuk);
+  document.getElementById('fTglKeluar').value = formatDateToInput(row.tanggalKeluar);
+  document.getElementById('fTglLahir').value = formatDateToInput(row.tanggalLahir);
+
   document.getElementById('editStatusField').style.display = 'block';
   openModal('modalKaryawan');
 }
@@ -145,7 +152,10 @@ function resetForm() {
   document.getElementById('editId').value = '';
   document.getElementById('modalTitle').textContent = 'Tambah Karyawan';
   document.getElementById('editStatusField').style.display = 'none';
-  ['fNIK','fNama','fNoTelp','fTempatLahir','fAlamat','fJabatan','fGaji','fBPJSKES','fBPJSTK','fNoRek','fTglLahir','fTglMasuk','fTglKeluar'].forEach(id => document.getElementById(id).value = '');
+  ['fNIK','fNama','fNoTelp','fTempatLahir','fAlamat','fJabatan','fGaji','fBPJSKES','fBPJSTK','fNoRek','fNamaBank','fTglLahir','fTglMasuk','fTglKeluar'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.value = '';
+  });
   document.getElementById('fJK').value = 'Laki-laki';
   document.getElementById('fDepartemen').value = 'Operasional';
 }
@@ -167,4 +177,30 @@ function exportPDF() {
   doc.save('Karyawan_' + new Date().toLocaleDateString('id-ID').replace(/\//g,'-') + '.pdf');
 }
 
-document.addEventListener('DOMContentLoaded', () => initPage('karyawan'));
+/**
+ * HELPER UTILITY: Mengonversi format tanggal string bawaan backend (misal DD/MM/YYYY)
+ * menjadi YYYY-MM-DD standar agar diakui oleh form input date HTML5.
+ */
+function formatDateToInput(dateStr) {
+  if (!dateStr) return '';
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
+  
+  const parts = dateStr.split(/[\/\-]/);
+  if (parts.length === 3) {
+    if (parts[2].length === 4) { // Format: DD/MM/YYYY
+      return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+    } else if (parts[0].length === 4) { // Format: YYYY/MM/DD
+      return `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
+    }
+  }
+  
+  const d = new Date(dateStr);
+  if (!isNaN(d.getTime())) {
+    return d.toISOString().split('T')[0];
+  }
+  return '';
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  if (typeof initPage === 'function') initPage('karyawan');
+});
