@@ -261,15 +261,44 @@
 </main>
 
 <script>
-  // Mengaitkan fungsi lokal tambahan agar sinkron dengan file JS eksternal
+  // Fungsi pembantu format rupiah lokal jika belum terdefinisi di labarugi.js
+  const toRp = (v) => typeof formatRupiah === 'function' ? formatRupiah(v) : 'Rp ' + Number(v).toLocaleString('id-ID');
+
   const originalRender = window.renderLabaRugi;
   window.renderLabaRugi = function(d) {
+    // Jalankan fungsi bawaan jika ada
     if(typeof originalRender === 'function') originalRender(d);
     
-    // Mapping ID tambahan di HTML baru ini agar nilainya selalu kembar & konsisten
-    const vPendapatan = document.getElementById('totalPendapatanLabel')?.textContent || '-';
-    const vHpp = document.getElementById('lrPembelianHPP')?.textContent || '-';
-    const vLabaKotor = document.getElementById('lrLabaKotor')?.textContent || '-';
+    // 1. Ambil data kontainer baris pendapatan
+    const pendapatanRows = document.getElementById('pendapatanRows');
+    const totalPendapatan = d.totalPendapatan || 0;
+
+    // 2. Render baris pendapatan secara dinamis dari sheet/data detail riil (d.pendapatanDetail)
+    if (pendapatanRows && d.pendapatanDetail && d.pendapatanDetail.length > 0) {
+      pendapatanRows.innerHTML = d.pendapatanDetail.map(p => {
+        const pct = totalPendapatan > 0 ? ((p.total / totalPendapatan) * 100).toFixed(1) : '0.0';
+        return `
+          <div class="lr-item">
+            <div class="lr-item-label">
+              <svg viewBox="0 0 24 24" width="14" height="14" stroke="var(--success)" fill="none" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+              <span>${p.uraian}</span>
+              <span class="lr-item-pct">${pct}%</span>
+            </div>
+            <div class="lr-item-value">${toRp(p.total)}</div>
+          </div>`;
+      }).join('');
+    } else if (pendapatanRows) {
+      pendapatanRows.innerHTML = `<div class="lr-item" style="justify-content:center;color:var(--text-secondary);">Belum ada data pendapatan dari sheet</div>`;
+    }
+
+    // 3. Sinkronisasi nilai-nilai total ke elemen UI pendukung
+    if (document.getElementById('secPendapatanTotal')) document.getElementById('secPendapatanTotal').textContent = toRp(totalPendapatan);
+    if (document.getElementById('totalPendapatanLabel')) document.getElementById('totalPendapatanLabel').textContent = toRp(totalPendapatan);
+    if (document.getElementById('lrPendapatan')) document.getElementById('lrPendapatan').textContent = toRp(totalPendapatan);
+
+    // Sinkronisasi data HPP & Laba Kotor ke baris tambahan di HTML
+    const vHpp = document.getElementById('lrPembelianHPP')?.textContent || toRp(0);
+    const vLabaKotor = document.getElementById('lrLabaKotor')?.textContent || toRp(0);
     
     const hppRow = document.getElementById('lrPembelianHppRow');
     if(hppRow) hppRow.textContent = vHpp;
