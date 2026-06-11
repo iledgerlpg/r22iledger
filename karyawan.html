@@ -264,5 +264,17 @@
   </div>
 </div>
 
+<script>
+  document.addEventListener('DOMContentLoaded', async () => {
+    // 1. Jalankan template, tunggu download navbar.html selesai total
+    await initPage('karyawan'); 
+    
+    // 2. Baru panggil proteksi role & pembacaan getUser() dari karyawan.js
+    if (typeof initKaryawanPage === 'function') {
+      initKaryawanPage();
+    }
+  });
+</script>
+
 </body>
 </html>
