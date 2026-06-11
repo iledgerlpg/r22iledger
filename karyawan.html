@@ -266,10 +266,10 @@
 
 <script>
   document.addEventListener('DOMContentLoaded', async () => {
-    // 1. Jalankan template, tunggu download navbar.html selesai total
+    // 1. Jalankan engine page-template, tunggu fetch navbar.html selesai total
     await initPage('karyawan'); 
     
-    // 2. Baru panggil proteksi role & pembacaan getUser() dari karyawan.js
+    // 2. Jika fungsi inisialisasi di karyawan.js tersedia, eksekusi secara aman
     if (typeof initKaryawanPage === 'function') {
       initKaryawanPage();
     }
