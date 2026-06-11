@@ -84,14 +84,14 @@ function renderLabaRugi(d) {
   if (document.getElementById('lrNetPeriode')) document.getElementById('lrNetPeriode').textContent = d.periode;
 
   // =========================================================================
-  // 1. URUAN PENDAPATAN (LANGSUNG DIURAI PER BARIS DARI SHEET PEMASUKAN)
+  // 1. URAIAN PENDAPATAN (LANGSUNG DIURAI PER BARIS DARI SHEET PEMASUKAN)
   // =========================================================================
   let totalPendapatan = 0;
   const pendapatanRows = document.getElementById('pendapatanRows');
   
   if (d.pendapatanByUraian && d.pendapatanByUraian.length) {
     pendapatanRows.innerHTML = d.pendapatanByUraian.map(p => {
-      const nilaiNominal = p.nominal || 0; // Menggunakan properti 'nominal' sesuai kolom sheet
+      const nilaiNominal = p.nominal || 0; 
       totalPendapatan += nilaiNominal; 
       return `
         <div class="lr-item">
@@ -115,7 +115,7 @@ function renderLabaRugi(d) {
   // =========================================================================
   // 2. PEMBELIAN (DARI SHEET PEMBELIAN)
   // =========================================================================
-  const totalPembelian = d.totalPembelianSheet || 0; 
+  const totalPembelian = d.totalPembelianSheet || d.totalHpp || 0; 
   const hppElement = document.getElementById('lrPembelianHPP');
   if (hppElement) hppElement.textContent = formatRupiah(totalPembelian);
 
@@ -133,19 +133,27 @@ function renderLabaRugi(d) {
   const pengeluaranRows = document.getElementById('pengeluaranRows');
   let totalBiaya = 0;
 
-  if (d.pengeluaranByPos && d.pengeluaranByPos.length) {
-    pengeluaranRows.innerHTML = d.pengeluaranByPos.map(p => {
-      totalBiaya += p.total;
-      const pct = d.totalPengeluaran > 0 ? ((p.total / d.totalPengeluaran) * 100).toFixed(1) : 0;
+  // Proteksi & kalkulasi total pengeluaran mandiri agar persentase bar akurat
+  const dataBiaya = d.pengeluaranByPos || d.biayaByKategori || d.pengeluaranByUraian || [];
+  const baseTotalPengeluaran = d.totalPengeluaran || d.totalBiaya || dataBiaya.reduce((sum, item) => sum + (item.total || item.nominal || 0), 0);
+
+  if (dataBiaya.length) {
+    pengeluaranRows.innerHTML = dataBiaya.map(p => {
+      const nilaiBiaya = p.total || p.nominal || 0;
+      const namaPos = p.pos || p.kategori || p.uraian || 'Operasional';
+      totalBiaya += nilaiBiaya;
+      
+      const pct = baseTotalPengeluaran > 0 ? ((nilaiBiaya / baseTotalPengeluaran) * 100).toFixed(1) : 0;
       const barWidth = Math.min(100, parseFloat(pct));
+      
       return `<div class="lr-item" style="flex-direction:column;align-items:stretch;gap:6px">
         <div style="display:flex;align-items:center;justify-content:space-between">
           <div class="lr-item-label">
             <svg viewBox="0 0 24 24" width="14" height="14" stroke="var(--error)" fill="none" stroke-width="2"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/></svg>
-            ${p.pos}
+            ${namaPos}
             <span class="lr-item-pct">${pct}%</span>
           </div>
-          <div class="lr-item-value red">${formatRupiah(p.total)}</div>
+          <div class="lr-item-value red">${formatRupiah(nilaiBiaya)}</div>
         </div>
         <div style="height:4px;background:var(--gray-100);border-radius:2px;overflow:hidden">
           <div style="height:100%;width:${barWidth}%;background:linear-gradient(90deg,#ef4444,#f87171);border-radius:2px;transition:width .6s ease"></div>
@@ -153,7 +161,13 @@ function renderLabaRugi(d) {
       </div>`;
     }).join('');
 
-    renderLRChart(d.pengeluaranByPos);
+    // Standarisasi array untuk Chart.js (memastikan object properti seragam)
+    const normalizedChartData = dataBiaya.map(p => ({
+      pos: p.pos || p.kategori || p.uraian || 'Operasional',
+      total: p.total || p.nominal || 0
+    }));
+
+    renderLRChart(normalizedChartData);
     if (document.getElementById('chartSection')) document.getElementById('chartSection').style.display = 'block';
   } else {
     if (pengeluaranRows) {
@@ -165,7 +179,9 @@ function renderLabaRugi(d) {
   if (document.getElementById('secPengeluaranTotal')) document.getElementById('secPengeluaranTotal').textContent = formatRupiah(totalBiaya);
   if (document.getElementById('totalPengeluaranLabel')) document.getElementById('totalPengeluaranLabel').textContent = formatRupiah(totalBiaya);
 
-  // 5. HITUNG LABA (RUGI) USAHA
+  // =========================================================================
+  // 5. HITUNG LABA (RUGI) USAHA FINAL
+  // =========================================================================
   const labaUsaha = labaKotor - totalBiaya;
 
   const labaEl = document.getElementById('lrLaba');
@@ -186,17 +202,36 @@ function renderLRChart(posData) {
   if (!chartEl) return;
   const ctx = chartEl.getContext('2d');
   if (lrChart) lrChart.destroy();
+  
   const palette = ['#0D47A1','#1565C0','#1976D2','#42A5F5','#00BCD4','#26C6DA','#4DD0E1','#ef4444','#f59e0b','#10b981'];
+  
+  // Modulo loop warna biar ga pecah/transparan kalau jumlah pos pengeluaran lebih dari 10
+  const bgColors = posData.map((_, i) => palette[i % palette.length] + 'CC');
+
   lrChart = new Chart(ctx, {
     type: 'bar',
     data: {
       labels: posData.map(p => p.pos),
-      datasets: [{ label: 'Pengeluaran', data: posData.map(p => p.total), backgroundColor: palette.slice(0, posData.length).map(c => c + 'CC'), borderRadius: 6, borderSkipped: false }]
+      datasets: [{ 
+        label: 'Pengeluaran', 
+        data: posData.map(p => p.total), 
+        backgroundColor: bgColors, 
+        borderRadius: 6, 
+        borderSkipped: false 
+      }]
     },
     options: {
-      responsive: true, maintainAspectRatio: false, indexAxis: 'y',
-      plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ' ' + formatRupiah(c.parsed.x) } } },
-      scales: { x: { ticks: { callback: v => 'Rp ' + (v/1000000).toFixed(1) + 'jt', font: { size: 10 } }, grid: { color: 'rgba(0,0,0,.04)' } }, y: { ticks: { font: { size: 11 } }, grid: { display: false } } }
+      responsive: true, 
+      maintainAspectRatio: false, 
+      indexAxis: 'y',
+      plugins: { 
+        legend: { display: false }, 
+        tooltip: { callbacks: { label: c => ' ' + formatRupiah(c.parsed.x) } } 
+      },
+      scales: { 
+        x: { ticks: { callback: v => 'Rp ' + (v/1000000).toFixed(1) + 'jt', font: { size: 10 } }, grid: { color: 'rgba(0,0,0,.04)' } }, 
+        y: { ticks: { font: { size: 11 } }, grid: { display: false } } 
+      }
     }
   });
 }
@@ -222,6 +257,8 @@ function exportExcel() {
   const d = globalDataRaw;
   const wb = XLSX.utils.book_new();
 
+  const dataBiaya = d.pengeluaranByPos || d.biayaByKategori || d.pengeluaranByUraian || [];
+
   // --- SHEET 1: LABA RUGI ---
   const lrRows = [
     ["LAPORAN LABA RUGI USAHA"],
@@ -241,7 +278,7 @@ function exportExcel() {
   lrRows.push(["JUMLAH PENDAPATAN", totalPendapatan]);
   lrRows.push([]);
   
-  const totalPembelian = d.totalPembelianSheet || 0;
+  const totalPembelian = d.totalPembelianSheet || d.totalHpp || 0;
   const labaKotor = totalPendapatan - totalPembelian;
 
   lrRows.push(["HARGA POKOK PEMBELIAN", ""]);
@@ -252,10 +289,12 @@ function exportExcel() {
   lrRows.push(["BIAYA OPERASIONAL", ""]);
 
   let totalBiaya = 0;
-  if (d.pengeluaranByPos) {
-    d.pengeluaranByPos.forEach(p => {
-      totalBiaya += p.total;
-      lrRows.push([`  - ${p.pos}`, p.total]);
+  if (dataBiaya.length) {
+    dataBiaya.forEach(p => {
+      const nilaiBiaya = p.total || p.nominal || 0;
+      const namaPos = p.pos || p.kategori || p.uraian || 'Operasional';
+      totalBiaya += nilaiBiaya;
+      lrRows.push([`  - ${namaPos}`, nilaiBiaya]);
     });
   }
   
@@ -274,9 +313,9 @@ function exportExcel() {
     ["Nama Pos Pengeluaran / Biaya", "Total Pengeluaran (Rp)"]
   ];
 
-  if (d.pengeluaranByPos) {
-    d.pengeluaranByPos.forEach(p => {
-      globalExpenseRows.push([p.pos, p.total]);
+  if (dataBiaya.length) {
+    dataBiaya.forEach(p => {
+      globalExpenseRows.push([p.pos || p.kategori || p.uraian || 'Operasional', p.total || p.nominal || 0]);
     });
   }
   globalExpenseRows.push(["TOTAL KESELURUHAN BIAYA", totalBiaya]);
@@ -284,7 +323,7 @@ function exportExcel() {
   const wsGlobal = XLSX.utils.aoa_to_sheet(globalExpenseRows);
   XLSX.utils.book_append_sheet(wb, wsGlobal, "Data Pengeluaran Global");
 
-  // --- SHEET 3 DST: POS MASUK INDIVIDUAL (BARIS SHEET PEMASUKAN) ---
+  // --- SHEET 3 DST: POS MASUK INDIVIDUAL ---
   if (d.pendapatanByUraian) {
     d.pendapatanByUraian.forEach(p => {
       const safeSheetName = p.uraian.replace(/[/\\?*:[\]]/g, "").substring(0, 23);
@@ -299,16 +338,17 @@ function exportExcel() {
     });
   }
 
-  // --- SHEET GRUP BIAYA (SHEET PENGELUARAN) ---
-  if (d.pengeluaranByPos) {
-    d.pengeluaranByPos.forEach(p => {
-      const safeSheetName = p.pos.replace(/[/\\?*:[\]]/g, "").substring(0, 23);
+  // --- SHEET GRUP BIAYA ---
+  if (dataBiaya.length) {
+    dataBiaya.forEach(p => {
+      const namaPos = p.pos || p.kategori || p.uraian || 'Operasional';
+      const safeSheetName = namaPos.replace(/[/\\?*:[\]]/g, "").substring(0, 23);
       const wsCostCenter = XLSX.utils.aoa_to_sheet([
-        [`RINCIAN ALOKASI BIAYA: ${p.pos.toUpperCase()}`],
+        [`RINCIAN ALOKASI BIAYA: ${namaPos.toUpperCase()}`],
         ["Periode: " + (d.periode || '')],
         [],
         ["Nama Pos", "Total Akumulasi Terpakai"],
-        [p.pos, p.total]
+        [namaPos, p.total || p.nominal || 0]
       ]);
       XLSX.utils.book_append_sheet(wb, wsCostCenter, `Out_${safeSheetName}`);
     });
@@ -329,6 +369,8 @@ function exportPDF() {
 
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
+  const d = globalDataRaw;
+  const dataBiaya = d.pengeluaranByPos || d.biayaByKategori || d.pengeluaranByUraian || [];
   
   doc.setFont('helvetica','bold'); doc.setFontSize(20);
   doc.setTextColor(13, 71, 161);
@@ -347,8 +389,8 @@ function exportPDF() {
   const pendapatanRows = [];
   let totalPendapatan = 0;
   
-  if (globalDataRaw.pendapatanByUraian && globalDataRaw.pendapatanByUraian.length) {
-    globalDataRaw.pendapatanByUraian.forEach(p => {
+  if (d.pendapatanByUraian && d.pendapatanByUraian.length) {
+    d.pendapatanByUraian.forEach(p => {
       const nilaiNominal = p.nominal || 0;
       totalPendapatan += nilaiNominal;
       pendapatanRows.push([p.uraian, formatRupiah(nilaiNominal)]);
@@ -365,7 +407,7 @@ function exportPDF() {
   });
   y = (doc.lastAutoTable?.finalY || y) + 6;
 
-  const totalPembelian = globalDataRaw.totalPembelianSheet || 0;
+  const totalPembelian = d.totalPembelianSheet || d.totalHpp || 0;
   const labaKotor = totalPendapatan - totalPembelian;
 
   doc.setFont('helvetica','bold'); doc.text('2. HARGA POKOK PEMBELIAN', 14, y); y += 6;
@@ -386,17 +428,18 @@ function exportPDF() {
   doc.setFont('helvetica','bold'); doc.setTextColor(0);
   doc.text('3. BIAYA OPERASIONAL', 14, y); y += 6;
 
-  const pengeluaranRows = [];
+  const pengeluaranRowsData = [];
   let totalBiaya = 0;
-  if (globalDataRaw.pengeluaranByPos) {
-    globalDataRaw.pengeluaranByPos.forEach(p => {
-      totalBiaya += p.total;
-      pengeluaranRows.push([p.pos, formatRupiah(p.total)]);
+  if (dataBiaya.length) {
+    dataBiaya.forEach(p => {
+      const nilaiBiaya = p.total || p.nominal || 0;
+      totalBiaya += nilaiBiaya;
+      pengeluaranRowsData.push([p.pos || p.kategori || p.uraian || 'Operasional', formatRupiah(nilaiBiaya)]);
     });
   }
-  pengeluaranRows.push(["TOTAL BIAYA", formatRupiah(totalBiaya)]);
+  pengeluaranRowsData.push(["TOTAL BIAYA", formatRupiah(totalBiaya)]);
 
-  doc.autoTable({ body: pengeluaranRows, startY: y, margin:{left:20,right:20}, styles:{fontSize:10} });
+  doc.autoTable({ body: pengeluaranRowsData, startY: y, margin:{left:20,right:20}, styles:{fontSize:10} });
   y = (doc.lastAutoTable?.finalY || y) + 6;
 
   const labaUsaha = labaKotor - totalBiaya;
