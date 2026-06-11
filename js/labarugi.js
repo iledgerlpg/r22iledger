@@ -10,7 +10,9 @@ document.addEventListener('DOMContentLoaded', () => {
   if (typeof initPage === 'function') initPage('labarugi');
   
   const fPembelian = document.getElementById('formPembelian');
-  if (fPembelian) fPembelian.addEventListener('submit', handleSimpanPembelian);
+  if (fPembelian) {
+    fPembelian.addEventListener('submit', handleSimpanPembelian);
+  }
 });
 
 function populateYearSelect() {
@@ -46,10 +48,20 @@ function setPeriod(p) {
 // FIX: FORM INPUT SESUAI STRUKTUR SHEET PEMBELIAN (TANGGAL, URAIAN, NOMINAL)
 // =========================================================================
 async function handleSimpanPembelian(event) {
-  event.preventDefault();
-  const tanggal = document.getElementById('beliTanggal').value;
-  const uraian = document.getElementById('beliUraian').value; // Menggantikan beliQty
-  const nominal = document.getElementById('beliNominal').value;
+  if (event) event.preventDefault();
+  
+  const tanggalEl = document.getElementById('beliTanggal');
+  const uraianEl = document.getElementById('beliUraian'); // Menggantikan beliQty
+  const nominalEl = document.getElementById('beliNominal');
+
+  if (!tanggalEl || !uraianEl || !nominalEl) {
+    showToast('Elemen form tidak ditemukan.', 'error');
+    return;
+  }
+
+  const tanggal = tanggalEl.value;
+  const uraian = uraianEl.value;
+  const nominal = nominalEl.value;
 
   const res = await callAPI('simpanPembelian', { 
     tanggal, 
@@ -65,6 +77,9 @@ async function handleSimpanPembelian(event) {
     showToast('Gagal menyimpan data pembelian.', 'error');
   }
 }
+
+// Global window exposure agar bisa ditembak langsung dari inline onclick / event listener eksternal
+window.simpanPembelian = handleSimpanPembelian;
 
 async function loadData() {
   const year = document.getElementById('selectYear').value;
