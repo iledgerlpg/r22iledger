@@ -307,7 +307,12 @@
 <div class="form-group-m">
         <label class="form-label-m">Uraian *</label>
         <div class="uraian-wrap" id="uraianWrap">
-          <input type="text" id="fUraian" class="form-control-m"
+<input 
+  type="text" 
+  id="fUraian" 
+  placeholder="Uraian pengeluaran..."
+  oninput="formatUraianInput(this)"
+/>
             placeholder="Ketik uraian... contoh: Isi solar 50L B 1234 CD"
             autocomplete="off"
             oninput="onUraianInput(this.value)">
@@ -355,7 +360,12 @@
 
         <div class="form-group-m">
           <label class="form-label-m">Nominal (Rp) *</label>
-          <input type="number" id="fNominal" class="form-control-m" placeholder="0" min="0" oninput="onNominalChangeBBM()">
+<input 
+  type="text" 
+  id="fUraian" 
+  placeholder="Uraian pengeluaran..."
+  oninput="formatUraianInput(this)"
+/>
         </div>
 
       </div>
