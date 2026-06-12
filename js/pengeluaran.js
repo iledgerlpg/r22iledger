@@ -357,18 +357,12 @@ function selectPos(idPos, namaPos) {
   selectedPosId = idPos;
   selectedPosName = namaPos;
   document.getElementById('fPosId').value = idPos;
-
-  // Show chip UI, hide manual select
   document.getElementById('posChipName').textContent = namaPos;
   document.getElementById('posSelectedBox').style.display = 'block';
   document.getElementById('posManualBox').style.display = 'none';
-  // Also keep old chip (if exists)
-
-
   hidePosDropdown();
   handlePosExtras(namaPos);
 }
-
 function clearPos() {
   selectedPosId = null; selectedPosName = null;
   document.getElementById('fPosId').value = '';
@@ -390,20 +384,14 @@ function clearPos() {
 
 function handlePosExtras(name) {
   const n = name.toLowerCase();
-  const isBBM       = selectedPosName === 'BBM' || n.includes('Solar') || n.includes('Shell');
-  const isPrw      = selectedPosName === 'Perawatan Kendaraan' || n.includes('Service Kendaraan') || n.includes('Ganti Oli');
-  const isPajak     = selectedPosName === 'Pajak Kendaraan' || n.includes('stnk') || n.includes('kir');
+
+  const isBBM   = n.includes('bbm');
+  const isPrw   = n.includes('perawatan');
+  const isPajak = n.includes('pajak');
 
   document.getElementById('bbmExtra').classList.toggle('show', isBBM);
   document.getElementById('perawatanExtra').classList.toggle('show', isPrw);
   document.getElementById('pajakExtra').classList.toggle('show', isPajak);
-
-  // Update nominalPreview positioning
-  if (!isBBM && !isPrw && !isPajak) {
-    document.getElementById('bbmExtra').classList.remove('show');
-    document.getElementById('perawatanExtra').classList.remove('show');
-    document.getElementById('pajakExtra').classList.remove('show');
-  }
 }
 
 function calcBBM() {
