@@ -1,7 +1,7 @@
 
 const CONFIG = {
 
-  APP_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbwc1i0jVFkdsvwqvzAJJn8MMDrp3L1nPPfAi-7bDYhYBitr1GB4OGZMOFT0SjdQtuLR/exec',
+  APP_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbyWBWkKO5ZA_tiT7fIYL53IzUMEeYjkqNfcAeKfb3Uqb-W9NscXc33YgTwdG0yHlah4/exec',
 
   APP_NAME: 'iLedgerV2',
   APP_VERSION: '2.0.0',
