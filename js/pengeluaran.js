@@ -390,9 +390,9 @@ function clearPos() {
 
 function handlePosExtras(name) {
   const n = name.toLowerCase();
-  const isBBM      = n.includes('bbm') || n.includes('bahan bakar') || n.includes('solar') || n.includes('pertalite');
-  const isPrw      = n.includes('perawatan');
-  const isPajak    = n.includes('pajak') || n.includes('stnk') || n.includes('kir');
+  const isBBM       = selectedPosName === 'BBM' || n.includes('Solar') || n.includes('Shell');
+  const isPrw      = selectedPosName === 'Perawatan Kendaraan' || n.includes('Service Kendaraan') || n.includes('Ganti Oli');
+  const isPajak     = selectedPosName === 'Pajak Kendaraan' || n.includes('stnk') || n.includes('kir');
 
   document.getElementById('bbmExtra').classList.toggle('show', isBBM);
   document.getElementById('perawatanExtra').classList.toggle('show', isPrw);
