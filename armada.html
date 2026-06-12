@@ -4,17 +4,16 @@
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>iLedgerV2 – Data Armada</title>
 <link rel="stylesheet" href="css/style.css">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="js/config.js"></script>
 <script src="js/armada.js"></script>
 <script src="js/page-template.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
-<script> window.CURRENT_PAGE='armada';</script>
-<div id="navbarMount"></div>
+<script>window.CURRENT_PAGE = 'armada';</script>
 <style>
 .armada-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
-.armada-card{background:var(--bg-card);border-radius:var(--radius-lg);border:1px solid var(--border-color);overflow:hidden;transition:transform .2s,box-shadow .2s;display:flex;flex-direction:column;justify-content:between}
+.armada-card{background:var(--bg-card);border-radius:var(--radius-lg);border:1px solid var(--border-color);overflow:hidden;transition:transform .2s,box-shadow .2s;display:flex;flex-direction:column}
 .armada-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-md)}
 .armada-photo{height:150px;background:linear-gradient(135deg,var(--primary) 0%,var(--primary-light) 100%);position:relative;overflow:hidden}
 .armada-photo img{width:100%;height:100%;object-fit:cover}
@@ -50,24 +49,23 @@
 .view-btn{width:32px;height:32px;border:none;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text-secondary);background:transparent;transition:all .2s}
 .view-btn.active{background:var(--bg-card);color:var(--primary);box-shadow:0 1px 4px rgba(0,0,0,.1)}
 .view-btn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2}
-
-/* Layout upload kolom dokumen di dalam modal */
 .document-upload-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:4px}
 @media(max-width:540px){.document-upload-grid{grid-template-columns:1fr}}
-
-/* --- UTILITIES BARU: TAMPILAN MULTI-FOTO DOKUMEN --- */
-.card-doc-thumbs {display:flex;gap:6px;margin-top:12px;padding-top:12px;border-top:1px dashed var(--border-color)}
-.doc-thumb-item {flex:1;height:45px;border-radius:6px;border:1px solid var(--border-color);position:relative;overflow:hidden;cursor:pointer;background:var(--gray-50);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:all .2s}
-.doc-thumb-item:hover {border-color:var(--primary);box-shadow:0 2px 6px rgba(0,0,0,0.08)}
-.doc-thumb-item img {width:100%;height:100%;object-fit:cover}
-.doc-thumb-item svg {width:16px;height:16px;stroke:var(--gray-400);fill:none;stroke-width:1.5}
-.doc-thumb-label {position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.65);color:white;font-size:8px;font-weight:700;text-align:center;padding:2px 0;text-transform:uppercase;letter-spacing:0.3px}
-.table-inline-thumb {width:26px;height:26px;border-radius:4px;object-fit:cover;border:1px solid var(--border-color);cursor:pointer;display:inline-block;vertical-align:middle;margin-right:4px;transition:transform 0.15s}
-.table-inline-thumb:hover {transform:scale(1.15);border-color:var(--primary)}
-.table-empty-thumb {width:26px;height:26px;border-radius:4px;background:var(--gray-100);color:var(--gray-400);display:inline-flex;align-items:center;justify-content:center;font-size:10px;vertical-align:middle;margin-right:4px}
+.card-doc-thumbs{display:flex;gap:6px;margin-top:12px;padding-top:12px;border-top:1px dashed var(--border-color)}
+.doc-thumb-item{flex:1;height:45px;border-radius:6px;border:1px solid var(--border-color);position:relative;overflow:hidden;cursor:pointer;background:var(--gray-50);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:all .2s}
+.doc-thumb-item:hover{border-color:var(--primary);box-shadow:0 2px 6px rgba(0,0,0,.08)}
+.doc-thumb-item img{width:100%;height:100%;object-fit:cover}
+.doc-thumb-item svg{width:16px;height:16px;stroke:var(--gray-400);fill:none;stroke-width:1.5}
+.doc-thumb-label{position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.65);color:white;font-size:8px;font-weight:700;text-align:center;padding:2px 0;text-transform:uppercase;letter-spacing:.3px}
+.table-inline-thumb{width:26px;height:26px;border-radius:4px;object-fit:cover;border:1px solid var(--border-color);cursor:pointer;display:inline-block;vertical-align:middle;margin-right:4px;transition:transform .15s}
+.table-inline-thumb:hover{transform:scale(1.15);border-color:var(--primary)}
+.table-empty-thumb{width:26px;height:26px;border-radius:4px;background:var(--gray-100);color:var(--gray-400);display:inline-flex;align-items:center;justify-content:center;font-size:10px;vertical-align:middle;margin-right:4px}
 </style>
 </head>
 <body>
+
+<!-- FIX: navbarMount dipindah ke dalam <body> -->
+<div id="navbarMount"></div>
 
 <header class="main-header">
   <button class="header-toggle" onclick="toggleSidebar()">
@@ -79,7 +77,7 @@
   </div>
   <div class="header-actions">
     <button class="header-btn" onclick="toggleTheme()">
-      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/></svg>
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
     </button>
   </div>
 </header>
@@ -103,13 +101,35 @@
     </div>
   </div>
 
-  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:20px" id="statsRow">
-    <div class="kpi-card"><div class="kpi-icon" style="background:#DBEAFE;color:#1D4ED8"><svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" fill="none" stroke-width="1.8"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div><div><div class="kpi-label">Total Armada</div><div class="kpi-value sm" id="statTotal">-</div></div></div>
-    <div class="kpi-card"><div class="kpi-icon" style="background:#DCFCE7;color:#16A34A"><svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" fill="none" stroke-width="1.8"><polyline points="20 6 9 17 4 12"/></svg></div><div><div class="kpi-label">Aktif</div><div class="kpi-value sm" id="statActive">-</div></div></div>
-    <div class="kpi-card"><div class="kpi-icon" style="background:#FEF3C7;color:#D97706"><svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" fill="none" stroke-width="1.8"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg></div><div><div class="kpi-label">STNK Segera</div><div class="kpi-value sm" id="statSTNK">-</div></div></div>
-    <div class="kpi-card"><div class="kpi-icon" style="background:#FEE2E2;color:#DC2626"><svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" fill="none" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div><div><div class="kpi-label">Terlambat</div><div class="kpi-value sm" id="statLate">-</div></div></div>
+  <!-- Stats -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:20px">
+    <div class="kpi-card">
+      <div class="kpi-icon" style="background:#DBEAFE;color:#1D4ED8">
+        <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" fill="none" stroke-width="1.8"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+      </div>
+      <div><div class="kpi-label">Total Armada</div><div class="kpi-value sm" id="statTotal">-</div></div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon" style="background:#DCFCE7;color:#16A34A">
+        <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" fill="none" stroke-width="1.8"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div><div class="kpi-label">Aktif</div><div class="kpi-value sm" id="statActive">-</div></div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon" style="background:#FEF3C7;color:#D97706">
+        <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" fill="none" stroke-width="1.8"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>
+      </div>
+      <div><div class="kpi-label">STNK Segera</div><div class="kpi-value sm" id="statSTNK">-</div></div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon" style="background:#FEE2E2;color:#DC2626">
+        <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" fill="none" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      </div>
+      <div><div class="kpi-label">Terlambat</div><div class="kpi-value sm" id="statLate">-</div></div>
+    </div>
   </div>
 
+  <!-- Toolbar -->
   <div class="search-toolbar">
     <div class="search-bar" style="flex:1;min-width:200px">
       <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -131,17 +151,23 @@
     <span style="font-size:12px;color:var(--text-secondary)" id="resultInfo">-</span>
   </div>
 
+  <!-- Grid View -->
   <div id="armadaGrid" class="armada-grid"></div>
+
+  <!-- List View -->
   <div id="armadaList" style="display:none" class="card">
     <div class="table-wrapper">
       <table class="data-table">
-        <thead><tr><th>No</th><th>No Polisi</th><th>Jenis</th><th>Merk</th><th>Tahun</th><th>Pemilik</th><th>STNK</th><th>KIR</th><th>Barcode</th><th>Status</th><th>Aksi</th></tr></thead>
+        <thead>
+          <tr><th>No</th><th>No Polisi</th><th>Jenis</th><th>Merk</th><th>Tahun</th><th>Pemilik</th><th>STNK</th><th>KIR</th><th>Barcode</th><th>Status</th><th>Aksi</th></tr>
+        </thead>
         <tbody id="armadaTableBody"></tbody>
       </table>
     </div>
   </div>
 </main>
 
+<!-- ==================== MODAL TAMBAH/EDIT ==================== -->
 <div class="modal-overlay" id="modalAdd">
   <div class="modal" style="max-width:680px">
     <div class="modal-header">
@@ -152,6 +178,7 @@
     </div>
     <div class="modal-body">
       <input type="hidden" id="editId">
+
       <div class="form-row-m">
         <div class="form-group-m">
           <label class="form-label-m">No. Polisi <span style="color:var(--error)">*</span></label>
@@ -165,9 +192,10 @@
           </select>
         </div>
       </div>
+
       <div class="form-row-m">
         <div class="form-group-m">
-          <label class="form-label-m">Nama Armada/Alias</label>
+          <label class="form-label-m">Nama Armada / Alias</label>
           <input type="text" id="fMerk" class="form-control-m" placeholder="Agnes Hino Euro">
         </div>
         <div class="form-group-m">
@@ -175,16 +203,18 @@
           <input type="number" id="fTahun" class="form-control-m" placeholder="2022" min="1990" max="2030">
         </div>
       </div>
+
       <div class="form-row-m">
         <div class="form-group-m">
           <label class="form-label-m">Pemilik / Pengemudi</label>
           <input type="text" id="fPemilik" class="form-control-m" placeholder="Nama pemilik kendaraan">
         </div>
         <div class="form-group-m">
-          <label class="form-label-m">Merk/Model</label>
+          <label class="form-label-m">Merk / Model</label>
           <input type="text" id="fNoSTNK" class="form-control-m" placeholder="Mitsubishi Colt Diesel">
         </div>
       </div>
+
       <div class="form-row-m">
         <div class="form-group-m">
           <label class="form-label-m">Tanggal STNK</label>
@@ -196,13 +226,13 @@
         </div>
       </div>
 
-      
+      <!-- Upload Dokumen -->
       <div class="form-group-m">
-        <label class="form-label-m" style="font-weight:700; margin-bottom:8px; display:block; color:var(--primary)">Upload Dokumen Berkas Pendukung</label>
+        <label class="form-label-m" style="font-weight:700;margin-bottom:8px;display:block;color:var(--primary)">Upload Dokumen Berkas Pendukung</label>
         <div class="document-upload-grid">
-          
+
           <div>
-            <label class="form-label-m" style="font-size:11px; margin-bottom:4px;">Foto STNK</label>
+            <label class="form-label-m" style="font-size:11px;margin-bottom:4px">Foto STNK</label>
             <div class="upload-zone">
               <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
               <p><strong>Pilih Berkas</strong> STNK</p>
@@ -217,7 +247,7 @@
           </div>
 
           <div>
-            <label class="form-label-m" style="font-size:11px; margin-bottom:4px;">Foto KIR</label>
+            <label class="form-label-m" style="font-size:11px;margin-bottom:4px">Foto KIR</label>
             <div class="upload-zone">
               <svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
               <p><strong>Pilih Berkas</strong> KIR</p>
@@ -232,7 +262,7 @@
           </div>
 
           <div>
-            <label class="form-label-m" style="font-size:11px; margin-bottom:4px;">Foto Barcode Pertamina</label>
+            <label class="form-label-m" style="font-size:11px;margin-bottom:4px">Foto Barcode Pertamina</label>
             <div class="upload-zone">
               <svg viewBox="0 0 24 24"><line x1="3" y1="5" x2="3" y2="19"/><line x1="21" y1="5" x2="21" y2="19"/><path d="M7 5v14M11 5v14M17 5v14"/></svg>
               <p><strong>Pilih Berkas</strong> Barcode</p>
@@ -248,7 +278,8 @@
 
         </div>
       </div>
-      
+
+      <!-- Status (edit only) -->
       <div id="editStatusGroup" style="display:none">
         <div class="form-group-m">
           <label class="form-label-m">Status</label>
@@ -258,6 +289,7 @@
           </select>
         </div>
       </div>
+
     </div>
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeModal('modalAdd');resetForm()">Batal</button>
@@ -269,26 +301,26 @@
   </div>
 </div>
 
-<div class="modal-overlay" id="modalPreviewFoto" style="z-index:2000;">
-  <div class="modal" style="max-width:500px; background:transparent; box-shadow:none; border:none;">
-    <div style="display:flex; justify-content:flex-end; margin-bottom:10px;">
-      <button class="modal-close" onclick="closeModal('modalPreviewFoto')" style="background:rgba(0,0,0,0.6); color:white; border-radius:50%; width:36px; height:36px; display:flex; align-items:center; justify-content:center; border:none; cursor:pointer;">
+<!-- ==================== MODAL LIGHTBOX FOTO ==================== -->
+<div class="modal-overlay" id="modalPreviewFoto" style="z-index:2000">
+  <div class="modal" style="max-width:500px;background:transparent;box-shadow:none;border:none">
+    <div style="display:flex;justify-content:flex-end;margin-bottom:10px">
+      <button class="modal-close" onclick="closeModal('modalPreviewFoto')" style="background:rgba(0,0,0,.6);color:white;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;border:none;cursor:pointer">
         <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
     </div>
-    <div style="background:var(--bg-card); border-radius:var(--radius-lg); overflow:hidden; padding:10px; box-shadow:var(--shadow-lg);">
-      <img id="imgLightbox" src="" style="width:100%; height:auto; max-height:70vh; object-fit:contain; display:block; border-radius:var(--radius);">
-      <div id="captionLightbox" style="text-align:center; padding:12px 8px 4px; font-size:13px; font-weight:700; color:var(--text-primary); text-transform:uppercase; letter-spacing:0.5px;">Preview Berkas</div>
+    <div style="background:var(--bg-card);border-radius:var(--radius-lg);overflow:hidden;padding:10px;box-shadow:var(--shadow-lg)">
+      <img id="imgLightbox" src="" style="width:100%;height:auto;max-height:70vh;object-fit:contain;display:block;border-radius:var(--radius)">
+      <div id="captionLightbox" style="text-align:center;padding:12px 8px 4px;font-size:13px;font-weight:700;color:var(--text-primary);text-transform:uppercase;letter-spacing:.5px">Preview Berkas</div>
     </div>
   </div>
 </div>
 
 <script>
-// Fungsi global pembantu trigger modal lightbox gambar dari file js/armada.js
 function previewImageDirect(url, title) {
   if (!url) return;
   document.getElementById('imgLightbox').src = url;
-  document.getElementById('captionLightbox').innerText = title;
+  document.getElementById('captionLightbox').innerText = title || 'Preview Berkas';
   openModal('modalPreviewFoto');
 }
 </script>
