@@ -363,8 +363,7 @@ function selectPos(idPos, namaPos) {
   document.getElementById('posSelectedBox').style.display = 'block';
   document.getElementById('posManualBox').style.display = 'none';
   // Also keep old chip (if exists)
-  const oldChip = document.getElementById('posSelectedChip');
-  if (oldChip) { document.getElementById('posSelectedName').textContent = namaPos; oldChip.classList.add('show'); }
+
 
   hidePosDropdown();
   handlePosExtras(namaPos);
@@ -372,9 +371,9 @@ function selectPos(idPos, namaPos) {
 
 function clearPos() {
   selectedPosId = null; selectedPosName = null;
-  document.getElementById('fPosVisible').selectedIndex = 0;
   document.getElementById('fPosId').value = '';
-  document.getElementById('posSelectedChip').classList.remove('show');
+  document.getElementById('posSelectedBox').style.display = 'none';
+  document.getElementById('posManualBox').style.display = 'block';
   ['bbmExtra','perawatanExtra','pajakExtra'].forEach(id => {
     document.getElementById(id).classList.remove('show');
   });
@@ -387,11 +386,7 @@ function clearPos() {
   
 }
 
-function onPosVisibleChange() {
-  const sel = document.getElementById('fPosVisible');
-  const name = sel.options[sel.selectedIndex]?.dataset.name || sel.options[sel.selectedIndex]?.text || '';
-  selectPos(sel.value, name);
-}
+
 
 function handlePosExtras(name) {
   const n = name.toLowerCase();
@@ -548,49 +543,6 @@ function closeCamera() {
 // ============================================================
 // SAVE / EDIT / DELETE
 // ============================================================
-async function saveData() {
-  const id     = document.getElementById('editId').value;
-  const ts     = document.getElementById('fTimestamp').value;
-  const nama   = document.getElementById('fNama').value.trim();
-  const uraian = document.getElementById('fUraian').value.trim();
-  const idPos  = document.getElementById('fPosId').value || document.getElementById('fPosVisible').value;
-  const fPosV  = document.getElementById('fPosVisible');
-  const namaPos= selectedPosName || fPosV.options[fPosV.selectedIndex]?.dataset.name || '';
-  const nominal= document.getElementById('fNominal').value;
-
-  if (!ts)     { showToast('Tanggal wajib diisi.','error'); return; }
-  if (!nama)   { showToast('Nama penerima wajib diisi.','error'); return; }
-  if (!uraian) { showToast('Uraian wajib diisi.','error'); return; }
-  if (!idPos)  { showToast('Pos wajib dipilih.','error'); return; }
-  if (!nominal || Number(nominal)<=0) { showToast('Nominal wajib diisi.','error'); return; }
-
-  const btn = document.getElementById('btnSave');
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span> Menyimpan...';
-
-  const armSel = document.getElementById('fArmada');
-  const nopol  = armSel.options[armSel.selectedIndex]?.dataset.nopol || '';
-
-  const r = await callAPI(id ? 'updatePengeluaran' : 'addPengeluaran', {
-    id, timestamp: ts, nama, uraian, idPos, namaPos,
-    nominal: Number(nominal),
-    metodePembayaran: document.getElementById('fMetode').value,
-    noPolisi: nopol, idArmada: armSel.value,
-    jenisBBM: document.getElementById('fJenisBBM').value,
-    liter: document.getElementById('fLiter').value,
-    hargaPerLiter: document.getElementById('fHargaL').value,
-    fotoNotaBase64: notaB64, fotoNotaMimeType: notaMime,
-    buktiBase64: buktiB64, buktiMimeType: buktiMime
-  });
-
-  btn.disabled = false;
-  btn.innerHTML = '<svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" fill="none" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Simpan';
-
-  if (r.success) {
-    showToast(r.message || 'Pengeluaran disimpan.', 'success');
-    closeModal('modalAdd'); resetForm(); pg = 1; loadData();
-  } else showToast(r.error || 'Gagal menyimpan.', 'error');
-}
 
 function editRow(row) {
   document.getElementById('editId').value = row.id;
@@ -621,7 +573,6 @@ function resetForm() {
   document.getElementById('editId').value = '';
   document.getElementById('modalTitle').textContent = 'Tambah Pengeluaran';
   ['fNama','fUraian','fNominal','fLiter','fHargaL'].forEach(i => document.getElementById(i).value = '');
-  document.getElementById('fPosVisible').selectedIndex = 0;
   document.getElementById('fMetode').value = 'Tunai';
   ['bbmExtra','perawatanExtra','pajakExtra'].forEach(id => {
     document.getElementById(id).classList.remove('show');
@@ -750,7 +701,6 @@ function togglePajakField(type) {
 // ============================================================
 // OVERWRITE saveData to also sync BBM / Perawatan / Pajak
 // ============================================================
-const _originalSaveData = saveData;
 // We'll redefine saveData below to handle the new modules
 
 async function saveDataFull() {
@@ -758,9 +708,8 @@ async function saveDataFull() {
   const ts     = document.getElementById('fTimestamp').value;
   const nama   = document.getElementById('fNama').value.trim();
   const uraian = document.getElementById('fUraian').value.trim();
-  const idPos  = document.getElementById('fPosId').value || document.getElementById('fPosVisible').value;
-  const fPosV  = document.getElementById('fPosVisible');
-  const namaPos = selectedPosName || fPosV.options[fPosV.selectedIndex]?.dataset.name || '';
+  const idPos = document.getElementById('fPosId').value;
+  const namaPos = selectedPosName || '';
   const nominal = document.getElementById('fNominal').value;
 
   if (!ts)     { showToast('Tanggal wajib diisi.','error'); return; }
@@ -980,8 +929,7 @@ function onNominalChangeBBM() {
   if (bbmShown) updateBBMCalc();
 }
 
-// Alias untuk backward compat
-function calcBBM() { updateBBMCalc(); }
+
 // Fungsi utama untuk menghitung jumlah liter
 function hitungTotalLiter() {
     // Ambil nilai dari input Nominal dan Harga, ubah ke angka (float)
@@ -1013,32 +961,3 @@ function hitungTotalLiter() {
     }
 }
 
-// Panggil fungsi hitung saat Nominal diubah
-function onNominalChangeBBM() {
-    hitungTotalLiter();
-}
-
-// Panggil fungsi hitung saat Harga per Liter diubah/direvisi manual
-function onHargaInput() {
-    hitungTotalLiter();
-}
-
-// Tambahan: Kalau lo pakai dropdown Jenis BBM untuk auto-fill harga referensi
-function onJenisBBMChange() {
-    const jenisBbm = document.getElementById('fJenisBBM').value;
-    const inputHarga = document.getElementById('fHargaL');
-    
-    // Contoh set harga otomatis berdasarkan pilihan, tapi tetep bisa direvisi manual
-    if (jenisBbm === 'Solar') {
-        inputHarga.value = 6800;
-    } else if (jenisBbm === 'Pertalite') {
-        inputHarga.value = 10000;
-    } else if (jenisBbm === 'Pertamax') {
-        inputHarga.value = 12950;
-    } else {
-        inputHarga.value = ''; // Kosongin kalau custom
-    }
-    
-    // Setelah harga terisi otomatis, hitung ulang liternya
-    hitungTotalLiter();
-}
