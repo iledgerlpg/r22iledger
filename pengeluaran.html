@@ -307,11 +307,8 @@
 <div class="form-group-m">
         <label class="form-label-m">Uraian *</label>
         <div class="uraian-wrap" id="uraianWrap">
-          <input 
-            type="text" 
-            id="fUraian" 
-            class="form-control-m"
-            placeholder="UANG JALAN"
+          <input type="text" id="fUraian" class="form-control-m"
+            placeholder="Ketik uraian... contoh: Isi solar 50L B 1234 CD"
             autocomplete="off"
             oninput="onUraianInput(this.value)">
           <div class="pos-dropdown" id="posDropdown">
@@ -356,16 +353,11 @@
           <input type="hidden" id="fPosId">
         </div>
 
-<div class="form-group-m">
+        <div class="form-group-m">
           <label class="form-label-m">Nominal (Rp) *</label>
-          <input 
-            type="text" 
-            id="fNominal" 
-            class="form-control-m"
-            inputmode="numeric"
-            placeholder="0"
-            oninput="if(typeof formatNominalInput === 'function') formatNominalInput(this)">
+          <input type="number" id="fNominal" class="form-control-m" placeholder="0" min="0" oninput="onNominalChangeBBM()">
         </div>
+
       </div>
 
       <!-- ===== BBM DETAIL ===== -->
