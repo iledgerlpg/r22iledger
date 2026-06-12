@@ -371,20 +371,50 @@ function selectPos(idPos, namaPos) {
 }
 
 function clearPos() {
-  selectedPosId = null; selectedPosName = null;
-  document.getElementById('fPosVisible').selectedIndex = 0;
-  document.getElementById('fPosId').value = '';
-  document.getElementById('posSelectedChip').classList.remove('show');
+  selectedPosId = null;
+  selectedPosName = null;
+
+  // FIX: cek null sebelum akses
+  const fPosVisible = document.getElementById('fPosVisible');
+  if (fPosVisible) fPosVisible.selectedIndex = 0;
+
+  const fPosId = document.getElementById('fPosId');
+  if (fPosId) fPosId.value = '';
+
+  const posSelectedChip = document.getElementById('posSelectedChip');
+  if (posSelectedChip) posSelectedChip.classList.remove('show');
+
+  // Reset pos selected box
+  const posSelectedBox = document.getElementById('posSelectedBox');
+  if (posSelectedBox) posSelectedBox.style.display = 'none';
+
+  const posManualBox = document.getElementById('posManualBox');
+  if (posManualBox) posManualBox.style.display = 'block';
+
   ['bbmExtra','perawatanExtra','pajakExtra'].forEach(id => {
-    document.getElementById(id).classList.remove('show');
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('show');
   });
+
   // Reset pajak checkboxes
-  ['cbSTNK','cbKIR','cbPajak'].forEach(id => { const el = document.getElementById(id); if(el) el.checked = false; });
-  ['fieldSTNK','fieldKIR','fieldPajak'].forEach(id => { const el = document.getElementById(id); if(el) el.style.display='none'; });
-  ['fTglSTNK','fTglKIR','fTglPajak','fPrwKet','fNextService'].forEach(id => { const el = document.getElementById(id); if(el) el.value=''; });
-  document.getElementById('pajakCurrentStatus').style.display = 'none';
-  document.getElementById('fArmadaPajak').value = '';
-  
+  ['cbSTNK','cbKIR','cbPajak'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.checked = false;
+  });
+  ['fieldSTNK','fieldKIR','fieldPajak'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+  ['fTglSTNK','fTglKIR','fTglPajak','fPrwKet','fNextService'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+
+  const pajakCurrentStatus = document.getElementById('pajakCurrentStatus');
+  if (pajakCurrentStatus) pajakCurrentStatus.style.display = 'none';
+
+  const fArmadaPajak = document.getElementById('fArmadaPajak');
+  if (fArmadaPajak) fArmadaPajak.value = '';
 }
 
 function onPosVisibleChange() {
@@ -394,21 +424,32 @@ function onPosVisibleChange() {
 }
 
 function handlePosExtras(name) {
-  const n = name.toLowerCase();
-  const isBBM      = n.includes('bbm') || n.includes('bahan bakar') || n.includes('solar') || n.includes('pertalite');
-  const isPrw      = n.includes('perawatan');
-  const isPajak    = n.includes('pajak') || n.includes('stnk') || n.includes('kir');
+  const n     = name.toLowerCase();
+  const idPos = selectedPosId || document.getElementById('fPosId').value || '';
+
+  // Cek nama pos yang dipilih dari allPos
+  const posObj  = allPos.find(p => p.id === idPos) || {};
+  const namaPos = (posObj.namaPos || name).toLowerCase();
+
+  // BBM — deteksi dari nama pos atau kategori
+  const isBBM = namaPos.includes('bbm') 
+    || namaPos.includes('bahan bakar') 
+    || namaPos.includes('solar') 
+    || namaPos.includes('pertalite');
+
+  // Perawatan — deteksi dari nama pos
+  const isPrw = namaPos.includes('perawatan') || namaPos.includes('servis');
+
+  // Pajak — HANYA trigger kalau nama pos mengandung kata 'pajak kendaraan' atau 'stnk' atau 'kir'
+  // BUKAN sekadar kata 'pajak' saja supaya tidak tabrakan dengan pos pajak lainnya
+  const isPajak = namaPos.includes('pajak kendaraan') 
+    || namaPos.includes('stnk') 
+    || namaPos.includes('kir')
+    || namaPos === 'pajak';  // exact match 'pajak' saja
 
   document.getElementById('bbmExtra').classList.toggle('show', isBBM);
   document.getElementById('perawatanExtra').classList.toggle('show', isPrw);
   document.getElementById('pajakExtra').classList.toggle('show', isPajak);
-
-  // Update nominalPreview positioning
-  if (!isBBM && !isPrw && !isPajak) {
-    document.getElementById('bbmExtra').classList.remove('show');
-    document.getElementById('perawatanExtra').classList.remove('show');
-    document.getElementById('pajakExtra').classList.remove('show');
-  }
 }
 
 function calcBBM() {
@@ -618,40 +659,55 @@ async function delRow(id, uraian) {
 }
 
 function resetForm() {
-  document.getElementById('editId').value = '';
-  document.getElementById('modalTitle').textContent = 'Tambah Pengeluaran';
-  ['fNama','fUraian','fNominal','fLiter','fHargaL'].forEach(i => document.getElementById(i).value = '');
-  document.getElementById('fPosVisible').selectedIndex = 0;
-  document.getElementById('fMetode').value = 'Tunai';
-  ['bbmExtra','perawatanExtra','pajakExtra'].forEach(id => {
-    document.getElementById(id).classList.remove('show');
+  const editId = document.getElementById('editId');
+  if (editId) editId.value = '';
+
+  const modalTitle = document.getElementById('modalTitle');
+  if (modalTitle) modalTitle.textContent = 'Tambah Pengeluaran';
+
+  ['fNama','fUraian','fNominal','fLiter','fHargaL'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
   });
-  // Reset pajak checkboxes
-  ['cbSTNK','cbKIR','cbPajak'].forEach(id => { const el = document.getElementById(id); if(el) el.checked = false; });
-  ['fieldSTNK','fieldKIR','fieldPajak'].forEach(id => { const el = document.getElementById(id); if(el) el.style.display='none'; });
-  ['fTglSTNK','fTglKIR','fTglPajak','fPrwKet','fNextService'].forEach(id => { const el = document.getElementById(id); if(el) el.value=''; });
-  document.getElementById('pajakCurrentStatus').style.display = 'none';
-  document.getElementById('fArmadaPajak').value = '';
-  
-  document.getElementById('nominalPreview').style.display = 'none';
+
+  const fMetode = document.getElementById('fMetode');
+  if (fMetode) fMetode.value = 'Tunai';
+
+  const nominalPreview = document.getElementById('nominalPreview');
+  if (nominalPreview) nominalPreview.style.display = 'none';
+
   namaMode = 'dropdown';
-  document.getElementById('namaIsCustom').style.display = 'none';
-  document.getElementById('fNama').placeholder = 'Pilih karyawan atau ketik nama supplier...';
-  clearPos();
-  // Reset harga BBM note
+
+  const namaIsCustom = document.getElementById('namaIsCustom');
+  if (namaIsCustom) namaIsCustom.style.display = 'none';
+
+  const fNama = document.getElementById('fNama');
+  if (fNama) fNama.placeholder = 'Pilih karyawan atau ketik nama supplier...';
+
+  // Reset BBM
   currentRefHarga = 0;
-  const jenisBBM = document.getElementById('fJenisBBM');
-  if (jenisBBM) jenisBBM.value = '';
-  const hargaNote = document.getElementById('bbmHargaNote');
-  if (hargaNote) { hargaNote.textContent = '← Pilih jenis BBM, harga referensi Pertamina terisi otomatis'; hargaNote.style.color='var(--text-secondary)'; }
-  const refChip = document.getElementById('bbmRefChip');
-  if (refChip) refChip.style.display = 'none';
-  const resetBtn = document.getElementById('btnResetHarga');
-  if (resetBtn) resetBtn.style.display = 'none';
-  const summary = document.getElementById('bbmSummary');
-  if (summary) summary.style.display = 'none';
-  removeFile('nota'); removeFile('bukti');
+  const fJenisBBM = document.getElementById('fJenisBBM');
+  if (fJenisBBM) fJenisBBM.value = '';
+
+  const bbmHargaNote = document.getElementById('bbmHargaNote');
+  if (bbmHargaNote) {
+    bbmHargaNote.textContent = '← Pilih jenis BBM, harga referensi Pertamina terisi otomatis';
+    bbmHargaNote.style.color = 'var(--text-secondary)';
+  }
+
+  const bbmRefChip = document.getElementById('bbmRefChip');
+  if (bbmRefChip) bbmRefChip.style.display = 'none';
+
+  const btnResetHarga = document.getElementById('btnResetHarga');
+  if (btnResetHarga) btnResetHarga.style.display = 'none';
+
+  const bbmSummary = document.getElementById('bbmSummary');
+  if (bbmSummary) bbmSummary.style.display = 'none';
+
+  removeFile('nota');
+  removeFile('bukti');
   setDefaultDT();
+  clearPos(); // clearPos sudah null-safe dari fix di atas
 }
 
 // ============================================================
@@ -1041,4 +1097,38 @@ function onJenisBBMChange() {
     
     // Setelah harga terisi otomatis, hitung ulang liternya
     hitungTotalLiter();
+}
+// ============================================================
+// FORMAT NOMINAL — Titik Ribuan otomatis saat mengetik
+// ============================================================
+function formatNominalInput(input) {
+  // Ambil hanya angka murni
+  let raw = input.value.replace(/\./g, '').replace(/[^0-9]/g, '');
+  
+  // Format pakai titik ribuan
+  if (raw) {
+    input.value = parseInt(raw).toLocaleString('id-ID');
+  } else {
+    input.value = '';
+  }
+  
+  // Update preview dan BBM calc jika perlu
+  showNominalPreview();
+  const bbmShown = document.getElementById('bbmExtra')?.classList.contains('show');
+  if (bbmShown) updateBBMCalc();
+}
+
+// Ambil nilai nominal murni (angka saja, tanpa titik) untuk dikirim ke backend
+function getNominalRaw() {
+  const val = document.getElementById('fNominal').value;
+  return parseInt(val.replace(/\./g, '').replace(/[^0-9]/g, '')) || 0;
+}
+
+// ============================================================
+// FORMAT URAIAN — Auto Uppercase saat mengetik
+// ============================================================
+function formatUraianInput(input) {
+  const pos = input.selectionStart; // simpan posisi cursor
+  input.value = input.value.toUpperCase();
+  input.setSelectionRange(pos, pos); // kembalikan posisi cursor
 }
