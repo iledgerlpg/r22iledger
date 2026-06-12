@@ -459,12 +459,12 @@ function calcBBM() {
 }
 
 function showNominalPreview() {
-  const v = parseFloat(document.getElementById('fNominal').value)||0;
+  const v = getNominalRaw(); // FIX: pakai getNominalRaw bukan parseFloat langsung
   const el = document.getElementById('nominalPreview');
+  if (!el) return;
   el.style.display = v > 0 ? 'block' : 'none';
   el.textContent = formatRupiah(v);
 }
-
 // ============================================================
 // FILE UPLOAD — Gallery
 // ============================================================
@@ -817,13 +817,13 @@ async function saveDataFull() {
   const idPos  = document.getElementById('fPosId').value || document.getElementById('fPosVisible').value;
   const fPosV  = document.getElementById('fPosVisible');
   const namaPos = selectedPosName || fPosV.options[fPosV.selectedIndex]?.dataset.name || '';
-  const nominal = document.getElementById('fNominal').value;
+  const nominal = getNominalRaw();
 
   if (!ts)     { showToast('Tanggal wajib diisi.','error'); return; }
   if (!nama)   { showToast('Nama penerima wajib diisi.','error'); return; }
   if (!uraian) { showToast('Uraian wajib diisi.','error'); return; }
   if (!idPos)  { showToast('Pos wajib dipilih.','error'); return; }
-  if (!nominal || Number(nominal)<=0) { showToast('Nominal wajib diisi.','error'); return; }
+ if (!nominal || nominal <= 0) { showToast('Nominal wajib diisi.','error'); return; }
 
   // Validate BBM if shown
   const bbmShown = document.getElementById('bbmExtra').classList.contains('show');
@@ -852,7 +852,7 @@ async function saveDataFull() {
 
     const r = await callAPI(id ? 'updatePengeluaran' : 'addPengeluaran', {
       id, timestamp: ts, nama, uraian, idPos, namaPos,
-      nominal: Number(nominal),
+      nominal: nominal,
       metodePembayaran: document.getElementById('fMetode').value,
       noPolisi: nopol, idArmada: armSel.value,
       jenisBBM: document.getElementById('fJenisBBM').value,
@@ -1002,8 +1002,8 @@ function resetHargaToRef() {
 
 // Core: Nominal (manual) ÷ Harga = Liter (readonly auto)
 function updateBBMCalc() {
-  const nominal = parseFloat(document.getElementById('fNominal').value) || 0;
-  const harga   = parseFloat(document.getElementById('fHargaL').value)  || 0;
+  const nominal = getNominalRaw(); // FIX: pakai getNominalRaw
+  const harga   = parseFloat(document.getElementById('fHargaL').value) || 0;
   const liter   = (nominal > 0 && harga > 0) ? nominal / harga : 0;
 
   // Update liter field (readonly)
