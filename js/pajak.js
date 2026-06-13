@@ -5,58 +5,14 @@ document.addEventListener('DOMContentLoaded', () => {
   loadData();
 });
 
-// ============================================================
-// LOAD DATA — ambil dari getArmada (sumber data sama)
-// ============================================================
 async function loadData() {
-  // FIX: pajak ambil data dari getArmada, bukan getPajak yang terpisah
-  const res = await callAPI('getArmada', {});
+  const res = await callAPI('getPajak', {});
   if (!res.success) { showToast('Gagal memuat data.', 'error'); return; }
 
-  // Normalisasi: tambahkan field status pajak dari tanggal
-  allData = (res.data || []).map(d => {
-    const now = new Date();
-    const diffSTNK  = diffHari(d.tanggalSTNK, now);
-    const diffKIR   = diffHari(d.tanggalKIR, now);
-
-    return {
-      ...d,
-      diffSTNK,
-      diffKIR,
-      statusSTNK : getStatusFromDiff(diffSTNK, d.tanggalSTNK),
-      statusKIR  : getStatusFromDiff(diffKIR,  d.tanggalKIR)
-    };
-  });
-
+  allData = res.data || [];
   updateStats(allData);
   renderAlerts(allData);
   applyFilter();
-}
-
-// ============================================================
-// HELPERS
-// ============================================================
-function parseTanggal(tglStr) {
-  if (!tglStr) return null;
-  if (typeof tglStr === 'string' && tglStr.includes('/')) {
-    const [d, m, y] = tglStr.split('/');
-    return new Date(`${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`);
-  }
-  return new Date(tglStr);
-}
-
-function diffHari(tglStr, now) {
-  if (!tglStr) return null;
-  const tgl = parseTanggal(tglStr);
-  if (!tgl || isNaN(tgl)) return null;
-  return Math.floor((tgl - now) / 86400000);
-}
-
-function getStatusFromDiff(diff, tglStr) {
-  if (!tglStr || diff === null) return 'N/A';
-  if (diff < 0)    return 'TERLAMBAT';
-  if (diff <= 30)  return 'SEGERA_JATUH_TEMPO';
-  return 'AMAN';
 }
 
 // ============================================================
@@ -75,17 +31,16 @@ function updateStats(data) {
   document.getElementById('statLate').textContent  = late;
   document.getElementById('statTotal').textContent = data.length;
 
-  // Update badge di navbar jika ada
-  const pajakBadge = document.getElementById('pajakBadge');
-  if (pajakBadge && (warn + late) > 0) {
-    pajakBadge.style.display = 'inline';
-    pajakBadge.textContent   = warn + late;
+  const badge = document.getElementById('navPajakBadge');
+  if (badge && (warn + late) > 0) {
+    badge.style.display  = 'inline';
+    badge.textContent    = warn + late;
   }
 }
 
 function getWorstStatus(d) {
-  const statuses = [d.statusSTNK, d.statusKIR].filter(s => s && s !== 'N/A');
-  if (statuses.includes('TERLAMBAT'))        return 'TERLAMBAT';
+  const statuses = [d.statusSTNK, d.statusKIR, d.statusPajak].filter(s => s && s !== 'N/A');
+  if (statuses.includes('TERLAMBAT'))          return 'TERLAMBAT';
   if (statuses.includes('SEGERA_JATUH_TEMPO')) return 'SEGERA_JATUH_TEMPO';
   return 'AMAN';
 }
@@ -116,10 +71,8 @@ function setFilter(filter, btn) {
 function applyFilter() {
   const q = (document.getElementById('searchInput').value || '').toLowerCase();
   let filtered = allData.filter(d => !q || d.noPolisi.toLowerCase().includes(q));
-
   if (currentFilter === 'warning') filtered = filtered.filter(d => getWorstStatus(d) === 'SEGERA_JATUH_TEMPO');
   else if (currentFilter === 'danger') filtered = filtered.filter(d => getWorstStatus(d) === 'TERLAMBAT');
-
   renderGrid(filtered);
 }
 
@@ -129,24 +82,17 @@ function applyFilter() {
 function renderGrid(data) {
   const container = document.getElementById('pajakGrid');
   if (!data.length) {
-    container.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px;color:var(--text-secondary)"><h3 style="color:var(--text-primary)">Tidak ada data</h3><p style="font-size:13px;margin-top:6px">Tambahkan armada di menu Data Armada untuk melihat status pajak.</p></div>';
+    container.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px;color:var(--text-secondary)"><h3>Tidak ada data</h3><p style="font-size:13px;margin-top:6px">Belum ada record pajak kendaraan.</p></div>';
     return;
   }
+
   container.innerHTML = data.map(d => {
     const worst       = getWorstStatus(d);
     const borderColor = worst === 'TERLAMBAT' ? 'var(--error)' : worst === 'SEGERA_JATUH_TEMPO' ? 'var(--warning)' : 'var(--border-color)';
     const topBg       = worst === 'TERLAMBAT' ? '#fef2f2'      : worst === 'SEGERA_JATUH_TEMPO' ? '#fffbeb'        : 'var(--bg-card)';
 
-    const stnkBadge = getStatusBadge(d.statusSTNK, d.diffSTNK);
-    const kirBadge  = getStatusBadge(d.statusKIR,  d.diffKIR);
-
-    const daysLeft = d.diffSTNK !== null ? d.diffSTNK : (d.diffKIR !== null ? d.diffKIR : null);
-    const ringData = daysLeft !== null ? buildRing(daysLeft) : null;
-
-    // FIX: escape value untuk onclick supaya tidak pecah
-    const tglSTNK  = (d.tanggalSTNK  || '').replace(/'/g, '');
-    const tglKIR   = (d.tanggalKIR   || '').replace(/'/g, '');
-    const nopol    = (d.noPolisi     || '').replace(/'/g, '');
+    const minDiff = [d.diffSTNK, d.diffKIR].filter(x => x !== null).sort((a,b) => a-b)[0];
+    const ringData = minDiff !== null && minDiff !== undefined ? buildRing(minDiff) : null;
 
     return `
     <div class="pajak-card" style="border-color:${borderColor}">
@@ -158,30 +104,35 @@ function renderGrid(data) {
               <circle class="ring-fill" cx="24" cy="24" r="20"
                 style="stroke:${ringData.color};stroke-dasharray:125.7;stroke-dashoffset:${ringData.offset}"/>
             </svg>
-            <div class="ring-text">${Math.abs(daysLeft)}</div>
+            <div class="ring-text">${Math.abs(minDiff)}</div>
           </div>` : ''}
           <div>
-            <div class="pajak-nopol">${nopol}</div>
+            <div class="pajak-nopol">${d.noPolisi}</div>
             <div style="font-size:11px;color:var(--text-secondary);margin-top:2px">
               ${worst === 'TERLAMBAT' ? '🚨 Terlambat' : worst === 'SEGERA_JATUH_TEMPO' ? '⚠️ Segera Jatuh Tempo' : '✅ Aman'}
             </div>
           </div>
         </div>
       </div>
-      <div class="pajak-card-body">
+      <div class="pajak-card-body" style="grid-template-columns:1fr 1fr 1fr">
         <div class="pajak-item">
           <div class="pi-label">STNK</div>
           <div class="pi-value">${d.tanggalSTNK || 'Belum diisi'}</div>
-          <div class="pi-days">${stnkBadge}</div>
+          <div class="pi-days">${getStatusBadge(d.statusSTNK, d.diffSTNK)}</div>
         </div>
         <div class="pajak-item">
           <div class="pi-label">KIR</div>
           <div class="pi-value">${d.tanggalKIR || 'Belum diisi'}</div>
-          <div class="pi-days">${kirBadge}</div>
+          <div class="pi-days">${getStatusBadge(d.statusKIR, d.diffKIR)}</div>
+        </div>
+        <div class="pajak-item">
+          <div class="pi-label">Pajak</div>
+          <div class="pi-value">${d.tanggalPajak || 'Belum diisi'}</div>
+          <div class="pi-days">${getStatusBadge(d.statusPajak, null)}</div>
         </div>
       </div>
       <div class="pajak-card-footer">
-        <button class="btn btn-outline btn-sm" onclick="editPajak('${d.id}','${nopol}','${tglSTNK}','${tglKIR}')">
+        <button class="btn btn-outline btn-sm" onclick="editPajak('${d.id}','${d.noPolisi}','${d.tanggalSTNK||''}','${d.tanggalKIR||''}','${d.tanggalPajak||''}')">
           <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
           Update Tanggal
         </button>
@@ -192,33 +143,50 @@ function renderGrid(data) {
 
 function getStatusBadge(status, diff) {
   if (!status || status === 'N/A') return '<span class="status-badge status-na">-</span>';
-  if (status === 'TERLAMBAT')           return `<span class="status-badge status-danger">🚨 Terlambat ${diff !== null ? Math.abs(diff) + ' hari' : ''}</span>`;
-  if (status === 'SEGERA_JATUH_TEMPO')  return `<span class="status-badge status-warning">⚠️ ${diff} hari lagi</span>`;
-  return `<span class="status-badge status-aman">✅ Aman (${diff} hari)</span>`;
+  if (status === 'TERLAMBAT')          return `<span class="status-badge status-danger">🚨 ${diff !== null && diff !== undefined ? Math.abs(diff) + ' hari' : 'Terlambat'}</span>`;
+  if (status === 'SEGERA_JATUH_TEMPO') return `<span class="status-badge status-warning">⚠️ ${diff !== null && diff !== undefined ? diff + ' hari lagi' : 'Segera'}</span>`;
+  return `<span class="status-badge status-aman">✅ ${diff !== null && diff !== undefined ? diff + ' hari' : 'Aman'}</span>`;
 }
 
 function buildRing(days) {
-  const maxDays     = 365;
-  const clampedDays = Math.max(0, Math.min(days, maxDays));
-  const pct         = clampedDays / maxDays;
+  const clampedDays   = Math.max(0, Math.min(days, 365));
+  const pct           = clampedDays / 365;
   const circumference = 125.7;
-  const offset      = circumference - (pct * circumference);
-  const color       = days < 0 ? '#ef4444' : days <= 7 ? '#ef4444' : days <= 30 ? '#f59e0b' : '#10b981';
+  const offset        = circumference - (pct * circumference);
+  const color         = days < 0 ? '#ef4444' : days <= 7 ? '#ef4444' : days <= 30 ? '#f59e0b' : '#10b981';
   return { offset, color };
 }
 
 // ============================================================
-// EDIT PAJAK — update tanggal STNK & KIR via updateArmada
+// EDIT PAJAK
 // ============================================================
-function editPajak(id, noPolisi, tglSTNK, tglKIR) {
+function editPajak(id, noPolisi, tglSTNK, tglKIR, tglPajak) {
   document.getElementById('editPajakId').value          = id;
   document.getElementById('modalEditTitle').textContent = 'Update Pajak – ' + noPolisi;
 
-  // FIX: konversi DD/MM/YYYY → YYYY-MM-DD untuk input[type=date]
-  document.getElementById('fTglSTNK').value  = tglSTNK  ? tglSTNK.split('/').reverse().join('-')  : '';
-  document.getElementById('fTglKIR').value   = tglKIR   ? tglKIR.split('/').reverse().join('-')   : '';
+  // Konversi DD Mon YYYY atau DD/MM/YYYY → YYYY-MM-DD
+  document.getElementById('fTglSTNK').value  = toInputDate(tglSTNK);
+  document.getElementById('fTglKIR').value   = toInputDate(tglKIR);
+  document.getElementById('fTglPajak').value = toInputDate(tglPajak);
 
   openModal('modalEdit');
+}
+
+function toInputDate(tglStr) {
+  if (!tglStr) return '';
+  // Format DD/MM/YYYY
+  if (tglStr.includes('/')) {
+    const [d, m, y] = tglStr.split('/');
+    return `${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`;
+  }
+  // Format "12 Jan 2026" dari formatDateOnly
+  try {
+    const parsed = new Date(tglStr);
+    if (!isNaN(parsed)) {
+      return parsed.toISOString().split('T')[0];
+    }
+  } catch(e) {}
+  return tglStr;
 }
 
 async function savePajak() {
@@ -227,11 +195,11 @@ async function savePajak() {
   btn.disabled    = true;
   btn.textContent = 'Menyimpan...';
 
-  // FIX: gunakan updateArmada (bukan updatePajak) supaya nyambung ke sheet yang sama
-  const res = await callAPI('updateArmada', {
+  const res = await callAPI('updatePajak', {
     id,
-    tanggalSTNK: document.getElementById('fTglSTNK').value,
-    tanggalKIR:  document.getElementById('fTglKIR').value
+    tanggalSTNK:  document.getElementById('fTglSTNK').value  || null,
+    tanggalKIR:   document.getElementById('fTglKIR').value   || null,
+    tanggalPajak: document.getElementById('fTglPajak').value || null
   });
 
   btn.disabled = false;
@@ -257,8 +225,13 @@ function exportPDF() {
   doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
   doc.text('Dicetak: ' + new Date().toLocaleString('id-ID'), 14, 26);
   doc.autoTable({
-    head: [['No','No Polisi','Tgl STNK','Tgl KIR','Status STNK','Status KIR']],
-    body: allData.map((d,i) => [i+1, d.noPolisi, d.tanggalSTNK||'-', d.tanggalKIR||'-', d.statusSTNK, d.statusKIR]),
+    head: [['No','No Polisi','Tgl STNK','Status STNK','Tgl KIR','Status KIR','Tgl Pajak','Status Pajak']],
+    body: allData.map((d,i) => [
+      i+1, d.noPolisi,
+      d.tanggalSTNK||'-', d.statusSTNK,
+      d.tanggalKIR||'-',  d.statusKIR,
+      d.tanggalPajak||'-',d.statusPajak
+    ]),
     startY: 32, styles: { fontSize: 9 },
     headStyles: { fillColor: [13,71,161], textColor: 255, fontStyle: 'bold' }
   });
