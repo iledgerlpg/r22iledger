@@ -142,12 +142,7 @@
     el.classList.toggle('active', el.dataset.page === currentPage);
   });
 
-  // Set company name in header if element exists
-const cnEl = document.getElementById('headerCompanyName');
-  if (cnEl) cnEl.textContent = user.company || 'Perusahaan';
 
-  const brandEl = document.getElementById('brandCompanyName');
-  if (brandEl) brandEl.textContent = user.company || 'iLedgerV2';
 })();
 
 function toggleSidebar() {
