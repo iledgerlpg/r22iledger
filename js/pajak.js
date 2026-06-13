@@ -1,17 +1,67 @@
-
 let allData = [], currentFilter = 'all';
 
-document.addEventListener('DOMContentLoaded', loadData);
+document.addEventListener('DOMContentLoaded', () => {
+  if (typeof initPage === 'function') initPage('pajak');
+  loadData();
+});
 
+// ============================================================
+// LOAD DATA — ambil dari getArmada (sumber data sama)
+// ============================================================
 async function loadData() {
-  const res = await callAPI('getPajak', {});
-  if (!res.success) { showToast('Gagal memuat data.','error'); return; }
-  allData = res.data;
+  // FIX: pajak ambil data dari getArmada, bukan getPajak yang terpisah
+  const res = await callAPI('getArmada', {});
+  if (!res.success) { showToast('Gagal memuat data.', 'error'); return; }
+
+  // Normalisasi: tambahkan field status pajak dari tanggal
+  allData = (res.data || []).map(d => {
+    const now = new Date();
+    const diffSTNK  = diffHari(d.tanggalSTNK, now);
+    const diffKIR   = diffHari(d.tanggalKIR, now);
+
+    return {
+      ...d,
+      diffSTNK,
+      diffKIR,
+      statusSTNK : getStatusFromDiff(diffSTNK, d.tanggalSTNK),
+      statusKIR  : getStatusFromDiff(diffKIR,  d.tanggalKIR)
+    };
+  });
+
   updateStats(allData);
   renderAlerts(allData);
   applyFilter();
 }
 
+// ============================================================
+// HELPERS
+// ============================================================
+function parseTanggal(tglStr) {
+  if (!tglStr) return null;
+  if (typeof tglStr === 'string' && tglStr.includes('/')) {
+    const [d, m, y] = tglStr.split('/');
+    return new Date(`${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`);
+  }
+  return new Date(tglStr);
+}
+
+function diffHari(tglStr, now) {
+  if (!tglStr) return null;
+  const tgl = parseTanggal(tglStr);
+  if (!tgl || isNaN(tgl)) return null;
+  return Math.floor((tgl - now) / 86400000);
+}
+
+function getStatusFromDiff(diff, tglStr) {
+  if (!tglStr || diff === null) return 'N/A';
+  if (diff < 0)    return 'TERLAMBAT';
+  if (diff <= 30)  return 'SEGERA_JATUH_TEMPO';
+  return 'AMAN';
+}
+
+// ============================================================
+// STATS
+// ============================================================
 function updateStats(data) {
   let aman = 0, warn = 0, late = 0;
   data.forEach(d => {
@@ -20,25 +70,29 @@ function updateStats(data) {
     else if (worst === 'SEGERA_JATUH_TEMPO') warn++;
     else if (worst === 'TERLAMBAT') late++;
   });
-  document.getElementById('statAman').textContent = aman;
-  document.getElementById('statWarn').textContent = warn;
-  document.getElementById('statLate').textContent = late;
+  document.getElementById('statAman').textContent  = aman;
+  document.getElementById('statWarn').textContent  = warn;
+  document.getElementById('statLate').textContent  = late;
   document.getElementById('statTotal').textContent = data.length;
-  
+
+  // Update badge di navbar jika ada
   const pajakBadge = document.getElementById('pajakBadge');
   if (pajakBadge && (warn + late) > 0) {
     pajakBadge.style.display = 'inline';
-    pajakBadge.textContent = warn + late;
+    pajakBadge.textContent   = warn + late;
   }
 }
 
 function getWorstStatus(d) {
-  const statuses = [d.statusSTNK, d.statusKIR, d.statusPajak].filter(s => s && s !== 'N/A');
-  if (statuses.includes('TERLAMBAT')) return 'TERLAMBAT';
+  const statuses = [d.statusSTNK, d.statusKIR].filter(s => s && s !== 'N/A');
+  if (statuses.includes('TERLAMBAT'))        return 'TERLAMBAT';
   if (statuses.includes('SEGERA_JATUH_TEMPO')) return 'SEGERA_JATUH_TEMPO';
   return 'AMAN';
 }
 
+// ============================================================
+// ALERTS
+// ============================================================
 function renderAlerts(data) {
   const strips = document.getElementById('alertStrips');
   const late = data.filter(d => getWorstStatus(d) === 'TERLAMBAT');
@@ -49,6 +103,9 @@ function renderAlerts(data) {
   strips.innerHTML = html;
 }
 
+// ============================================================
+// FILTER
+// ============================================================
 function setFilter(filter, btn) {
   currentFilter = filter;
   document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
@@ -59,13 +116,16 @@ function setFilter(filter, btn) {
 function applyFilter() {
   const q = (document.getElementById('searchInput').value || '').toLowerCase();
   let filtered = allData.filter(d => !q || d.noPolisi.toLowerCase().includes(q));
-  
+
   if (currentFilter === 'warning') filtered = filtered.filter(d => getWorstStatus(d) === 'SEGERA_JATUH_TEMPO');
   else if (currentFilter === 'danger') filtered = filtered.filter(d => getWorstStatus(d) === 'TERLAMBAT');
-  
+
   renderGrid(filtered);
 }
 
+// ============================================================
+// RENDER GRID
+// ============================================================
 function renderGrid(data) {
   const container = document.getElementById('pajakGrid');
   if (!data.length) {
@@ -73,15 +133,20 @@ function renderGrid(data) {
     return;
   }
   container.innerHTML = data.map(d => {
-    const worst = getWorstStatus(d);
+    const worst       = getWorstStatus(d);
     const borderColor = worst === 'TERLAMBAT' ? 'var(--error)' : worst === 'SEGERA_JATUH_TEMPO' ? 'var(--warning)' : 'var(--border-color)';
-    const topBg = worst === 'TERLAMBAT' ? '#fef2f2' : worst === 'SEGERA_JATUH_TEMPO' ? '#fffbeb' : 'var(--bg-card)';
+    const topBg       = worst === 'TERLAMBAT' ? '#fef2f2'      : worst === 'SEGERA_JATUH_TEMPO' ? '#fffbeb'        : 'var(--bg-card)';
 
     const stnkBadge = getStatusBadge(d.statusSTNK, d.diffSTNK);
-    const kirBadge = getStatusBadge(d.statusKIR, d.diffKIR);
+    const kirBadge  = getStatusBadge(d.statusKIR,  d.diffKIR);
 
     const daysLeft = d.diffSTNK !== null ? d.diffSTNK : (d.diffKIR !== null ? d.diffKIR : null);
     const ringData = daysLeft !== null ? buildRing(daysLeft) : null;
+
+    // FIX: escape value untuk onclick supaya tidak pecah
+    const tglSTNK  = (d.tanggalSTNK  || '').replace(/'/g, '');
+    const tglKIR   = (d.tanggalKIR   || '').replace(/'/g, '');
+    const nopol    = (d.noPolisi     || '').replace(/'/g, '');
 
     return `
     <div class="pajak-card" style="border-color:${borderColor}">
@@ -96,8 +161,10 @@ function renderGrid(data) {
             <div class="ring-text">${Math.abs(daysLeft)}</div>
           </div>` : ''}
           <div>
-            <div class="pajak-nopol">${d.noPolisi}</div>
-            <div style="font-size:11px;color:var(--text-secondary);margin-top:2px">${worst === 'TERLAMBAT' ? '🚨 Terlambat' : worst === 'SEGERA_JATUH_TEMPO' ? '⚠️ Segera Jatuh Tempo' : '✅ Aman'}</div>
+            <div class="pajak-nopol">${nopol}</div>
+            <div style="font-size:11px;color:var(--text-secondary);margin-top:2px">
+              ${worst === 'TERLAMBAT' ? '🚨 Terlambat' : worst === 'SEGERA_JATUH_TEMPO' ? '⚠️ Segera Jatuh Tempo' : '✅ Aman'}
+            </div>
           </div>
         </div>
       </div>
@@ -114,7 +181,7 @@ function renderGrid(data) {
         </div>
       </div>
       <div class="pajak-card-footer">
-        <button class="btn btn-outline btn-sm" onclick="editPajak('${d.id}','${d.noPolisi}','${d.tanggalSTNK||''}','${d.tanggalKIR||''}','${d.tanggalPajak||''}')">
+        <button class="btn btn-outline btn-sm" onclick="editPajak('${d.id}','${nopol}','${tglSTNK}','${tglKIR}')">
           <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
           Update Tanggal
         </button>
@@ -125,71 +192,75 @@ function renderGrid(data) {
 
 function getStatusBadge(status, diff) {
   if (!status || status === 'N/A') return '<span class="status-badge status-na">-</span>';
-  if (status === 'TERLAMBAT') return `<span class="status-badge status-danger">🚨 Terlambat ${diff !== null ? Math.abs(diff) + ' hari' : ''}</span>`;
-  if (status === 'SEGERA_JATUH_TEMPO') return `<span class="status-badge status-warning">⚠️ ${diff} hari lagi</span>`;
+  if (status === 'TERLAMBAT')           return `<span class="status-badge status-danger">🚨 Terlambat ${diff !== null ? Math.abs(diff) + ' hari' : ''}</span>`;
+  if (status === 'SEGERA_JATUH_TEMPO')  return `<span class="status-badge status-warning">⚠️ ${diff} hari lagi</span>`;
   return `<span class="status-badge status-aman">✅ Aman (${diff} hari)</span>`;
 }
 
 function buildRing(days) {
-  const maxDays = 365;
+  const maxDays     = 365;
   const clampedDays = Math.max(0, Math.min(days, maxDays));
-  const pct = clampedDays / maxDays;
+  const pct         = clampedDays / maxDays;
   const circumference = 125.7;
-  const offset = circumference - (pct * circumference);
-  const color = days < 0 ? '#ef4444' : days <= 7 ? '#ef4444' : days <= 30 ? '#f59e0b' : '#10b981';
+  const offset      = circumference - (pct * circumference);
+  const color       = days < 0 ? '#ef4444' : days <= 7 ? '#ef4444' : days <= 30 ? '#f59e0b' : '#10b981';
   return { offset, color };
 }
 
-function editPajak(id, noPolisi, tglSTNK, tglKIR, tglPajak) {
-  document.getElementById('editPajakId').value = id;
+// ============================================================
+// EDIT PAJAK — update tanggal STNK & KIR via updateArmada
+// ============================================================
+function editPajak(id, noPolisi, tglSTNK, tglKIR) {
+  document.getElementById('editPajakId').value          = id;
   document.getElementById('modalEditTitle').textContent = 'Update Pajak – ' + noPolisi;
-  document.getElementById('fTglSTNK').value = tglSTNK ? tglSTNK.split('/').reverse().join('-') : '';
-  document.getElementById('fTglKIR').value = tglKIR ? tglKIR.split('/').reverse().join('-') : '';
-  document.getElementById('fTglPajak').value = tglPajak ? tglPajak.split('/').reverse().join('-') : '';
+
+  // FIX: konversi DD/MM/YYYY → YYYY-MM-DD untuk input[type=date]
+  document.getElementById('fTglSTNK').value  = tglSTNK  ? tglSTNK.split('/').reverse().join('-')  : '';
+  document.getElementById('fTglKIR').value   = tglKIR   ? tglKIR.split('/').reverse().join('-')   : '';
+
   openModal('modalEdit');
 }
 
 async function savePajak() {
-  const id = document.getElementById('editPajakId').value;
+  const id  = document.getElementById('editPajakId').value;
   const btn = document.getElementById('btnSavePajak');
-  btn.disabled = true; btn.textContent = 'Menyimpan...';
-  
-  const res = await callAPI('updatePajak', {
+  btn.disabled    = true;
+  btn.textContent = 'Menyimpan...';
+
+  // FIX: gunakan updateArmada (bukan updatePajak) supaya nyambung ke sheet yang sama
+  const res = await callAPI('updateArmada', {
     id,
     tanggalSTNK: document.getElementById('fTglSTNK').value,
-    tanggalKIR: document.getElementById('fTglKIR').value,
-    tanggalPajak: document.getElementById('fTglPajak').value
+    tanggalKIR:  document.getElementById('fTglKIR').value
   });
-  
+
   btn.disabled = false;
   btn.innerHTML = '<svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" fill="none" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Simpan';
-  
-  if (res.success) { showToast('Data pajak diperbarui.','success'); closeModal('modalEdit'); loadData(); }
-  else showToast(res.error,'error');
+
+  if (res.success) {
+    showToast('Data pajak diperbarui.', 'success');
+    closeModal('modalEdit');
+    loadData();
+  } else {
+    showToast(res.error || 'Gagal menyimpan.', 'error');
+  }
 }
 
+// ============================================================
+// EXPORT PDF
+// ============================================================
 function exportPDF() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ orientation: 'landscape' });
-  doc.setFont('helvetica','bold'); doc.setFontSize(16);
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(16);
   doc.text('Status Pajak Kendaraan', 14, 18);
-  doc.setFont('helvetica','normal'); doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
   doc.text('Dicetak: ' + new Date().toLocaleString('id-ID'), 14, 26);
   doc.autoTable({
     head: [['No','No Polisi','Tgl STNK','Tgl KIR','Status STNK','Status KIR']],
     body: allData.map((d,i) => [i+1, d.noPolisi, d.tanggalSTNK||'-', d.tanggalKIR||'-', d.statusSTNK, d.statusKIR]),
-    startY: 32, styles:{fontSize:9},
-    headStyles:{fillColor:[13,71,161],textColor:255,fontStyle:'bold'},
-    bodyStyles:(row) => {
-      const status = row.cells[4]?.raw;
-      if (status === 'TERLAMBAT') return { fillColor: [254,226,226] };
-      if (status === 'SEGERA_JATUH_TEMPO') return { fillColor: [254,243,199] };
-    }
+    startY: 32, styles: { fontSize: 9 },
+    headStyles: { fillColor: [13,71,161], textColor: 255, fontStyle: 'bold' }
   });
   doc.save('PajakKendaraan_' + new Date().toLocaleDateString('id-ID').replace(/\//g,'-') + '.pdf');
 }
-
-
-
-document.addEventListener('DOMContentLoaded', () => initPage('pajak'));
-
