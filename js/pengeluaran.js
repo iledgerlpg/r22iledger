@@ -84,7 +84,7 @@ async function loadPos() {
     // Reset dulu biar opsi gak numpuk kalau dipanggil ulang
     fs.innerHTML = '<option value="">Semua Pos</option>'; 
     allPos.forEach(p => {
-      fs.innerHTML += `<option value="${p.id}">${p.namaPos}</option>`;
+      fs.innerHTML += `<option value="${p.namaPos}</option>`;
     });
   }
   
