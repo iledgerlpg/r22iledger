@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0D47A1">
+<title>iLedgerV2 – Daftar Akun</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" href="r22.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="js/config.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Plus Jakarta Sans',sans-serif;min-height:100vh;background:linear-gradient(135deg,#0D47A1 0%,#1565C0 40%,#0288D1 100%);display:flex;align-items:center;justify-content:center;padding:20px;overflow:hidden}
+body::before{content:'';position:fixed;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4z'/%3E%3C/g%3E%3C/svg%3E");pointer-events:none}
+.bg-shape{position:fixed;border-radius:50%;pointer-events:none;opacity:.07}
+.bg-shape-1{width:500px;height:500px;background:white;top:-200px;right:-150px;animation:float1 8s ease-in-out infinite}
+.bg-shape-2{width:300px;height:300px;background:white;bottom:-100px;left:-100px;animation:float2 10s ease-in-out infinite}
+@keyframes float1{0%,100%{transform:translateY(0)}50%{transform:translateY(30px)}}
+@keyframes float2{0%,100%{transform:translateY(0)}50%{transform:translateY(-20px)}}
+.login-wrapper{position:relative;z-index:1;width:100%;max-width:460px;animation:slideUp .6s cubic-bezier(0.16,1,0.3,1)}
+@keyframes slideUp{from{opacity:0;transform:translateY(40px)}to{opacity:1;transform:translateY(0)}}
+.card{background:rgba(255,255,255,.97);border-radius:20px;box-shadow:0 20px 60px rgba(13,71,161,.2);overflow:hidden}
+.card-header{background:linear-gradient(135deg,#0D47A1,#1565C0);padding:28px 40px 24px;text-align:center;position:relative;overflow:hidden}
+.card-header::after{content:'';position:absolute;bottom:-30px;left:-10%;width:120%;height:60px;background:rgba(255,255,255,.97);border-radius:50%}
+.logo-icon{width:52px;height:52px;background:rgba(255,255,255,.15);border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;border:1px solid rgba(255,255,255,.25)}
+.logo-icon img{width:34px;height:34px;object-fit:contain}
+.card-header h1{color:white;font-size:20px;font-weight:800;letter-spacing:-.5px}
+.card-header p{color:rgba(255,255,255,.7);font-size:12px;margin-top:4px}
+.card-body{padding:28px 36px 36px}
+.form-group{margin-bottom:16px}
+.form-label{display:block;font-size:12px;font-weight:700;color:#475569;margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px}
+.input-wrap{position:relative}
+.input-icon{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:#94a3b8;pointer-events:none}
+.input-icon svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2}
+.form-control{width:100%;padding:11px 40px 11px 42px;border:1.5px solid #e2e8f0;border-radius:10px;font-family:inherit;font-size:14px;color:#1e293b;background:#f8fafc;transition:all .2s;outline:none}
+.form-control:focus{border-color:#0D47A1;background:white;box-shadow:0 0 0 3px rgba(13,71,161,.1)}
+.form-control.error{border-color:#ef4444}
+.form-control::placeholder{color:#94a3b8}
+.form-control-plain{padding-left:14px}
+.pw-toggle{position:absolute;right:13px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#94a3b8;padding:4px}
+.pw-toggle svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2}
+.btn-primary{width:100%;padding:13px;background:linear-gradient(135deg,#0D47A1,#1565C0);color:white;border:none;border-radius:10px;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;transition:all .2s}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(13,71,161,.35)}
+.btn-primary:disabled{opacity:.6;cursor:not-allowed;transform:none}
+.alert{padding:12px 14px;border-radius:10px;font-size:13px;font-weight:500;margin-bottom:16px;display:flex;align-items:flex-start;gap:9px}
+.alert svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;flex-shrink:0;margin-top:1px}
+.alert-error{background:#fef2f2;color:#b91c1c;border:1px solid #fee2e2}
+.alert-success{background:#f0fdf4;color:#166534;border:1px solid #bbf7d0}
+.divider{display:flex;align-items:center;gap:12px;margin:20px 0}
+.divider-line{flex:1;height:1px;background:#e2e8f0}
+.divider-text{font-size:12px;color:#94a3b8;font-weight:500}
+.link-back{display:block;text-align:center;font-size:13px;font-weight:600;color:#0D47A1;text-decoration:none;margin-top:16px;transition:color .2s}
+.link-back:hover{color:#0a3880}
+.code-hint{font-size:11px;color:#94a3b8;margin-top:5px;line-height:1.5}
+.step-indicator{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:20px}
+.step{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;transition:all .3s}
+.step.active{background:#0D47A1;color:white}
+.step.done{background:#10b981;color:white}
+.step.inactive{background:#e2e8f0;color:#94a3b8}
+.step-line{width:40px;height:2px;background:#e2e8f0;transition:background .3s}
+.step-line.done{background:#10b981}
+</style>
+</head>
+<body>
+<div class="bg-shape bg-shape-1"></div>
+<div class="bg-shape bg-shape-2"></div>
+
+<div class="login-wrapper">
+  <div class="card">
+    <div class="card-header">
+      <div class="logo-icon">
+        <img src="r22.png" alt="Logo">
+      </div>
+      <h1>Daftar Akun</h1>
+      <p>Bergabung dengan perusahaan yang sudah terdaftar</p>
+    </div>
+
+    <div class="card-body">
+      <!-- Step indicator -->
+      <div class="step-indicator">
+        <div class="step active" id="step1Dot">1</div>
+        <div class="step-line" id="line1"></div>
+        <div class="step inactive" id="step2Dot">2</div>
+        <div class="step-line" id="line2"></div>
+        <div class="step inactive" id="step3Dot">✓</div>
+      </div>
+
+      <div id="alertArea"></div>
+
+      <!-- STEP 1: Kode PT -->
+      <div id="step1">
+        <div class="form-group">
+          <label class="form-label">Kode PT / Perusahaan</label>
+          <div class="input-wrap">
+            <span class="input-icon"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg></span>
+            <input type="text" id="fTenantCode" class="form-control" placeholder="Contoh: AB1234" autocomplete="off" style="text-transform:uppercase">
+          </div>
+          <div class="code-hint">💡 Minta kode PT dari HRD / admin perusahaan Anda</div>
+        </div>
+        <button class="btn-primary" onclick="checkTenantCode()">
+          Lanjut →
+        </button>
+      </div>
+
+      <!-- STEP 2: Data Diri -->
+      <div id="step2" style="display:none">
+        <div style="background:rgba(13,71,161,.06);border-radius:10px;padding:10px 14px;margin-bottom:16px;font-size:13px;color:#0D47A1;font-weight:600" id="ptNameBanner"></div>
+
+        <div class="form-group">
+          <label class="form-label">Nama Lengkap</label>
+          <div class="input-wrap">
+            <span class="input-icon"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+            <input type="text" id="fNama" class="form-control" placeholder="Nama lengkap Anda">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <div class="input-wrap">
+            <span class="input-icon"><svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 7 10-7"/></svg></span>
+            <input type="email" id="fEmail" class="form-control" placeholder="email@perusahaan.com">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">No. Telepon</label>
+          <div class="input-wrap">
+            <span class="input-icon"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.56 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.91a16 16 0 0 0 6.29 6.29l.91-.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg></span>
+            <input type="tel" id="fNoTelp" class="form-control" placeholder="08xxxxxxxxxx">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <div class="input-wrap">
+            <span class="input-icon"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
+            <input type="password" id="fPassword" class="form-control" placeholder="Minimal 8 karakter">
+            <button class="pw-toggle" onclick="togglePwd('fPassword',this)" type="button">
+              <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Konfirmasi Password</label>
+          <div class="input-wrap">
+            <span class="input-icon"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
+            <input type="password" id="fConfirm" class="form-control" placeholder="Ulangi password">
+            <button class="pw-toggle" onclick="togglePwd('fConfirm',this)" type="button">
+              <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:10px">
+          <button class="btn-primary" style="background:#64748b;flex:0 0 auto;width:auto;padding:13px 20px" onclick="goStep(1)">← Kembali</button>
+          <button class="btn-primary" id="btnDaftar" onclick="handleRegister()">Daftar Sekarang</button>
+        </div>
+      </div>
+
+      <!-- STEP 3: Sukses -->
+      <div id="step3" style="display:none;text-align:center;padding:10px 0">
+        <div style="width:64px;height:64px;background:#dcfce7;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px">
+          <svg viewBox="0 0 24 24" width="32" height="32" stroke="#16a34a" fill="none" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <h2 style="font-size:18px;font-weight:800;color:#1e293b;margin-bottom:8px">Pendaftaran Berhasil!</h2>
+        <p style="font-size:13px;color:#64748b;line-height:1.6">Akun Anda sedang menunggu persetujuan HRD.<br>Anda akan mendapat notifikasi setelah disetujui.</p>
+        <div style="margin-top:20px;padding:14px;background:#f8fafc;border-radius:10px;border:1px solid #e2e8f0;font-size:12px;color:#64748b">
+          ⏳ Biasanya disetujui dalam 1x24 jam kerja
+        </div>
+      </div>
+
+      <div class="divider" id="dividerBack">
+        <div class="divider-line"></div>
+        <span class="divider-text">Sudah punya akun?</span>
+        <div class="divider-line"></div>
+      </div>
+      <a href="login.html" class="link-back" id="linkBack">← Kembali ke Login</a>
+    </div>
+  </div>
+</div>
+
+<script>
+let validTenantCode = '';
+let ptName = '';
+
+// Cek kode PT dulu sebelum lanjut
+async function checkTenantCode() {
+  const code = document.getElementById('fTenantCode').value.trim().toUpperCase();
+  if (!code) { showAlert('Kode PT wajib diisi.', 'error'); return; }
+
+  // Validasi kode ke backend
+  const res = await callAPI('checkTenantCode', { tenantCode: code });
+  if (!res.success) { showAlert(res.error || 'Kode PT tidak valid.', 'error'); return; }
+
+  validTenantCode = code;
+  ptName = res.namaPT || '';
+  document.getElementById('ptNameBanner').textContent = '🏢 ' + ptName;
+  goStep(2);
+}
+
+function goStep(n) {
+  [1,2,3].forEach(i => document.getElementById('step'+i).style.display = 'none');
+  document.getElementById('step'+n).style.display = 'block';
+  clearAlert();
+
+  // Update step dots
+  [1,2,3].forEach(i => {
+    const dot = document.getElementById('step'+i+'Dot');
+    if (i < n) { dot.className = 'step done'; dot.textContent = '✓'; }
+    else if (i === n) { dot.className = 'step active'; dot.textContent = i; }
+    else { dot.className = 'step inactive'; dot.textContent = i === 3 ? '✓' : i; }
+  });
+  [1,2].forEach(i => {
+    document.getElementById('line'+i).className = 'step-line' + (i < n ? ' done' : '');
+  });
+
+  // Sembunyikan divider & link back di step 3
+  const showBack = n !== 3;
+  document.getElementById('dividerBack').style.display = showBack ? 'flex' : 'none';
+  document.getElementById('linkBack').style.display    = showBack ? 'block' : 'none';
+}
+
+async function handleRegister() {
+  const nama     = document.getElementById('fNama').value.trim();
+  const email    = document.getElementById('fEmail').value.trim();
+  const noTelp   = document.getElementById('fNoTelp').value.trim();
+  const password = document.getElementById('fPassword').value;
+  const confirm  = document.getElementById('fConfirm').value;
+
+  clearAlert();
+  if (!nama)              { showAlert('Nama lengkap wajib diisi.', 'error'); return; }
+  if (!email)             { showAlert('Email wajib diisi.', 'error'); return; }
+  if (!password)          { showAlert('Password wajib diisi.', 'error'); return; }
+  if (password.length < 8){ showAlert('Password minimal 8 karakter.', 'error'); return; }
+  if (password !== confirm){ showAlert('Konfirmasi password tidak cocok.', 'error'); return; }
+
+  const btn = document.getElementById('btnDaftar');
+  btn.disabled    = true;
+  btn.textContent = 'Mendaftarkan...';
+
+  const res = await callAPI('registerAdminUser', {
+    email,
+    password,
+    namaLengkap: nama,
+    noTelp,
+    tenantCode: validTenantCode
+  });
+
+  btn.disabled = false;
+  btn.textContent = 'Daftar Sekarang';
+
+  if (res.success) {
+    goStep(3);
+  } else {
+    showAlert(res.error || 'Pendaftaran gagal.', 'error');
+  }
+}
+
+function togglePwd(id, btn) {
+  const inp = document.getElementById(id);
+  const isText = inp.type === 'text';
+  inp.type = isText ? 'password' : 'text';
+  btn.querySelector('svg').innerHTML = isText
+    ? '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>'
+    : '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
+}
+
+function showAlert(msg, type) {
+  const icons = {
+    error: '<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/>',
+    success: '<polyline points="20 6 9 17 4 12"/>'
+  };
+  document.getElementById('alertArea').innerHTML = `
+    <div class="alert alert-${type}">
+      <svg viewBox="0 0 24 24">${icons[type]||icons.error}</svg>
+      <span>${msg}</span>
+    </div>`;
+}
+
+function clearAlert() { document.getElementById('alertArea').innerHTML = ''; }
+
+document.addEventListener('keydown', e => { if (e.key === 'Enter') { if (document.getElementById('step1').style.display !== 'none') checkTenantCode(); else if (document.getElementById('step2').style.display !== 'none') handleRegister(); }});
+</script>
+</body>
+</html>
