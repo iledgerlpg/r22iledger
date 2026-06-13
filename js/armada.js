@@ -3,8 +3,8 @@ let selectedFotoBase64 = null, selectedFotoMime = null;
 let searchTimeout = null;
 
 let uploadState = {
-  stnk: { base64: null, mime: null },
-  kir: { base64: null, mime: null },
+  stnk:    { base64: null, mime: null },
+  kir:     { base64: null, mime: null },
   barcode: { base64: null, mime: null }
 };
 
@@ -20,10 +20,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 function setDefaultDT() {
   const now = new Date();
   const pad = n => String(n).padStart(2, '0');
-  const elTimestamp = document.getElementById('fTimestamp');
-  if (elTimestamp) {
-    elTimestamp.value = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
-  }
   const elFilterMonth = document.getElementById('filterMonth');
   if (elFilterMonth) {
     elFilterMonth.value = `${now.getFullYear()}-${pad(now.getMonth()+1)}`;
@@ -31,22 +27,22 @@ function setDefaultDT() {
 }
 
 // ============================================================
-// HELPER TANGGAL — handle DD/MM/YYYY dan YYYY-MM-DD
+// HELPER TANGGAL
 // ============================================================
 function parseTanggal(tglStr) {
   if (!tglStr) return null;
-  if (tglStr.includes('/')) {
+  if (typeof tglStr === 'string' && tglStr.includes('/')) {
     const [d, m, y] = tglStr.split('/');
-    return new Date(`${y}-${m}-${d}`);
+    return new Date(`${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`);
   }
   return new Date(tglStr);
 }
 
 function toInputDate(tglStr) {
   if (!tglStr) return '';
-  if (tglStr.includes('/')) {
+  if (typeof tglStr === 'string' && tglStr.includes('/')) {
     const [d, m, y] = tglStr.split('/');
-    return `${y}-${m}-${d}`;
+    return `${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`;
   }
   return tglStr;
 }
@@ -147,17 +143,19 @@ function renderGrid(data) {
     const srcFotoUtama = idFotoUtama ? `https://drive.google.com/thumbnail?id=${idFotoUtama}&sz=w300` : mainPhotoUrl;
 
     const photoHtml = mainPhotoUrl
-      ? `<img src="${srcFotoUtama}" alt="${a.noPolisi}" onerror="this.parentElement.innerHTML='<div class=armada-photo-placeholder><svg viewBox=\'0 0 24 24\'><rect x=\'1\' y=\'3\' width=\'15\' height=\'13\' rx=\'1\'/></svg></div>'">`
+      ? `<img src="${srcFotoUtama}" alt="${a.noPolisi}" onerror="this.parentElement.innerHTML='<div class=armada-photo-placeholder><svg viewBox=&quot;0 0 24 24&quot;><rect x=&quot;1&quot; y=&quot;3&quot; width=&quot;15&quot; height=&quot;13&quot; rx=&quot;1&quot;/></svg></div>'">`
       : `<div class="armada-photo-placeholder"><svg viewBox="0 0 24 24" width="64" height="64" stroke="currentColor" fill="none" stroke-width="0.8"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div>`;
 
     const srcThumbStnk    = a.fotoSTNK              ? (extractFileId(a.fotoSTNK)              ? `https://drive.google.com/thumbnail?id=${extractFileId(a.fotoSTNK)}&sz=w90`              : a.fotoSTNK)              : '';
     const srcThumbKir     = a.fotoKIR               ? (extractFileId(a.fotoKIR)               ? `https://drive.google.com/thumbnail?id=${extractFileId(a.fotoKIR)}&sz=w90`               : a.fotoKIR)               : '';
     const srcThumbBarcode = a.fotoBarcodeSubsidiTepat ? (extractFileId(a.fotoBarcodeSubsidiTepat) ? `https://drive.google.com/thumbnail?id=${extractFileId(a.fotoBarcodeSubsidiTepat)}&sz=w90` : a.fotoBarcodeSubsidiTepat) : '';
 
-    // FIX: onclick cek di sisi render, bukan lewat string if('undefined')
     const onclickStnk    = a.fotoSTNK              ? `previewImageDirect('${getLargeDocUrl(a.fotoSTNK)}', 'STNK - ${a.noPolisi}')`              : '';
     const onclickKir     = a.fotoKIR               ? `previewImageDirect('${getLargeDocUrl(a.fotoKIR)}', 'KIR - ${a.noPolisi}')`               : '';
     const onclickBarcode = a.fotoBarcodeSubsidiTepat ? `previewImageDirect('${getLargeDocUrl(a.fotoBarcodeSubsidiTepat)}', 'Barcode - ${a.noPolisi}')` : '';
+
+    // FIX: escape JSON untuk onclick supaya tidak pecah karena single quote
+    const rowJson = JSON.stringify(a).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
 
     return `
     <div class="armada-card">
@@ -196,7 +194,7 @@ function renderGrid(data) {
         </div>
       </div>
       <div class="armada-footer">
-        <button class="btn btn-outline btn-sm" style="flex:1" onclick='editRow(${JSON.stringify(a).replace(/'/g,"&#39;")})'>
+        <button class="btn btn-outline btn-sm" style="flex:1" onclick="editRowById('${a.id}')">
           <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
           Edit
         </button>
@@ -244,7 +242,7 @@ function renderList(data) {
       </td>
       <td><span class="badge ${a.status === 'ACTIVE' ? 'badge-success' : 'badge-gray'}">${a.status}</span></td>
       <td><div style="display:flex;gap:6px">
-        <button class="btn btn-outline btn-sm btn-icon" onclick='editRow(${JSON.stringify(a).replace(/'/g,"&#39;")})'>
+        <button class="btn btn-outline btn-sm btn-icon" onclick="editRowById('${a.id}')">
           <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/></svg>
         </button>
         <button class="btn btn-danger btn-sm btn-icon" onclick="deleteRow('${a.id}','${a.noPolisi}')">
@@ -287,16 +285,22 @@ function handleFotoSelect(e, jenis) {
     uploadState[jenis].base64 = ev.target.result.split(',')[1];
     uploadState[jenis].mime   = file.type;
 
-    const previewImg = document.getElementById(`preview${jenis}Img`);
-    previewImg.src = ev.target.result;
-    previewImg.className = 'cursor-pointer hover:opacity-80 transition object-cover rounded border border-gray-300';
-    previewImg.onclick = () => {
-      if (typeof previewImageDirect === 'function') {
-        const nopol = document.getElementById('fNopol').value || 'Kendaraan';
-        previewImageDirect(ev.target.result, `${jenis.toUpperCase()} (Baru) - ${nopol}`);
-      }
-    };
-    document.getElementById(`preview${jenis}`).style.display = 'block';
+    // FIX: gunakan ID yang konsisten lowercase
+    const previewId  = `preview${jenis}`;
+    const previewImgId = `preview${jenis}Img`;
+    const previewImg = document.getElementById(previewImgId);
+    if (previewImg) {
+      previewImg.src = ev.target.result;
+      previewImg.className = 'cursor-pointer hover:opacity-80 transition object-cover rounded border border-gray-300';
+      previewImg.onclick = () => {
+        if (typeof previewImageDirect === 'function') {
+          const nopol = document.getElementById('fNopol').value || 'Kendaraan';
+          previewImageDirect(ev.target.result, `${jenis.toUpperCase()} (Baru) - ${nopol}`);
+        }
+      };
+    }
+    const previewBox = document.getElementById(previewId);
+    if (previewBox) previewBox.style.display = 'block';
   };
   reader.readAsDataURL(file);
 }
@@ -305,7 +309,8 @@ function removeFoto(jenis) {
   uploadState[jenis] = { base64: null, mime: null };
   const previewImg = document.getElementById(`preview${jenis}Img`);
   if (previewImg) { previewImg.src = ''; previewImg.onclick = null; }
-  document.getElementById(`preview${jenis}`).style.display = 'none';
+  const previewBox = document.getElementById(`preview${jenis}`);
+  if (previewBox) previewBox.style.display = 'none';
   const fileInput = document.getElementById(`fFoto${jenis}`);
   if (fileInput) fileInput.value = '';
 }
@@ -320,27 +325,38 @@ function setupEditPreview(jenis, url) {
     const thumbUrl = id ? `https://drive.google.com/thumbnail?id=${id}&sz=w300` : url;
     const largeUrl = getLargeDocUrl(url);
 
-    previewImg.src       = thumbUrl;
-    previewImg.className = 'cursor-pointer hover:opacity-80 transition object-cover rounded border border-gray-300';
-    previewImg.onclick   = () => {
-      if (typeof previewImageDirect === 'function') {
-        const nopol = document.getElementById('fNopol').value || 'Kendaraan';
-        previewImageDirect(largeUrl, `${jenis.toUpperCase()} - ${nopol}`);
-      }
-    };
-    previewBox.style.display = 'block';
+    if (previewImg) {
+      previewImg.src       = thumbUrl;
+      previewImg.className = 'cursor-pointer hover:opacity-80 transition object-cover rounded border border-gray-300';
+      previewImg.onclick   = () => {
+        if (typeof previewImageDirect === 'function') {
+          const nopol = document.getElementById('fNopol').value || 'Kendaraan';
+          previewImageDirect(largeUrl, `${jenis.toUpperCase()} - ${nopol}`);
+        }
+      };
+    }
+    if (previewBox) previewBox.style.display = 'block';
   } else {
-    previewImg.src     = '';
-    previewImg.onclick = null;
-    previewBox.style.display = 'none';
+    if (previewImg) { previewImg.src = ''; previewImg.onclick = null; }
+    if (previewBox) previewBox.style.display = 'none';
   }
+}
+
+// ============================================================
+// FIX: editRowById — cari dari allData by ID, hindari masalah
+// JSON.stringify di onclick yang sering rusak karena special char
+// ============================================================
+function editRowById(id) {
+  const row = allData.find(a => String(a.id) === String(id));
+  if (!row) { showToast('Data tidak ditemukan.', 'error'); return; }
+  editRow(row);
 }
 
 // ============================================================
 // SAVE / EDIT / DELETE
 // ============================================================
 async function saveData() {
-  const id      = document.getElementById('editId').value;
+  const id      = document.getElementById('editId').value.trim();
   const noPolisi = document.getElementById('fNopol').value.trim().toUpperCase();
   if (!noPolisi) { showToast('Nomor polisi wajib diisi.', 'error'); return; }
 
@@ -348,8 +364,8 @@ async function saveData() {
   btn.disabled    = true;
   btn.textContent = 'Menyimpan...';
 
-  const res = await callAPI(id ? 'updateArmada' : 'addArmada', {
-    id, noPolisi,
+  const payload = {
+    noPolisi,
     jenisKendaraan: document.getElementById('fJenis').value,
     merk:           document.getElementById('fMerk').value,
     tahun:          document.getElementById('fTahun').value,
@@ -357,22 +373,35 @@ async function saveData() {
     noSTNK:         document.getElementById('fNoSTNK').value,
     tanggalSTNK:    document.getElementById('fTglSTNK').value,
     tanggalKIR:     document.getElementById('fTglKIR').value,
-    status:         id ? document.getElementById('fStatus').value : 'ACTIVE',
     fotoSTNKBase64:    uploadState.stnk.base64,    fotoSTNKMimeType:    uploadState.stnk.mime,
     fotoKIRBase64:     uploadState.kir.base64,     fotoKIRMimeType:     uploadState.kir.mime,
     fotoBarcodeBase64: uploadState.barcode.base64, fotoBarcodeMimeType: uploadState.barcode.mime
-  });
+  };
+
+  // FIX: kirim id hanya kalau edit (tidak kosong), action berbeda
+  let action = 'addArmada';
+  if (id) {
+    payload.id = id;
+    payload.status = document.getElementById('fStatus').value;
+    action = 'updateArmada';
+  } else {
+    payload.status = 'ACTIVE';
+  }
+
+  console.log('💾 saveData action:', action, 'id:', id, 'payload:', payload);
+
+  const res = await callAPI(action, payload);
 
   btn.disabled = false;
   btn.innerHTML = '<svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" fill="none" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Simpan';
 
   if (res.success) {
-    showToast(res.message, 'success');
+    showToast(res.message || 'Data berhasil disimpan.', 'success');
     closeModal('modalAdd');
     resetForm();
     loadData();
   } else {
-    showToast(res.error, 'error');
+    showToast(res.error || 'Gagal menyimpan data.', 'error');
   }
 }
 
@@ -381,13 +410,13 @@ function editRow(row) {
   document.getElementById('modalTitle').textContent    = 'Edit Armada';
   document.getElementById('fNopol').value              = row.noPolisi;
   document.getElementById('fJenis').value              = row.jenisKendaraan;
-  document.getElementById('fMerk').value               = row.merk;
-  document.getElementById('fTahun').value              = row.tahun;
-  document.getElementById('fPemilik').value            = row.pemilik;
-  document.getElementById('fNoSTNK').value             = row.noSTNK;
+  document.getElementById('fMerk').value               = row.merk || '';
+  document.getElementById('fTahun').value              = row.tahun || '';
+  document.getElementById('fPemilik').value            = row.pemilik || '';
+  document.getElementById('fNoSTNK').value             = row.noSTNK || '';
   document.getElementById('fTglSTNK').value            = toInputDate(row.tanggalSTNK);
   document.getElementById('fTglKIR').value             = toInputDate(row.tanggalKIR);
-  document.getElementById('fStatus').value             = row.status;
+  document.getElementById('fStatus').value             = row.status || 'ACTIVE';
   document.getElementById('editStatusGroup').style.display = 'block';
 
   setupEditPreview('stnk',    row.fotoSTNK);
