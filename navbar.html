@@ -121,7 +121,15 @@
     roleEl.textContent = user.role || 'ADMIN';
     roleEl.className = 'user-role ' + (user.role === 'HRD' ? 'role-hrd' : 'role-admin');
   }
-
+// Fetch company name dari Settings
+  callAPI('getSettings', {}).then(r => {
+    if (r.success && r.data && r.data.COMPANY_NAME) {
+      const brandEl = document.getElementById('brandCompanyName');
+      const cnEl = document.getElementById('headerCompanyName');
+      if (brandEl) brandEl.textContent = r.data.COMPANY_NAME;
+      if (cnEl) cnEl.textContent = r.data.COMPANY_NAME;
+    }
+  });
   // Show HRD menus
   if (user.role === 'HRD') {
     const hrdMenus = document.getElementById('navHrdMenus');
