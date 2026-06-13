@@ -89,20 +89,19 @@ body::before{content:'';position:fixed;inset:0;background:url("data:image/svg+xm
 
       <div id="alertArea"></div>
 
-      <!-- STEP 1: Kode PT -->
-      <div id="step1">
-        <div class="form-group">
-<label class="form-label">Email Perusahaan</label>
-<div class="input-wrap">
-            <span class="input-icon"><svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 7 10-7"/></svg></span>
-            <input type="email" id="fTenantCode" class="form-control" placeholder="email@perusahaan.com" autocomplete="email">
-          </div>
-          <div class="code-hint">💡 Masukkan email kantor Anda — sistem akan mendeteksi perusahaan otomatis</div>
-        </div>
-        <button class="btn-primary" onclick="checkTenantCode()">
-          Lanjut →
-        </button>
-      </div>
+<div id="step1">
+  <div class="form-group">
+    <label class="form-label">Email Perusahaan</label>
+    <div class="input-wrap">
+      <span class="input-icon"><svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 7 10-7"/></svg></span>
+      <input type="email" id="fTenantCode" class="form-control" placeholder="nama@perusahaan.com" autocomplete="email">
+    </div>
+    <div class="code-hint">💡 Masukkan email kantor Anda — sistem akan mendeteksi perusahaan otomatis via domain email</div>
+  </div>
+  <button class="btn-primary" onclick="checkTenantCode()">
+    Lanjut →
+  </button>
+</div>
 
       <!-- STEP 2: Data Diri -->
       <div id="step2" style="display:none">
@@ -187,19 +186,56 @@ let validTenantId = '';
 let ptName = '';
 
 async function checkTenantCode() {
-  const email = document.getElementById('fTenantCode').value.trim();
-  if (!email) { showAlert('Email wajib diisi.', 'error'); return; }
+  const emailInput = document.getElementById('fTenantCode').value.trim();
+  
+  // 1. Validasi input tidak boleh kosong
+  if (!emailInput) { 
+    showAlert('Email wajib diisi.', 'error'); 
+    return; 
+  }
 
-  const res = await callAPI('checkTenantByEmail', { email });
-  if (!res.success) { showAlert(res.error || 'Email tidak cocok dengan perusahaan manapun.', 'error'); return; }
+  // 2. Validasi format email sederhana (harus ada @ dan domain)
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(emailInput)) {
+    showAlert('Format email tidak valid (Contoh: nama@perusahaan.com).', 'error');
+    return;
+  }
 
-  validTenantId = res.tenantId;
-  ptName = res.namaPT || '';
-  document.getElementById('ptNameBanner').textContent = '🏢 ' + ptName;
+  // Mengubah tombol menjadi loading state
+  const btn = document.querySelector('#step1 .btn-primary');
+  const originalText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Memeriksa...';
 
-  // Auto-fill email di step 2
-  document.getElementById('fEmail').value = email;
-  goStep(2);
+  try {
+    // 3. Kirim data sesuai format objek yang diminta backend { email: email }
+    const res = await callAPI('checkTenantByEmail', { email: emailInput });
+    
+    if (res && res.success) {
+      // Ambil data dari response backend
+      validTenantId = res.tenantId;
+      ptName = res.namaPT || 'Perusahaan Terdaftar';
+      
+      // Tampilkan banner nama PT di Step 2
+      document.getElementById('ptNameBanner').textContent = '🏢 ' + ptName;
+
+      // Auto-fill email ke form input di Step 2
+      document.getElementById('fEmail').value = emailInput;
+      
+      // Pindah ke step berikutnya
+      goStep(2);
+    } else {
+      // Tampilkan pesan error dari backend
+      showAlert(res.error || 'Domain email tidak terdaftar atau perusahaan tidak aktif.', 'error');
+    }
+  } catch (error) {
+    console.error(error);
+    showAlert('Gagal terhubung ke server. Coba lagi nanti.', 'error');
+  } finally {
+    // Kembalikan tombol ke semula
+    btn.disabled = false;
+    btn.textContent = originalText;
+  }
 }
 function goStep(n) {
   [1,2,3].forEach(i => document.getElementById('step'+i).style.display = 'none');
