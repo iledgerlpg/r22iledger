@@ -93,11 +93,11 @@ body::before{content:'';position:fixed;inset:0;background:url("data:image/svg+xm
       <div id="step1">
         <div class="form-group">
           <label class="form-label">Kode PT / Perusahaan</label>
-          <div class="input-wrap">
-            <span class="input-icon"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg></span>
-            <input type="text" id="fTenantCode" class="form-control" placeholder="Contoh: AB1234" autocomplete="off" style="text-transform:uppercase">
+<div class="input-wrap">
+            <span class="input-icon"><svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 7 10-7"/></svg></span>
+            <input type="email" id="fTenantCode" class="form-control" placeholder="email@perusahaan.com" autocomplete="email">
           </div>
-          <div class="code-hint">💡 Minta kode PT dari HRD / admin perusahaan Anda</div>
+          <div class="code-hint">💡 Masukkan email kantor Anda — sistem akan mendeteksi perusahaan otomatis</div>
         </div>
         <button class="btn-primary" onclick="checkTenantCode()">
           Lanjut →
