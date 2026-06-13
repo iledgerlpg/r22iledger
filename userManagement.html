@@ -9,8 +9,7 @@
 <script src="js/user.js"></script>
 <script src="js/page-template.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<script> window.CURRENT_PAGE='user-management';</script>
-<div id="navbarMount"></div>
+<script> window.CURRENT_PAGE='userManagement';</script>
 <style>
 .user-card{background:var(--bg-card);border-radius:var(--radius-lg);border:1px solid var(--border-color);padding:20px;display:flex;align-items:flex-start;gap:16px;transition:box-shadow .2s}
 .user-card:hover{box-shadow:var(--shadow-md)}
@@ -28,6 +27,8 @@
 </style>
 </head>
 <body>
+
+<div id="navbarMount"></div>
 
 <header class="main-header">
   <button class="header-toggle" onclick="toggleSidebar()">
@@ -53,7 +54,6 @@
     <span class="pb-text">Ada pengguna menunggu persetujuan <span class="pb-count" id="pendingCount">0</span></span>
   </div>
 
-  <!-- Filter -->
   <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;align-items:center">
     <div class="search-bar" style="flex:1;min-width:200px">
       <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -100,7 +100,6 @@
     </div>
   </div>
 </div>
-
 
 </body>
 </html>
