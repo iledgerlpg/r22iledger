@@ -79,12 +79,11 @@ async function loadPos() {
   allPos = r.data;
   
   // Populate filter select di halaman depan
-  const fs = document.getElementById('filterPos');
+const fs = document.getElementById('filterPos');
   if (fs) {
-    // Reset dulu biar opsi gak numpuk kalau dipanggil ulang
     fs.innerHTML = '<option value="">Semua Pos</option>'; 
     allPos.forEach(p => {
-      fs.innerHTML += `<option value="${p.namaPos}</option>`;
+      fs.innerHTML += `<option value="${p.namaPos}">${p.namaPos}</option>`;
     });
   }
   
