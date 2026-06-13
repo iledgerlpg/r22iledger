@@ -9,44 +9,6 @@
 <link rel="icon" type="image/png" href="r22.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-
-<script>
-  // Buat fungsi requireAuth palsu agar saat config.js dimuat atau dipanggil, 
-  // dia tidak akan menendang user ke halaman login.
-  window.requireAuth = function() {
-    console.log("requireAuth dinonaktifkan khusus untuk halaman Register.");
-    return true; // Selalu lolos tanpa token
-  };
-</script>
-
-<script src="js/config.js"></script>
-
-<script>
-  // Membersihkan sisa token/session lama yang berpotensi memicu bug login
-  if (window.localStorage) { 
-    localStorage.removeItem('il_token'); 
-    localStorage.removeItem('il_user'); 
-  }
-  if (window.sessionStorage) { 
-    sessionStorage.clear(); 
-  }
-
-  // Jaga-jaga jika ada script lain yang mengubah window.location.href secara paksa ke login.html
-  let currentHref = window.location.href;
-  Object.defineProperty(window.location, 'href', {
-    get: function() { return currentHref; },
-    set: function(url) {
-      if (url.includes('login.html')) {
-        console.warn('Sistem memblokir pengalihan paksa ke:', url);
-        return currentHref; 
-      }
-      window.location.assign(url);
-      return url;
-    },
-    configurable: true
-  });
-</script>
-
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Plus Jakarta Sans',sans-serif;min-height:100vh;background:linear-gradient(135deg,#0D47A1 0%,#1565C0 40%,#0288D1 100%);display:flex;align-items:center;justify-content:center;padding:20px;overflow:hidden}
@@ -115,7 +77,6 @@ body::before{content:'';position:fixed;inset:0;background:url("data:image/svg+xm
     </div>
 
     <div class="card-body">
-      <!-- Step indicator -->
       <div class="step-indicator">
         <div class="step active" id="step1Dot">1</div>
         <div class="step-line" id="line1"></div>
@@ -126,21 +87,20 @@ body::before{content:'';position:fixed;inset:0;background:url("data:image/svg+xm
 
       <div id="alertArea"></div>
 
-<div id="step1">
-  <div class="form-group">
-    <label class="form-label">Email Perusahaan</label>
-    <div class="input-wrap">
-      <span class="input-icon"><svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 7 10-7"/></svg></span>
-      <input type="email" id="fTenantCode" class="form-control" placeholder="nama@perusahaan.com" autocomplete="email">
-    </div>
-    <div class="code-hint">💡 Masukkan email kantor Anda — sistem akan mendeteksi perusahaan otomatis via domain email</div>
-  </div>
-  <button class="btn-primary" onclick="checkTenantCode()">
-    Lanjut →
-  </button>
-</div>
+      <div id="step1">
+        <div class="form-group">
+          <label class="form-label">Email Perusahaan</label>
+          <div class="input-wrap">
+            <span class="input-icon"><svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 7 10-7"/></svg></span>
+            <input type="email" id="fTenantCode" class="form-control" placeholder="nama@perusahaan.com" autocomplete="email">
+          </div>
+          <div class="code-hint">💡 Masukkan email kantor Anda — sistem akan mendeteksi perusahaan otomatis via domain email</div>
+        </div>
+        <button class="btn-primary" onclick="checkTenantCode()">
+          Lanjut →
+        </button>
+      </div>
 
-      <!-- STEP 2: Data Diri -->
       <div id="step2" style="display:none">
         <div style="background:rgba(13,71,161,.06);border-radius:10px;padding:10px 14px;margin-bottom:16px;font-size:13px;color:#0D47A1;font-weight:600" id="ptNameBanner"></div>
 
@@ -196,7 +156,6 @@ body::before{content:'';position:fixed;inset:0;background:url("data:image/svg+xm
         </div>
       </div>
 
-      <!-- STEP 3: Sukses -->
       <div id="step3" style="display:none;text-align:center;padding:10px 0">
         <div style="width:64px;height:64px;background:#dcfce7;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px">
           <svg viewBox="0 0 24 24" width="32" height="32" stroke="#16a34a" fill="none" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
@@ -219,79 +178,65 @@ body::before{content:'';position:fixed;inset:0;background:url("data:image/svg+xm
 </div>
 
 <script>
-// --- BYPASS SESSION CHECK UNTUK HALAMAN REGISTER ---
-// Menghapus token sampah atau session login lama yang memicu error "Session expired"
-if (window.localStorage) {
-  localStorage.removeItem('token'); 
-  localStorage.removeItem('user');
-}
-if (window.sessionStorage) {
-  sessionStorage.removeItem('token');
-  sessionStorage.clear();
-}
-
-// Intersepsi fungsi alert bawaan jika pesan error dipicu secara otomatis oleh js/config.js
-const originalAlert = window.alert;
-window.alert = function(msg) {
-  if (msg && (msg.toLowerCase().includes('expired') || msg.toLowerCase().includes('login again'))) {
-    console.warn('Bypassed session alert on register page:', msg);
-    return false; // Blokir alert popup agar user tidak ditendang ke halaman login
-  }
-  return originalAlert.apply(this, arguments);
-};
-// ----------------------------------------------------
+// URL Langsung ditaruh di sini agar mandiri bebas dari config.js
+const APP_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwJuipT0pmO9DnAkBLZ53nLvZVYRT9QuRknEGAEc8XL-AK6EuzmIakQZzG4stGGrPT8/exec';
 
 let validTenantId = '';
 let ptName = '';
 
+// Fungsi request mandiri tanpa token auth login
+async function sendRequestToAPI(action, payload = {}) {
+  try {
+    const res = await fetch(APP_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action, ...payload })
+    });
+    return await res.json();
+  } catch (err) {
+    console.error('Fetch Error:', err);
+    return { success: false, error: 'Gagal terhubung ke server.' };
+  }
+}
+
 async function checkTenantCode() {
   const emailInput = document.getElementById('fTenantCode').value.trim();
   
-  // 1. Validasi input tidak boleh kosong
   if (!emailInput) { 
     showAlert('Email wajib diisi.', 'error'); 
     return; 
   }
 
-  // 2. Validasi format email sederhana (harus ada @ dan domain)
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(emailInput)) {
     showAlert('Format email tidak valid (Contoh: nama@perusahaan.com).', 'error');
     return;
   }
 
-  // Mengubah tombol menjadi loading state
   const btn = document.querySelector('#step1 .btn-primary');
   const originalText = btn.textContent;
   btn.disabled = true;
   btn.textContent = 'Memeriksa...';
 
   try {
-    // 3. Kirim data sesuai format objek yang diminta backend { email: email }
-    const res = await callAPI('checkTenantByEmail', { email: emailInput });
+    // Panggil menggunakan fungsi fetch mandiri
+    const res = await sendRequestToAPI('checkTenantByEmail', { email: emailInput });
     
     if (res && res.success) {
-      // Ambil data dari response backend
       validTenantId = res.tenantId;
       ptName = res.namaPT || 'Perusahaan Terdaftar';
       
-      // Tampilkan banner nama PT di Step 2
       document.getElementById('ptNameBanner').textContent = '🏢 ' + ptName;
-
-      // Auto-fill email ke form input di Step 2
       document.getElementById('fEmail').value = emailInput;
       
-      // Pindah ke step berikutnya
       goStep(2);
     } else {
-      // Tampilkan pesan error dari backend
       showAlert(res.error || 'Domain email tidak terdaftar atau perusahaan tidak aktif.', 'error');
     }
   } catch (error) {
     console.error(error);
     showAlert('Gagal terhubung ke server. Coba lagi nanti.', 'error');
   } finally {
-    // Kembalikan tombol ke semula
     btn.disabled = false;
     btn.textContent = originalText;
   }
@@ -302,7 +247,6 @@ function goStep(n) {
   document.getElementById('step'+n).style.display = 'block';
   clearAlert();
 
-  // Update step dots
   [1,2,3].forEach(i => {
     const dot = document.getElementById('step'+i+'Dot');
     if (i < n) { dot.className = 'step done'; dot.textContent = '✓'; }
@@ -313,7 +257,6 @@ function goStep(n) {
     document.getElementById('line'+i).className = 'step-line' + (i < n ? ' done' : '');
   });
 
-  // Sembunyikan divider & link back di step 3
   const showBack = n !== 3;
   document.getElementById('dividerBack').style.display = showBack ? 'flex' : 'none';
   document.getElementById('linkBack').style.display    = showBack ? 'block' : 'none';
@@ -337,7 +280,8 @@ async function handleRegister() {
   btn.disabled    = true;
   btn.textContent = 'Mendaftarkan...';
 
-  const res = await callAPI('registerAdminUser', {
+  // Panggil menggunakan fungsi fetch mandiri
+  const res = await sendRequestToAPI('registerAdminUser', {
     email,
     password,
     namaLengkap: nama,
