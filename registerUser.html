@@ -9,7 +9,44 @@
 <link rel="icon" type="image/png" href="r22.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+<script>
+  // Buat fungsi requireAuth palsu agar saat config.js dimuat atau dipanggil, 
+  // dia tidak akan menendang user ke halaman login.
+  window.requireAuth = function() {
+    console.log("requireAuth dinonaktifkan khusus untuk halaman Register.");
+    return true; // Selalu lolos tanpa token
+  };
+</script>
+
 <script src="js/config.js"></script>
+
+<script>
+  // Membersihkan sisa token/session lama yang berpotensi memicu bug login
+  if (window.localStorage) { 
+    localStorage.removeItem('il_token'); 
+    localStorage.removeItem('il_user'); 
+  }
+  if (window.sessionStorage) { 
+    sessionStorage.clear(); 
+  }
+
+  // Jaga-jaga jika ada script lain yang mengubah window.location.href secara paksa ke login.html
+  let currentHref = window.location.href;
+  Object.defineProperty(window.location, 'href', {
+    get: function() { return currentHref; },
+    set: function(url) {
+      if (url.includes('login.html')) {
+        console.warn('Sistem memblokir pengalihan paksa ke:', url);
+        return currentHref; 
+      }
+      window.location.assign(url);
+      return url;
+    },
+    configurable: true
+  });
+</script>
+
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Plus Jakarta Sans',sans-serif;min-height:100vh;background:linear-gradient(135deg,#0D47A1 0%,#1565C0 40%,#0288D1 100%);display:flex;align-items:center;justify-content:center;padding:20px;overflow:hidden}
