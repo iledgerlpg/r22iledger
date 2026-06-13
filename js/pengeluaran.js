@@ -136,6 +136,7 @@ async function loadData() {
   totalPg = r.totalPages || 1;
   document.getElementById('resultInfo').textContent = r.total + ' data';
   document.getElementById('pageInfo').textContent = `Hal ${r.page} dari ${totalPg}`;
+  r.data.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
   renderTable(r.data, r.page, parseInt(document.getElementById('limitSelect').value));
   renderPagination('paginationContainer', pg, totalPg, 'changePage');
   updateSummary(r.data);
