@@ -5,11 +5,11 @@
 
 <aside class="sidebar" id="sidebar">
   <div class="sidebar-brand">
-    <div class="brand-icon">
-      <svg viewBox="0 0 32 32"><path d="M4 4h10v10H4zm14 0h10v10H18zM4 18h10v10H4zm14 0h10v10H18z" opacity=".4"/><path d="M6 6h6v6H6zm14 0h6v6h-6zM6 20h6v6H6zm14 0h6v6h-6z"/></svg>
+<div class="brand-icon">
+      <img src="r22.png" alt="Logo" style="width:32px;height:32px;object-fit:contain;">
     </div>
-    <div class="brand-text">
-      <h1>iLedgerV2</h1>
+<div class="brand-text">
+      <h1 id="brandCompanyName">iLedgerV2</h1>
       <p>Fleet Management System</p>
     </div>
   </div>
@@ -135,10 +135,11 @@
   });
 
   // Set company name in header if element exists
-  const cnEl = document.getElementById('headerCompanyName');
-  if (cnEl && user.tenantId) {
-    cnEl.textContent = user.company || 'Perusahaan';
-  }
+const cnEl = document.getElementById('headerCompanyName');
+  if (cnEl) cnEl.textContent = user.company || 'Perusahaan';
+
+  const brandEl = document.getElementById('brandCompanyName');
+  if (brandEl) brandEl.textContent = user.company || 'iLedgerV2';
 })();
 
 function toggleSidebar() {
