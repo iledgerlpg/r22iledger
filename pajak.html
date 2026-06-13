@@ -11,8 +11,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
-<script> window.CURRENT_PAGE='pajak';</script>
-<div id="navbarMount"></div>
+<script>window.CURRENT_PAGE = 'pajak';</script>
+<!-- FIX: style tetap di <head>, tapi navbarMount dipindah ke <body> -->
 <style>
 .status-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:700}
 .status-aman{background:#dcfce7;color:#166534}
@@ -46,6 +46,9 @@
 </head>
 <body>
 
+<!-- FIX: navbarMount dipindah ke <body> (sebelumnya ada di dalam <head> yang salah) -->
+<div id="navbarMount"></div>
+
 <header class="main-header">
   <button class="header-toggle" onclick="toggleSidebar()">
     <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
@@ -55,7 +58,9 @@
     <span class="breadcrumb-current">Pajak Kendaraan</span>
   </div>
   <div class="header-actions">
-    <button class="header-btn" onclick="toggleTheme()"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/></svg></button>
+    <button class="header-btn" onclick="toggleTheme()">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/></svg>
+    </button>
   </div>
 </header>
 
@@ -64,7 +69,7 @@
     <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px">
       <div>
         <h1 class="page-title">Pajak Kendaraan</h1>
-        <p class="page-subtitle">Pantau STNK, KIR & Pajak semua armada secara real-time</p>
+        <p class="page-subtitle">Pantau STNK & KIR semua armada secara real-time</p>
       </div>
       <div style="display:flex;gap:8px">
         <button class="btn btn-outline btn-sm" onclick="exportPDF()">
@@ -128,10 +133,6 @@
         <label class="form-label-m">Tanggal KIR Baru</label>
         <input type="date" id="fTglKIR" class="form-control-m">
       </div>
-      <div class="form-group-m">
-        <label class="form-label-m">Tanggal Pajak Baru</label>
-        <input type="date" id="fTglPajak" class="form-control-m">
-      </div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeModal('modalEdit')">Batal</button>
@@ -142,7 +143,6 @@
     </div>
   </div>
 </div>
-
 
 </body>
 </html>
