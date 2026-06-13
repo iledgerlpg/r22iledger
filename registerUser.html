@@ -183,24 +183,24 @@ body::before{content:'';position:fixed;inset:0;background:url("data:image/svg+xm
 </div>
 
 <script>
-let validTenantCode = '';
+let validTenantId = '';
 let ptName = '';
 
-// Cek kode PT dulu sebelum lanjut
 async function checkTenantCode() {
-  const code = document.getElementById('fTenantCode').value.trim().toUpperCase();
-  if (!code) { showAlert('Kode PT wajib diisi.', 'error'); return; }
+  const email = document.getElementById('fTenantCode').value.trim();
+  if (!email) { showAlert('Email wajib diisi.', 'error'); return; }
 
-  // Validasi kode ke backend
-  const res = await callAPI('checkTenantCode', { tenantCode: code });
-  if (!res.success) { showAlert(res.error || 'Kode PT tidak valid.', 'error'); return; }
+  const res = await callAPI('checkTenantByEmail', { email });
+  if (!res.success) { showAlert(res.error || 'Email tidak cocok dengan perusahaan manapun.', 'error'); return; }
 
-  validTenantCode = code;
+  validTenantId = res.tenantId;
   ptName = res.namaPT || '';
   document.getElementById('ptNameBanner').textContent = '🏢 ' + ptName;
+
+  // Auto-fill email di step 2
+  document.getElementById('fEmail').value = email;
   goStep(2);
 }
-
 function goStep(n) {
   [1,2,3].forEach(i => document.getElementById('step'+i).style.display = 'none');
   document.getElementById('step'+n).style.display = 'block';
