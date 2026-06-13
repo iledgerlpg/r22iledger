@@ -92,7 +92,7 @@ body::before{content:'';position:fixed;inset:0;background:url("data:image/svg+xm
       <!-- STEP 1: Kode PT -->
       <div id="step1">
         <div class="form-group">
-          <label class="form-label">Kode PT / Perusahaan</label>
+<label class="form-label">Email Perusahaan</label>
 <div class="input-wrap">
             <span class="input-icon"><svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 7 10-7"/></svg></span>
             <input type="email" id="fTenantCode" class="form-control" placeholder="email@perusahaan.com" autocomplete="email">
@@ -241,14 +241,13 @@ async function handleRegister() {
   btn.disabled    = true;
   btn.textContent = 'Mendaftarkan...';
 
-  const res = await callAPI('registerAdminUser', {
+const res = await callAPI('registerAdminUser', {
     email,
     password,
     namaLengkap: nama,
     noTelp,
-    tenantCode: validTenantCode
+    tenantId: validTenantId
   });
-
   btn.disabled = false;
   btn.textContent = 'Daftar Sekarang';
 
