@@ -43,6 +43,7 @@ function setSession(token, user) {
 function clearSession() {
   localStorage.removeItem(CONFIG.SESSION_KEY);
   localStorage.removeItem(CONFIG.USER_KEY);
+  localStorage.removeItem(LAST_ACTIVE_KEY); // tambahan
 }
 function requireAuth() {
   const token = getToken();
@@ -188,3 +189,44 @@ if (!document.getElementById('toastStyle')) {
   s.textContent = '@keyframes toastIn{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:translateX(0)}}';
   document.head.appendChild(s);
 }
+// ============================================================
+// AUTO-LOGOUT (inactivity 1 hour)
+// ============================================================
+const INACTIVITY_LIMIT = 60 * 60 * 1000; // 1 jam dalam ms
+const LAST_ACTIVE_KEY = 'il_last_active';
+
+function updateLastActive() {
+  localStorage.setItem(LAST_ACTIVE_KEY, Date.now());
+}
+
+function checkInactivity() {
+  const token = getToken();
+  if (!token) return; // Belum login, skip
+
+  const lastActive = parseInt(localStorage.getItem(LAST_ACTIVE_KEY) || '0');
+  const now = Date.now();
+
+  if (lastActive && (now - lastActive) >= INACTIVITY_LIMIT) {
+    clearSession();
+    localStorage.removeItem(LAST_ACTIVE_KEY);
+    showToast('Sesi berakhir karena tidak ada aktivitas.', 'warning', 4000);
+    setTimeout(() => { window.location.href = 'login.html'; }, 1500);
+  }
+}
+
+function initActivityTracker() {
+  if (!getToken()) return; // Hanya aktif jika sudah login
+
+  // Set aktivitas awal
+  updateLastActive();
+
+  // Pantau aktivitas user
+  const events = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll', 'click'];
+  events.forEach(ev => window.addEventListener(ev, updateLastActive, { passive: true }));
+
+  // Cek inaktivitas setiap 1 menit
+  setInterval(checkInactivity, 60 * 1000);
+}
+
+// Jalankan tracker saat halaman dimuat
+initActivityTracker();
