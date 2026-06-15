@@ -1,65 +1,199 @@
 <!DOCTYPE html>
 <html lang="id" data-theme="light">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>iLedgerV2 – Pengaturan</title>
-<link rel="stylesheet" href="css/style.css"><link rel="manifest" href="manifest.json">
-<link rel="icon" type="image/png" href="r22.png">
-<script src="js/config.js"></script>
-<script src="js/settings.js"></script>  
-<script src="js/page-template.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<script> window.CURRENT_PAGE='settings';</script>
-<div id="navbarMount"></div>
-<style>
-.settings-layout{display:grid;grid-template-columns:220px 1fr;gap:20px}
-.settings-nav{background:var(--bg-card);border-radius:var(--radius-lg);border:1px solid var(--border-color);overflow:hidden;height:fit-content}
-.settings-nav-item{display:flex;align-items:center;gap:10px;padding:12px 16px;font-size:13px;font-weight:600;color:var(--text-secondary);cursor:pointer;transition:all .2s;border-left:3px solid transparent}
-.settings-nav-item:hover{background:var(--gray-50);color:var(--text-primary)}
-.settings-nav-item.active{background:rgba(13,71,161,.06);color:var(--primary);border-left-color:var(--primary)}
-.settings-nav-item svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;flex-shrink:0}
-.settings-panel{display:none}.settings-panel.active{display:block}
-.settings-section{background:var(--bg-card);border-radius:var(--radius-lg);border:1px solid var(--border-color);margin-bottom:16px;overflow:hidden}
-.settings-section-header{padding:18px 20px;border-bottom:1px solid var(--border-color);font-size:15px;font-weight:700;color:var(--text-primary);display:flex;align-items:center;gap:8px}
-.settings-section-header svg{width:18px;height:18px;stroke:var(--primary);fill:none;stroke-width:2}
-.settings-section-body{padding:20px}
-.setting-row{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;padding:12px 0;border-bottom:1px solid var(--border-color)}
-.setting-row:last-child{border-bottom:none}
-.setting-label{font-size:14px;font-weight:600;color:var(--text-primary)}
-.setting-desc{font-size:12px;color:var(--text-secondary);margin-top:2px}
-.setting-control{flex-shrink:0}
-.setting-input{padding:8px 14px;border:1.5px solid var(--border-color);border-radius:var(--radius);font-family:var(--font);font-size:13px;color:var(--text-primary);background:var(--bg-card);outline:none;transition:border-color .2s;min-width:200px}
-.setting-input:focus{border-color:var(--primary)}
-.toggle-switch{position:relative;width:44px;height:24px;display:inline-block}
-.toggle-switch input{opacity:0;width:0;height:0}
-.toggle-slider{position:absolute;inset:0;background:var(--gray-200);border-radius:24px;cursor:pointer;transition:.3s}
-.toggle-slider::before{content:'';position:absolute;width:18px;height:18px;left:3px;top:3px;background:white;border-radius:50%;transition:.3s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
-input:checked+.toggle-slider{background:var(--primary)}
-input:checked+.toggle-slider::before{transform:translateX(20px)}
-
-.profile-avatar{width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:800;color:white;margin-bottom:12px}
-.profile-name{font-size:20px;font-weight:800;color:var(--text-primary)}
-.profile-email{font-size:13px;color:var(--text-secondary);margin-top:4px}
-.profile-role{margin-top:8px}
-
-.danger-zone{background:#fef2f2;border:1.5px solid #fee2e2;border-radius:var(--radius-lg);padding:20px}
-.danger-zone h3{font-size:14px;font-weight:700;color:#b91c1c;margin-bottom:12px}
-
-@media(max-width:768px){.settings-layout{grid-template-columns:1fr}.settings-nav{display:flex;overflow-x:auto;border-radius:var(--radius)}.settings-nav-item{white-space:nowrap;border-left:none;border-bottom:3px solid transparent}.settings-nav-item.active{border-left:none;border-bottom-color:var(--primary)}}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>iLedgerV2 – Pengaturan</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" href="r22.png">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="js/config.js"></script>
+  <script src="js/settings.js"></script>
+  <script src="js/page-template.js"></script>
+  <script> window.CURRENT_PAGE = 'settings'; </script>
+  <style>
+    .settings-layout {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      gap: 20px;
+    }
+    .settings-nav {
+      background: var(--bg-card);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-color);
+      overflow: hidden;
+      height: fit-content;
+    }
+    .settings-nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all .2s;
+      border-left: 3px solid transparent;
+    }
+    .settings-nav-item:hover {
+      background: var(--gray-50);
+      color: var(--text-primary);
+    }
+    .settings-nav-item.active {
+      background: rgba(13,71,161,.06);
+      color: var(--primary);
+      border-left-color: var(--primary);
+    }
+    .settings-nav-item svg {
+      width: 16px;
+      height: 16px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      flex-shrink: 0;
+    }
+    .settings-panel { display: none; }
+    .settings-panel.active { display: block; }
+    .settings-section {
+      background: var(--bg-card);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-color);
+      margin-bottom: 16px;
+      overflow: hidden;
+    }
+    .settings-section-header {
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .settings-section-header svg {
+      width: 18px;
+      height: 18px;
+      stroke: var(--primary);
+      fill: none;
+      stroke-width: 2;
+    }
+    .settings-section-body { padding: 20px; }
+    .setting-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .setting-row:last-child { border-bottom: none; }
+    .setting-label { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+    .setting-desc { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+    .setting-control { flex-shrink: 0; }
+    .setting-input {
+      padding: 8px 14px;
+      border: 1.5px solid var(--border-color);
+      border-radius: var(--radius);
+      font-family: var(--font);
+      font-size: 13px;
+      color: var(--text-primary);
+      background: var(--bg-card);
+      outline: none;
+      transition: border-color .2s;
+      min-width: 200px;
+    }
+    .setting-input:focus { border-color: var(--primary); }
+    .toggle-switch {
+      position: relative;
+      width: 44px;
+      height: 24px;
+      display: inline-block;
+    }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider {
+      position: absolute;
+      inset: 0;
+      background: var(--gray-200);
+      border-radius: 24px;
+      cursor: pointer;
+      transition: .3s;
+    }
+    .toggle-slider::before {
+      content: '';
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      left: 3px;
+      top: 3px;
+      background: white;
+      border-radius: 50%;
+      transition: .3s;
+      box-shadow: 0 1px 3px rgba(0,0,0,.2);
+    }
+    input:checked + .toggle-slider { background: var(--primary); }
+    input:checked + .toggle-slider::before { transform: translateX(20px); }
+    .profile-avatar {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      font-weight: 800;
+      color: white;
+      margin-bottom: 12px;
+    }
+    .profile-name { font-size: 20px; font-weight: 800; color: var(--text-primary); }
+    .profile-email { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
+    .profile-role { margin-top: 8px; }
+    .danger-zone {
+      background: #fef2f2;
+      border: 1.5px solid #fee2e2;
+      border-radius: var(--radius-lg);
+      padding: 20px;
+    }
+    .danger-zone h3 { font-size: 14px; font-weight: 700; color: #b91c1c; margin-bottom: 12px; }
+    @media(max-width:768px) {
+      .settings-layout { grid-template-columns: 1fr; }
+      .settings-nav {
+        display: flex;
+        overflow-x: auto;
+        border-radius: var(--radius);
+      }
+      .settings-nav-item {
+        white-space: nowrap;
+        border-left: none;
+        border-bottom: 3px solid transparent;
+      }
+      .settings-nav-item.active {
+        border-left: none;
+        border-bottom-color: var(--primary);
+      }
+    }
+  </style>
 </head>
 <body>
+
+<div id="navbarMount"></div>
 
 <header class="main-header">
   <button class="header-toggle" onclick="toggleSidebar()">
     <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
   </button>
   <div class="header-breadcrumb">
-    <span>iLedgerV2</span><span class="breadcrumb-sep">/</span>
+    <span id="headerCompanyName">iLedgerV2</span>
+    <span class="breadcrumb-sep">/</span>
     <span class="breadcrumb-current">Pengaturan</span>
   </div>
   <div class="header-actions">
-    <button class="header-btn" onclick="toggleTheme()"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/></svg></button>
+    <button class="header-btn" onclick="toggleTheme()">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+    </button>
   </div>
 </header>
 
@@ -70,6 +204,7 @@ input:checked+.toggle-slider::before{transform:translateX(20px)}
   </div>
 
   <div class="settings-layout">
+
     <!-- Settings Nav -->
     <div class="settings-nav">
       <div class="settings-nav-item active" onclick="switchPanel('panelProfile', this)">
@@ -85,7 +220,7 @@ input:checked+.toggle-slider::before{transform:translateX(20px)}
         Notifikasi
       </div>
       <div class="settings-nav-item" onclick="switchPanel('panelTampilan', this)">
-        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83"/></svg>
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         Tampilan
       </div>
       <div class="settings-nav-item" onclick="switchPanel('panelKeamanan', this)">
@@ -93,7 +228,7 @@ input:checked+.toggle-slider::before{transform:translateX(20px)}
         Keamanan
       </div>
       <div class="settings-nav-item" onclick="switchPanel('panelLog', this)">
-        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
         Audit Log
       </div>
     </div>
@@ -116,16 +251,27 @@ input:checked+.toggle-slider::before{transform:translateX(20px)}
               <div>
                 <div class="profile-name" id="profileName">-</div>
                 <div class="profile-email" id="profileEmail">-</div>
-                <div class="profile-role"><span class="badge badge-info" id="profileRole">-</span></div>
+                <div class="profile-role">
+                  <span class="badge badge-info" id="profileRole">-</span>
+                </div>
               </div>
             </div>
             <div class="setting-row">
-              <div><div class="setting-label">Nama Lengkap</div></div>
-              <div class="setting-control"><input type="text" class="setting-input" id="settNama" placeholder="Nama lengkap"></div>
+              <div>
+                <div class="setting-label">Nama Lengkap</div>
+              </div>
+              <div class="setting-control">
+                <input type="text" class="setting-input" id="settNama" placeholder="Nama lengkap">
+              </div>
             </div>
             <div class="setting-row">
-              <div><div class="setting-label">Email</div><div class="setting-desc">Tidak dapat diubah</div></div>
-              <div class="setting-control"><input type="email" class="setting-input" id="settEmail" disabled style="opacity:.6"></div>
+              <div>
+                <div class="setting-label">Email</div>
+                <div class="setting-desc">Tidak dapat diubah</div>
+              </div>
+              <div class="setting-control">
+                <input type="email" class="setting-input" id="settEmail" disabled style="opacity:.6">
+              </div>
             </div>
             <div style="margin-top:16px">
               <button class="btn btn-primary" onclick="saveProfile()">
@@ -146,15 +292,26 @@ input:checked+.toggle-slider::before{transform:translateX(20px)}
           </div>
           <div class="settings-section-body">
             <div class="setting-row">
-              <div><div class="setting-label">Nama Perusahaan</div></div>
-              <div class="setting-control"><input type="text" class="setting-input" id="sCompanyName" placeholder="PT Perusahaan"></div>
+              <div>
+                <div class="setting-label">Nama Perusahaan</div>
+              </div>
+              <div class="setting-control">
+                <input type="text" class="setting-input" id="sCompanyName" placeholder="PT Perusahaan">
+              </div>
             </div>
             <div class="setting-row">
-              <div><div class="setting-label">Email Notifikasi</div><div class="setting-desc">Penerima email reminder otomatis</div></div>
-              <div class="setting-control"><input type="email" class="setting-input" id="sNotifEmail" placeholder="hrd@perusahaan.com"></div>
+              <div>
+                <div class="setting-label">Email Notifikasi</div>
+                <div class="setting-desc">Penerima email reminder otomatis</div>
+              </div>
+              <div class="setting-control">
+                <input type="email" class="setting-input" id="sNotifEmail" placeholder="hrd@perusahaan.com">
+              </div>
             </div>
             <div class="setting-row">
-              <div><div class="setting-label">Zona Waktu</div></div>
+              <div>
+                <div class="setting-label">Zona Waktu</div>
+              </div>
               <div class="setting-control">
                 <select class="setting-input" id="sTimezone">
                   <option value="Asia/Jakarta">WIB (UTC+7)</option>
@@ -182,7 +339,10 @@ input:checked+.toggle-slider::before{transform:translateX(20px)}
           </div>
           <div class="settings-section-body">
             <div class="setting-row">
-              <div><div class="setting-label">Reminder Pajak Kendaraan</div><div class="setting-desc">Kirim email otomatis H-30, H-14, H-7, H-2</div></div>
+              <div>
+                <div class="setting-label">Reminder Pajak Kendaraan</div>
+                <div class="setting-desc">Kirim email otomatis H-30, H-14, H-7, H-2</div>
+              </div>
               <div class="setting-control">
                 <label class="toggle-switch">
                   <input type="checkbox" id="sPajakAlert" checked>
@@ -191,7 +351,10 @@ input:checked+.toggle-slider::before{transform:translateX(20px)}
               </div>
             </div>
             <div class="setting-row">
-              <div><div class="setting-label">Reminder Service Kendaraan</div><div class="setting-desc">Notifikasi jadwal perawatan armada</div></div>
+              <div>
+                <div class="setting-label">Reminder Service Kendaraan</div>
+                <div class="setting-desc">Notifikasi jadwal perawatan armada</div>
+              </div>
               <div class="setting-control">
                 <label class="toggle-switch">
                   <input type="checkbox" id="sBBMAlert" checked>
@@ -200,8 +363,13 @@ input:checked+.toggle-slider::before{transform:translateX(20px)}
               </div>
             </div>
             <div class="setting-row">
-              <div><div class="setting-label">Interval Service (KM)</div><div class="setting-desc">Default: setiap 5.000 km</div></div>
-              <div class="setting-control"><input type="number" class="setting-input" id="sServiceKM" value="5000" style="min-width:140px"></div>
+              <div>
+                <div class="setting-label">Interval Service (KM)</div>
+                <div class="setting-desc">Default: setiap 5.000 km</div>
+              </div>
+              <div class="setting-control">
+                <input type="number" class="setting-input" id="sServiceKM" value="5000" style="min-width:140px">
+              </div>
             </div>
             <div style="margin-top:16px">
               <button class="btn btn-primary" onclick="saveNotifSettings()">
@@ -217,12 +385,15 @@ input:checked+.toggle-slider::before{transform:translateX(20px)}
       <div class="settings-panel" id="panelTampilan">
         <div class="settings-section">
           <div class="settings-section-header">
-            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83"/></svg>
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
             Tampilan & Tema
           </div>
           <div class="settings-section-body">
             <div class="setting-row">
-              <div><div class="setting-label">Mode Gelap</div><div class="setting-desc">Aktifkan tampilan dark mode</div></div>
+              <div>
+                <div class="setting-label">Mode Gelap</div>
+                <div class="setting-desc">Aktifkan tampilan dark mode</div>
+              </div>
               <div class="setting-control">
                 <label class="toggle-switch">
                   <input type="checkbox" id="sDarkMode" onchange="handleDarkMode(this)">
@@ -266,25 +437,42 @@ input:checked+.toggle-slider::before{transform:translateX(20px)}
       <div class="settings-panel" id="panelLog">
         <div class="settings-section">
           <div class="settings-section-header">
-            <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
             Audit Log Aktivitas
           </div>
           <div class="settings-section-body" style="padding:0">
             <div style="padding:12px 16px;border-bottom:1px solid var(--border-color);display:flex;gap:10px;flex-wrap:wrap">
               <div class="search-bar" style="flex:1;min-width:180px">
                 <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                <input class="search-input" id="logSearch" placeholder="Cari aktivitas..." oninput="loadLog()">
+                <input class="search-input" id="logSearch" placeholder="Cari aktivitas..." oninput="logPage=1;loadLog()">
               </div>
-              <select id="logModule" style="padding:8px 12px;border:1.5px solid var(--border-color);border-radius:var(--radius);font-family:var(--font);font-size:12px;background:var(--bg-card);color:var(--text-primary);cursor:pointer;outline:none" onchange="loadLog()">
+              <select id="logModule"
+                style="padding:8px 12px;border:1.5px solid var(--border-color);border-radius:var(--radius);font-family:var(--font);font-size:12px;background:var(--bg-card);color:var(--text-primary);cursor:pointer;outline:none"
+                onchange="logPage=1;loadLog()">
                 <option value="">Semua Modul</option>
-                <option>Auth</option><option>Pengeluaran</option><option>Pemasukan</option>
-                <option>Armada</option><option>BBM</option><option>Perawatan</option><option>Pajak</option>
-                <option>Karyawan</option><option>Pos</option><option>UserManagement</option>
+                <option>Auth</option>
+                <option>Pengeluaran</option>
+                <option>Pemasukan</option>
+                <option>Armada</option>
+                <option>BBM</option>
+                <option>Perawatan</option>
+                <option>Pajak</option>
+                <option>Karyawan</option>
+                <option>Pos</option>
+                <option>UserManagement</option>
               </select>
             </div>
             <div class="table-wrapper" style="border:none">
               <table class="data-table">
-                <thead><tr><th>Waktu</th><th>User</th><th>Aksi</th><th>Modul</th><th>Data</th></tr></thead>
+                <thead>
+                  <tr>
+                    <th>Waktu</th>
+                    <th>User</th>
+                    <th>Aksi</th>
+                    <th>Modul</th>
+                    <th>Data</th>
+                  </tr>
+                </thead>
                 <tbody id="logBody"></tbody>
               </table>
             </div>
@@ -296,7 +484,6 @@ input:checked+.toggle-slider::before{transform:translateX(20px)}
     </div>
   </div>
 </main>
-
 
 </body>
 </html>
