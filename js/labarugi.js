@@ -351,34 +351,52 @@ function toggleSection(id) {
 }
 
 async function exportExcel() {
-  // 1. Ambil sessionUser pakai helper lu
+  // 1. Validasi sesi
   const sessionUser = getUser();
-
   if (!sessionUser || !sessionUser.tenantId) {
-    showToast('Sesi tidak valid, silakan login kembali', 'error');
+    showToast('Sesi tidak valid, silakan login kembali.', 'error');
     return;
   }
 
-  // 2. Ambil data dengan ID yang sesuai (Sinkronisasi ID)
-  // Perhatikan: Gue pakai 'currentPeriod' (variabel global lu) 
-  // dan ID yang sesuai dengan fungsi 'loadData'
+  // 2. Susun payload
   const payload = {
     sessionUser: sessionUser,
-    period: currentPeriod, 
-    year: document.getElementById('selectYear').value,
-    month: document.getElementById('selectMonth').value
+    period     : currentPeriod,
+    year       : document.getElementById('selectYear').value,
+    month      : document.getElementById('selectMonth').value
   };
 
-  // 3. Eksekusi
-  showToast('Sedang memproses laporan ke Excel...', 'info');
+  // 3. Panggil API
+  showToast('Sedang memproses laporan...', 'info');
 
-  const response = await callAPI('exportLabaRugiToExcel', payload);
+  const res = await callAPI('exportLabaRugiToExcel', payload);
 
-  if (response.success) {
-    window.open(response.downloadUrl, '_blank');
-    showToast('Excel berhasil di-generate!', 'success');
-  } else {
-    showToast('Gagal export: ' + (response.error || 'Terjadi kesalahan sistem'), 'error');
+  if (!res.success) {
+    showToast('Gagal export: ' + (res.error || 'Terjadi kesalahan sistem.'), 'error');
+    return;
+  }
+
+  // 4. Decode base64 → Blob → trigger download langsung (tanpa buka tab baru)
+  try {
+    const byteChars = atob(res.base64);
+    const byteArr   = new Uint8Array(byteChars.length);
+    for (let i = 0; i < byteChars.length; i++) {
+      byteArr[i] = byteChars.charCodeAt(i);
+    }
+
+    const blob     = new Blob([byteArr], { type: 'application/vnd.ms-excel' });
+    const url      = URL.createObjectURL(blob);
+    const anchor   = document.createElement('a');
+    anchor.href    = url;
+    anchor.download = res.filename || `Laporan_Keuangan_${currentPeriod}.xls`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+    URL.revokeObjectURL(url);
+
+    showToast('Laporan berhasil diunduh!', 'success');
+  } catch (e) {
+    showToast('Gagal memproses file: ' + e.message, 'error');
   }
 }
 function exportPDF() {
