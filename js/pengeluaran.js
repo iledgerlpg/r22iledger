@@ -98,10 +98,12 @@ async function loadMappings() {
 }
 
 async function loadKaryawan() {
-  const r = await callAPI('getKaryawan', { status: 'ACTIVE' });
+  const r = await callAPI('getKaryawan', {
+    status: 'ACTIVE',
+    fieldsOnly: 'nama,jabatan'  // ← wajib ada agar ADMIN diizinkan
+  });
   allKaryawan = r.success ? r.data : [];
 }
-
 async function loadArmada() {
   const r = await callAPI('getArmada', { status: 'ACTIVE' });
   if (!r.success) return;
