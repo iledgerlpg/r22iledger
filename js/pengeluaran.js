@@ -706,8 +706,13 @@ async function saveDataFull() {
   if (!nama)   { showToast('Nama penerima wajib diisi.','error'); return; }
   if (!uraian) { showToast('Uraian wajib diisi.','error'); return; }
   if (!idPos)  { showToast('Pos wajib dipilih.','error'); return; }
-  if (!nominal || Number(nominal)<=0) { showToast('Nominal wajib diisi.','error'); return; }
+if (!nominal || Number(nominal)<=0) { showToast('Nominal wajib diisi.','error'); return; }
 
+// Validasi: minimal satu foto wajib diisi
+if (!notaB64 && !buktiB64) {
+  showToast('Minimal satu foto (Nota atau Bukti Transfer) wajib dilampirkan.', 'error');
+  return;
+}
   // Validate BBM if shown
   const bbmShown = document.getElementById('bbmExtra').classList.contains('show');
   if (bbmShown) {
