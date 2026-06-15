@@ -131,12 +131,16 @@
       if (cnEl) cnEl.textContent = r.data.COMPANY_NAME;
     }
   });
-  // Show HRD menus
-  if (user.role === 'HRD') {
-    const hrdMenus = document.getElementById('navHrdMenus');
-    if (hrdMenus) hrdMenus.style.display = 'block';
-  }
+// Show HRD menus
+if (user.role === 'HRD') {
+  const hrdMenus = document.getElementById('navHrdMenus');
+  if (hrdMenus) hrdMenus.style.display = 'block';
 
+  // ✅ Tampilkan semua item dengan data-hrd-only="true" di mana saja posisinya
+  document.querySelectorAll('[data-hrd-only="true"]').forEach(el => {
+    el.style.display = 'flex';
+  });
+}
   // Active nav item — detect from current page filename
   const currentPage = window.location.pathname.split('/').pop().replace('.html','');
   document.querySelectorAll('.nav-item[data-page]').forEach(el => {
