@@ -1,3 +1,18 @@
+  (function guardLabaRugi() {
+    // Tunggu config.js siap
+    if (typeof getUser !== 'function') {
+      setTimeout(guardLabaRugi, 100);
+      return;
+    }
+    const user = getUser();
+    if (!user || user.role !== 'HRD') {
+      // Bukan HRD — redirect ke dashboard atau halaman 403
+      alert('Akses ditolak. Halaman ini hanya untuk HRD.');
+      window.location.replace('dashboard.html');
+    }
+  })();
+
+
 let currentPeriod = 'monthly';
 let lrChart = null;
 let globalDataRaw = null; // Menyimpan data aktif dari API untuk kebutuhan Export Excel/PDF
