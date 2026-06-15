@@ -1,20 +1,34 @@
 let logPage = 1;
 
-// ✅ Satu DOMContentLoaded — initPage dipanggil pertama
+// ✅ Satu DOMContentLoaded — tunggu config.js siap sebelum init
 document.addEventListener('DOMContentLoaded', () => {
-  initPage('settings');
-  loadSettings();
-  setupProfile();
   checkDarkMode();
+  waitForUser();
 });
 
+function waitForUser() {
+  if (typeof getUser !== 'function') {
+    setTimeout(waitForUser, 100);
+    return;
+  }
+  const user = getUser();
+  if (!user || !user.name) {
+    setTimeout(waitForUser, 100);
+    return;
+  }
+  initPage('settings');
+  setupProfile();
+  loadSettings();
+}
+
 function setupProfile() {
-  document.getElementById('profileName').textContent    = _user.name  || '-';
-  document.getElementById('profileEmail').textContent   = _user.email || '-';
-  document.getElementById('profileRole').textContent    = _user.role  || '-';
-  document.getElementById('profileAvatar').textContent  = (_user.name || '-').charAt(0).toUpperCase();
-  document.getElementById('settNama').value             = _user.name  || '';
-  document.getElementById('settEmail').value            = _user.email || '';
+  const user = getUser();
+  document.getElementById('profileName').textContent    = user.name  || '-';
+  document.getElementById('profileEmail').textContent   = user.email || '-';
+  document.getElementById('profileRole').textContent    = user.role  || '-';
+  document.getElementById('profileAvatar').textContent  = (user.name || '-').charAt(0).toUpperCase();
+  document.getElementById('settNama').value             = user.name  || '';
+  document.getElementById('settEmail').value            = user.email || '';
 }
 
 async function loadSettings() {
@@ -68,8 +82,9 @@ async function saveProfile() {
 
   const res = await callAPI('updateProfile', { name: nama });
   if (res.success) {
-    // Update cache lokal
-    _user.name = nama;
+    // Update cache lokal via getUser jika tersedia
+    const user = getUser();
+    if (user) user.name = nama;
 
     // Update tampilan di halaman settings
     document.getElementById('profileName').textContent   = nama;
